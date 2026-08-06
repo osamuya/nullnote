@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- App Store 配布に必須。最初から有効にしておかないと後で必ず詰まる。 -->
+	<key>com.apple.security.app-sandbox</key>
+	<true/>
+	<!-- 書類アプリなので、ユーザーが選んだファイルの読み書きだけを許す。 -->
+	<key>com.apple.security.files.user-selected.read-write</key>
+	<true/>
+</dict>
+</plist>

@@ -1,0 +1,15 @@
+.DS_Store
+
+# Swift Package Manager
+.build/
+.swiftpm/
+# ライブラリ側は依存の解決結果を固定しない。
+# アプリ側（Nullnote.xcodeproj/.../swiftpm/Package.resolved）は再現性のため追跡する。
+Packages/*/Package.resolved
+
+# Xcode
+DerivedData/
+*.xcuserstate
+xcuserdata/
+*.xcscmblueprint
+*.xccheckout
