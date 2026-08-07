@@ -36,12 +36,13 @@ struct PreviewText: View {
 
     var body: some View {
         #if canImport(AppKit)
-        PreviewTextRepresentable(
-            attributed: PreviewAttributes.make(
-                from: text, theme: theme, baseFont: font, baseColor: color, alignment: alignment
-            ),
-            theme: theme
-        )
+        // 属性の変換はここでは行わない。`body` は再描画のたびに評価されるため、
+        // ウインドウのリサイズ中は毎フレーム全ブロックを作り直すことになる。
+        // 実際に中身が変わったときだけ変換する（`updateNSView` を参照）。
+        PreviewTextRepresentable(text: text, theme: theme, baseFont: font, baseColor: color)
+        // AppKit のビューはベースラインを持たない。教えないと
+        // `HStack(alignment: .firstTextBaseline)` で並べたときにずれる。
+        .alignmentGuide(.firstTextBaseline) { [ascender = font.ascender] _ in ascender }
         #else
         Text(text)
             .font(.system(size: font.pointSize))
@@ -64,16 +65,13 @@ enum PreviewAttributes {
         from text: AttributedString,
         theme: MarkdownTheme,
         baseFont: PlatformFont,
-        baseColor: PlatformColor,
-        alignment: TextAlignment
+        baseColor: PlatformColor
     ) -> NSAttributedString {
+        // 揃えは段落スタイルに入れない。中央・右揃えにすると
+        // グリフがコンテナ幅いっぱいに配置され、測定した幅が実際より広くなる。
+        // 揃えは SwiftUI 側の frame(alignment:) で行う。
         let paragraph = NSMutableParagraphStyle()
         paragraph.lineSpacing = theme.fontSize * 0.22
-        switch alignment {
-        case .center: paragraph.alignment = .center
-        case .trailing: paragraph.alignment = .right
-        default: paragraph.alignment = .natural
-        }
 
         let result = NSMutableAttributedString()
 
@@ -119,8 +117,66 @@ enum PreviewAttributes {
 
 private struct PreviewTextRepresentable: NSViewRepresentable {
 
-    let attributed: NSAttributedString
+    let text: AttributedString
     let theme: MarkdownTheme
+    let baseFont: PlatformFont
+    let baseColor: PlatformColor
+
+    /// 変換結果と、大きさを測るための道具を持つ。
+    ///
+    /// **測定は表示用のレイアウトとは別立てにする。**
+    /// 同じレイアウトを測定にも使うと、測るたびにコンテナの幅を書き換えることになり、
+    /// 表示側の折り返し幅が測定時の値に引きずられる。
+    /// 表示側は `widthTracksTextView` に任せ、AppKit が自分で幅を追従させる。
+    final class Coordinator {
+        var appliedText: AttributedString?
+        var appliedFontSize: CGFloat = 0
+        var appliedAppearance: MarkdownAppearance?
+
+        let measuringStorage = NSTextStorage()
+        let measuringLayout = NSLayoutManager()
+        let measuringContainer = NSTextContainer(
+            size: NSSize(width: 0, height: CGFloat.greatestFiniteMagnitude))
+
+        init() {
+            measuringContainer.widthTracksTextView = false
+            measuringContainer.lineFragmentPadding = 0
+            // 遅延レイアウトだと測定時に推定値が返ることがある。
+            measuringLayout.allowsNonContiguousLayout = false
+            measuringStorage.addLayoutManager(measuringLayout)
+            measuringLayout.addTextContainer(measuringContainer)
+        }
+
+        /// 与えられた幅で組んだときの高さ。
+        func height(fitting width: CGFloat) -> CGFloat {
+            measuringContainer.containerSize =
+                NSSize(width: width, height: CGFloat.greatestFiniteMagnitude)
+            measuringLayout.ensureLayout(for: measuringContainer)
+            return ceil(measuringLayout.usedRect(for: measuringContainer).height)
+        }
+
+        /// 折り返さずに1行で並べたときの幅。
+        var naturalWidth: CGFloat { ceil(measuringStorage.size().width) }
+    }
+
+    func makeCoordinator() -> Coordinator { Coordinator() }
+
+    private var attributed: NSAttributedString {
+        PreviewAttributes.make(from: text, theme: theme, baseFont: baseFont, baseColor: baseColor)
+    }
+
+    /// 作り直しが要るか。
+    private func needsRebuild(_ coordinator: Coordinator) -> Bool {
+        coordinator.appliedText != text
+            || coordinator.appliedFontSize != theme.fontSize
+            || coordinator.appliedAppearance != theme.appearance
+    }
+
+    private func remember(in coordinator: Coordinator) {
+        coordinator.appliedText = text
+        coordinator.appliedFontSize = theme.fontSize
+        coordinator.appliedAppearance = theme.appearance
+    }
 
     func makeNSView(context: Context) -> LinkHoverTextView {
         // レイアウトの寸法を測るため、TextKit 1 で組み立てる。
@@ -142,27 +198,37 @@ private struct PreviewTextRepresentable: NSViewRepresentable {
         textView.isHorizontallyResizable = false
         textView.autoresizingMask = [NSView.AutoresizingMask.width]
         apply(theme, to: textView)
+        let attributed = self.attributed
         textView.textStorage?.setAttributedString(attributed)
+        context.coordinator.measuringStorage.setAttributedString(attributed)
+        remember(in: context.coordinator)
         return textView
     }
 
     func updateNSView(_ textView: LinkHoverTextView, context: Context) {
+        guard needsRebuild(context.coordinator) else { return }
         apply(theme, to: textView)
-        if textView.textStorage?.isEqual(to: attributed) != true {
-            textView.textStorage?.setAttributedString(attributed)
-        }
+        let attributed = self.attributed
+        textView.textStorage?.setAttributedString(attributed)
+        context.coordinator.measuringStorage.setAttributedString(attributed)
+        remember(in: context.coordinator)
     }
 
-    /// 高さを本文の量に合わせる。これが無いと `VStack` が正しく積めない。
+    /// 本文の量に合わせて大きさを返す。
+    ///
+    /// 測定は表示用とは別のレイアウトで行う。表示側のコンテナ幅には一切触らない。
     func sizeThatFits(_ proposal: ProposedViewSize, nsView: LinkHoverTextView, context: Context) -> CGSize? {
-        guard let container = nsView.textContainer, let layoutManager = nsView.layoutManager else { return nil }
-        let width = proposal.width ?? nsView.bounds.width
-        guard width > 0, width.isFinite else { return nil }
+        let coordinator = context.coordinator
 
-        container.containerSize = NSSize(width: width, height: CGFloat.greatestFiniteMagnitude)
-        layoutManager.ensureLayout(for: container)
-        let used = layoutManager.usedRect(for: container)
-        return CGSize(width: width, height: ceil(used.height))
+        // 折り返す幅が決まっているとき。
+        if let proposed = proposal.width, proposed > 0, proposed.isFinite {
+            return CGSize(width: proposed, height: coordinator.height(fitting: proposed))
+        }
+
+        // 幅が決まっていないとき（Grid の列幅を決める段階など）は、
+        // 折り返さない自然な幅を返す。
+        let natural = coordinator.naturalWidth
+        return CGSize(width: natural, height: coordinator.height(fitting: natural))
     }
 
     private func apply(_ theme: MarkdownTheme, to textView: LinkHoverTextView) {

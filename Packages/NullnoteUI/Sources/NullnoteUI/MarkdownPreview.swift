@@ -23,7 +23,13 @@ public struct MarkdownPreview: View {
         self.anchorLine = anchorLine
     }
 
+    private static let horizontalPadding: CGFloat = 20
+
     public var body: some View {
+        // 幅を明示的に測って渡す。
+        // `HSplitView` は子に確定した幅を提案しないことがあり、
+        // AppKit のテキストビューが「折り返さない自然な幅」で配置されて切れてしまう。
+        GeometryReader { geometry in
         ScrollViewReader { proxy in
             ScrollView {
                 VStack(alignment: .leading, spacing: theme.fontSize * 0.85) {
@@ -31,8 +37,11 @@ public struct MarkdownPreview: View {
                         PreviewBlockView(block: block, theme: theme).erased
                     }
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, 20)
+                .frame(
+                    width: max(0, geometry.size.width - Self.horizontalPadding * 2),
+                    alignment: .leading
+                )
+                .padding(.horizontal, Self.horizontalPadding)
                 .padding(.vertical, 18)
                 .textSelection(.enabled)
             }
@@ -43,6 +52,7 @@ public struct MarkdownPreview: View {
                 // 解析し直した直後は id が振り直されるので、位置を取り直す。
                 scroll(to: anchorLine, using: proxy)
             }
+        }
         }
         .background(Color(platform: theme.background))
         .preferredColorScheme(theme.appearance.colorScheme)
@@ -167,6 +177,9 @@ private struct PreviewListView: View {
                             PreviewBlockView(block: $0, theme: theme, textColor: textColor).erased
                         }
                     }
+                    // AppKit のテキストビューは「折り返さない自然な幅」を理想の幅として返す。
+                    // 指定しないと HStack が幅を配分しきれず、本文だけ狭く折り返される。
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
             }
         }
@@ -283,12 +296,8 @@ private struct PreviewTableView: View {
             Grid(alignment: .topLeading, horizontalSpacing: 16, verticalSpacing: 8) {
                 GridRow {
                     ForEach(Array(table.header.enumerated()), id: \.offset) { column, cell in
-                        PreviewText(
-                            cell, theme: theme,
-                            font: theme.bodyFont.addingTraits(bold: true),
-                            alignment: textAlignment(of: column)
-                        )
-                        .frame(maxWidth: .infinity)
+                        PreviewText(cell, theme: theme, font: theme.bodyFont.addingTraits(bold: true))
+                            .frame(maxWidth: .infinity, alignment: alignment(of: column))
                     }
                 }
                 Divider().overlay(Color(platform: theme.marker))
@@ -296,8 +305,8 @@ private struct PreviewTableView: View {
                 ForEach(Array(table.rows.enumerated()), id: \.offset) { _, row in
                     GridRow {
                         ForEach(Array(row.enumerated()), id: \.offset) { column, cell in
-                            PreviewText(cell, theme: theme, alignment: textAlignment(of: column))
-                                .frame(maxWidth: .infinity)
+                            PreviewText(cell, theme: theme)
+                                .frame(maxWidth: .infinity, alignment: alignment(of: column))
                         }
                     }
                 }
@@ -309,15 +318,6 @@ private struct PreviewTableView: View {
                 RoundedRectangle(cornerRadius: 6)
                     .stroke(Color(platform: theme.marker).opacity(0.4), lineWidth: 1)
             )
-        }
-    }
-
-    private func textAlignment(of column: Int) -> TextAlignment {
-        guard column < table.alignments.count else { return .leading }
-        switch table.alignments[column] {
-        case .center: return .center
-        case .trailing: return .trailing
-        case .leading: return .leading
         }
     }
 
