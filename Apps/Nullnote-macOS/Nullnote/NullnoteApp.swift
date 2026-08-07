@@ -21,6 +21,7 @@ struct NullnoteApp: App {
         }
         .commands {
             CommandGroup(after: .sidebar) {
+                ToggleOutlineButton()
                 TogglePreviewButton()
                 Divider()
             }
@@ -46,6 +47,19 @@ struct NullnoteApp: App {
         Settings {
             SettingsView(fontSize: $fontSize, appearance: $appearance)
         }
+    }
+}
+
+private struct ToggleOutlineButton: View {
+
+    @FocusedValue(\.outlineVisibility) private var visibility
+
+    var body: some View {
+        Button(visibility?.wrappedValue == true ? "目次を隠す" : "目次を表示") {
+            visibility?.wrappedValue.toggle()
+        }
+        .keyboardShortcut("s", modifiers: [.control, .command])
+        .disabled(visibility == nil)
     }
 }
 

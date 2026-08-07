@@ -25,6 +25,12 @@ struct LineIndex {
     /// 行数。
     var lineCount: Int { starts.count }
 
+    /// その行の先頭の UTF-16 オフセット。行番号は 1 始まり。
+    /// 範囲外の行番号は、いちばん近い行に丸める。
+    func utf16Offset(ofLine line: Int) -> Int {
+        starts[min(max(line - 1, 0), starts.count - 1)]
+    }
+
     /// UTF-16 オフセットが何行目か。1 始まり。
     func line(atUTF16Offset offset: Int) -> Int {
         guard offset > 0 else { return 1 }

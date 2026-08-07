@@ -11,6 +11,19 @@ import UIKit
 /// macOS では `NSTextView`、iOS では `UITextView` を包む。
 /// **プラットフォーム差分はこのファイルにだけ置くこと。** ここが漏れ始めると
 /// iOS 版が macOS 版の作り直しになる。
+/// 「この行へスクロールしてほしい」という依頼。
+///
+/// 値そのものではなく **依頼が新しく発行されたか** で判定したいので、
+/// 同じ行を続けて指しても別の値になるよう `id` を持つ。
+public struct EditorScrollRequest: Equatable, Sendable {
+    public let line: Int
+    private let id = UUID()
+
+    public init(line: Int) {
+        self.line = line
+    }
+}
+
 @MainActor
 public struct MarkdownEditorView {
 
@@ -18,15 +31,19 @@ public struct MarkdownEditorView {
     var theme: MarkdownTheme
     /// 画面の一番上に見えている行。1 始まり。プレビューとの同期に使う。
     var topVisibleLine: Binding<Int>?
+    /// 目次などから「ここへ移動して」と言われたときの依頼。
+    var scrollRequest: EditorScrollRequest?
 
     public init(
         text: Binding<String>,
         theme: MarkdownTheme,
-        topVisibleLine: Binding<Int>? = nil
+        topVisibleLine: Binding<Int>? = nil,
+        scrollRequest: EditorScrollRequest? = nil
     ) {
         self._text = text
         self.theme = theme
         self.topVisibleLine = topVisibleLine
+        self.scrollRequest = scrollRequest
     }
 
     public func makeCoordinator() -> Coordinator {
@@ -52,6 +69,8 @@ public struct MarkdownEditorView {
         var appliedText: String
         /// スクロール位置を読むために保持する。所有はビュー階層側。
         weak var textView: PlatformTextView?
+        /// 最後に処理したスクロール依頼。同じものを二度実行しないため。
+        var appliedScrollRequest: EditorScrollRequest?
 
         init(text: Binding<String>, theme: MarkdownTheme, topVisibleLine: Binding<Int>?) {
             self.text = text
@@ -68,6 +87,30 @@ public struct MarkdownEditorView {
             appliedText = source
             lineIndex = LineIndex(source)
             highlighter.apply(to: storage, text: source)
+        }
+
+        /// その行が画面の上端に来るようスクロールする。
+        func scroll(to line: Int) {
+            let offset = lineIndex.utf16Offset(ofLine: line)
+            #if canImport(AppKit)
+            guard let textView,
+                  let layoutManager = textView.layoutManager,
+                  let container = textView.textContainer,
+                  let scrollView = textView.enclosingScrollView
+            else { return }
+
+            let glyphRange = layoutManager.glyphRange(
+                forCharacterRange: NSRange(location: offset, length: 0), actualCharacterRange: nil
+            )
+            let rect = layoutManager.boundingRect(forGlyphRange: glyphRange, in: container)
+            // 見出しの行が上端に来るようにする。
+            let target = max(0, rect.minY)
+            scrollView.contentView.scroll(to: NSPoint(x: 0, y: target))
+            scrollView.reflectScrolledClipView(scrollView.contentView)
+            #elseif canImport(UIKit)
+            guard let textView else { return }
+            textView.scrollRangeToVisible(NSRange(location: offset, length: 0))
+            #endif
         }
 
         /// 表示範囲の先頭にある文字位置から行番号を求め、変わっていれば報告する。
@@ -153,6 +196,10 @@ extension MarkdownEditorView: NSViewRepresentable {
         }
         if textChanged || themeChanged {
             coordinator.highlight(textView.textStorage, source: text)
+        }
+        if let request = scrollRequest, request != coordinator.appliedScrollRequest {
+            coordinator.appliedScrollRequest = request
+            coordinator.scroll(to: request.line)
         }
     }
 
@@ -251,6 +298,10 @@ extension MarkdownEditorView: UIViewRepresentable {
         }
         if textChanged || themeChanged {
             coordinator.highlight(textView.textStorage, source: text)
+        }
+        if let request = scrollRequest, request != coordinator.appliedScrollRequest {
+            coordinator.appliedScrollRequest = request
+            coordinator.scroll(to: request.line)
         }
     }
 
