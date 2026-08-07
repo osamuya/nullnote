@@ -27,7 +27,11 @@ public struct OutlineView: View {
             if items.isEmpty {
                 emptyState
             } else {
-                List(selection: $selection) {
+                // **`List(selection:)` は使わない。**
+                // 選ばれた行が、窓が前面のときだけ OS のアクセント色で塗られる。
+                // 目次は「今どこを見ているか」を示すだけなので、
+                // 前面かどうかで色が変わらない、落ち着いた灰色で通す。
+                List {
                     ForEach(items) { node(for: $0).erased }
                 }
                 .listStyle(.sidebar)
@@ -65,14 +69,32 @@ public struct OutlineView: View {
         )
     }
 
+    /// 行は `Button` にする。
+    ///
+    /// `onTapGesture` より確実で、キーボードや読み上げからも押せる。
+    /// `List(selection:)` を使わなくなったぶん、押したことはここで受ける。
     private func row(for item: OutlineItem) -> some View {
-        Text(item.title)
-            .font(.system(size: theme.fontSize * 0.92, weight: item.level <= 2 ? .medium : .regular))
-            .foregroundStyle(Color(platform: item.level <= 2 ? theme.heading : theme.text))
-            .lineLimit(1)
-            .truncationMode(.tail)
-            .help(item.title)
-            .tag(item.id)
+        Button {
+            selection = item.id
+        } label: {
+            Text(item.title)
+                .font(.system(size: theme.fontSize * 0.92, weight: item.level <= 2 ? .medium : .regular))
+                .foregroundStyle(Color(platform: item.level <= 2 ? theme.heading : theme.text))
+                .lineLimit(1)
+                .truncationMode(.tail)
+                .padding(.horizontal, 6)
+                .padding(.vertical, 4)
+                // 文字の無いところを押しても選べるようにする。
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .contentShape(Rectangle())
+                .background(
+                    RoundedRectangle(cornerRadius: 5)
+                        .fill(Color(platform: theme.outlineSelection))
+                        .opacity(selection == item.id ? 1 : 0)
+                )
+        }
+        .buttonStyle(.plain)
+        .help(item.title)
     }
 
     private var emptyState: some View {

@@ -88,6 +88,18 @@ public struct MarkdownTheme {
         self.accent = accent
     }
 
+    /// 取り消した文字。
+    ///
+    /// 線を引くだけでなく、文字自体を本文より沈ませる。
+    /// 「もう読まなくてよい」ことが、ぱっと見で分かるようにするため。
+    public var struckText: PlatformColor { quote }
+
+    /// 目次で今いる項目の背景。
+    ///
+    /// OS のアクセント色は使わない。窓が前面かどうかで色が変わってしまい、
+    /// 「今どこを見ているか」を示すだけの用途には強すぎる。
+    public var outlineSelection: PlatformColor { marker.withAlphaComponent(0.32) }
+
     /// 表の見出し行の背景。本文の背景から一段ずらして、見出しだと分かるようにする。
     ///
     /// いまはコードブロックの背景と同じ値。役割が違うので名前は分けてある

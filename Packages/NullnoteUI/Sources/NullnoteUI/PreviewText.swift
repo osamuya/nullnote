@@ -98,9 +98,12 @@ enum PreviewAttributes {
                 bold: intent.contains(.stronglyEmphasized),
                 italic: intent.contains(.emphasized)
             )
+            // 取り消した文字は、線を太くしたうえで文字自体も沈ませる。
+            // 細い線を1本引くだけだと、ぱっと見でふつうの文字と区別が付かない。
             if intent.contains(.strikethrough) {
-                attributes[.strikethroughStyle] = NSUnderlineStyle.single.rawValue
-                attributes[.strikethroughColor] = theme.marker
+                color = theme.struckText
+                attributes[.strikethroughStyle] = NSUnderlineStyle.thick.rawValue
+                attributes[.strikethroughColor] = theme.struckText
             }
 
             // リンクは色・下線・カーソルを NSTextView に任せる（linkTextAttributes）。

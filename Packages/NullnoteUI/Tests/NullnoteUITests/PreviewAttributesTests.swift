@@ -84,10 +84,32 @@ struct PreviewAttributesTests {
         #expect(font?.fontDescriptor.symbolicTraits.contains(.italic) == true)
     }
 
-    @Test("取り消し線が引かれる")
+    /// 細い線を1本引くだけだと、ぱっと見でふつうの文字と区別が付かない。
+    /// 線を太くしたうえで、文字自体も沈ませる。
+    @Test("取り消し線は太く、文字も沈む")
     func strikethrough() {
-        let attributes = attributes(of: "gone", in: "~~gone~~ ふつう")
-        #expect(attributes[.strikethroughStyle] as? Int == NSUnderlineStyle.single.rawValue)
+        let struck = attributes(of: "gone", in: "~~gone~~ ふつう")
+        #expect(struck[.strikethroughStyle] as? Int == NSUnderlineStyle.thick.rawValue)
+        #expect(struck[.foregroundColor] as? NSColor == theme.struckText)
+        #expect(struck[.strikethroughColor] as? NSColor == theme.struckText)
+
+        // 同じ段落のふつうの文字は、本文の色のまま。
+        let plain = attributes(of: "ふつう", in: "~~gone~~ ふつう")
+        #expect(plain[.strikethroughStyle] == nil)
+        #expect(plain[.foregroundColor] as? NSColor == theme.text)
+    }
+
+    @Test("取り消した文字は本文より沈んでいる")
+    func struckTextIsMuted() throws {
+        let target = try #require(NSAppearance(named: .darkAqua))
+        var struckBrightness = 0.0
+        var textBrightness = 0.0
+        target.performAsCurrentDrawingAppearance {
+            struckBrightness = Double(theme.struckText.usingColorSpace(.deviceRGB)?.brightnessComponent ?? 0)
+            textBrightness = Double(theme.text.usingColorSpace(.deviceRGB)?.brightnessComponent ?? 0)
+        }
+        // ダークでは本文が明るいので、沈む＝暗くなる。
+        #expect(struckBrightness < textBrightness, "取り消した文字が本文と同じ強さで出ている")
     }
 
     @Test("インラインコードは等幅・コード色・背景つきになる")
