@@ -212,6 +212,57 @@ Nullnote                 ← 4.4 MB。これだけ
 
 ---
 
+## 6.5. ビルドしたアプリはどこにできるか
+
+同じアプリの `.app` が Mac の中に複数できる。**これは正常で、問題ではない。**
+それぞれ役割が違うだけ。
+
+| パス | 作られる操作 | 用途 |
+|---|---|---|
+| `~/Library/Developer/Xcode/DerivedData/<プロジェクト>-<ハッシュ>/Build/Products/Debug/<アプリ>.app` | Xcode の ⌘R、`xcodebuild -configuration Debug` | 開発中の動作確認 |
+| `…/Build/Products/Release/<アプリ>.app` | `xcodebuild -configuration Release` | 配布用の設定でのビルド |
+| `/Applications/<アプリ>.app` | 手でコピー、`install.sh` | 日常的に使う |
+| `~/Library/Developer/Xcode/Archives/<日付>/<名前>.xcarchive/Products/Applications/<アプリ>.app` | Product → Archive | App Store 申請用 |
+
+**同時にはできない。** それぞれ別の操作で作られ、同じ場所は上書きされる。
+Debug ビルドを100回しても `Debug/<アプリ>.app` は1個のまま。
+
+`/Applications` のものだけは Xcode が作らない。誰かがコピーして初めて存在する。
+
+### Bundle ID が同じことの意味
+
+これらはすべて同じ `CFBundleIdentifier` を持つ。macOS はこれでアプリを識別するので、
+**設定とサンドボックスのコンテナを共有する**。
+
+```
+~/Library/Containers/<Bundle ID>/
+```
+
+開発ビルドで設定を変えると、`/Applications` のアプリにも反映される。
+**開発中はむしろ好都合**（実際の設定のまま確認できる）。
+分けたければ Debug の `PRODUCT_BUNDLE_IDENTIFIER` に `.debug` を付ける。
+急いでやる必要はない。
+
+### 唯一気をつけること
+
+**ビルドし直したら、アプリを再起動する。**
+
+複数の場所にビルドがあること自体は無害だが、
+「直したはずなのに変わらない」の原因はほぼこれ。
+起動しっぱなしのプロセスは、いつビルドされたコードを動かしているか分からない。
+
+```sh
+# いま動いているのは、いつビルドされたものか
+ps -o lstart= -p $(pgrep -f "<アプリ>.app/Contents/MacOS/<アプリ>" | head -1)
+stat -f "%Sm" <アプリのパス>/Contents/MacOS/<アプリ>
+```
+
+プロセスの開始時刻がビルド時刻より**前**なら、古いコードを見ている。
+
+> **調べるときの落とし穴**: 起動テストを連続で回すと、
+> 前のプロセスが終了しきる前に `pgrep` してしまい、古い方を「いま動いている」と誤読する。
+> 必ず `pgrep` で 0 件になるのを確認してから次を測ること。
+
 ## 7. 署名とサンドボックス
 
 ### 署名

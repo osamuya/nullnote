@@ -127,6 +127,11 @@ cd Apps/Nullnote-macOS && xcodebuild -scheme Nullnote build
 
 ## 次の一歩
 
+**リリースまでの段取りは [docs/03-release-plan.md](docs/03-release-plan.md) にまとめてある。**
+第1段階＝ローカル常用、第2段階＝App Store 公開。
+
+機能面の候補:
+
 1. コードブロックのシンタックスハイライト（言語名は既に取れている）
 2. Markdown 記法の入力補助（⌘B で `**` を挿入する等）
 3. 差分ハイライト（長文で引っかかるようになったら。`MarkdownLineTokens.stateAfter` の収束で打ち切る）
