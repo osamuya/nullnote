@@ -64,8 +64,10 @@ public struct MarkdownEditorView {
         var highlighter: MarkdownHighlighter
         /// 最後に適用したテーマ。設定が変わったときだけ貼り直す。
         var appliedFontSize: CGFloat
+        #if canImport(AppKit)
         /// 解決したあとの外観で比べる。`.system` のままでも OS 側が変われば貼り直す。
         var appliedAppearanceName: NSAppearance.Name?
+        #endif
         /// 本文が変わったときだけ作り直す行の索引。
         private var lineIndex: LineIndex
         /// 最後に報告した行。同じ値を書き戻して再描画を誘発しないため。
@@ -80,8 +82,8 @@ public struct MarkdownEditorView {
         /// 最後に処理したスクロール依頼。同じものを二度実行しないため。
         var appliedScrollRequest: EditorScrollRequest?
         #if canImport(AppKit)
-        /// 行番号の定規。表示していないときは作らない。
-        var ruler: LineNumberRulerView?
+        /// 行番号を描いているテキストビュー。表示していないときは nil のまま。
+        weak var gutterTextView: FocusReportingTextView?
         #endif
 
         init(text: Binding<String>, theme: MarkdownTheme, topVisibleLine: Binding<Int>?) {
@@ -102,8 +104,7 @@ public struct MarkdownEditorView {
             lineIndex = LineIndex(source)
             highlighter.apply(to: storage, text: source)
             #if canImport(AppKit)
-            ruler?.lineIndex = lineIndex
-            ruler?.updateThickness()
+            gutterTextView?.lineNumbers?.lineIndex = lineIndex
             #endif
         }
 
@@ -146,11 +147,79 @@ public struct MarkdownEditorView {
 
 #if canImport(AppKit)
 
+/// 入力の焦点が出入りしたことを知らせるテキストビュー。
+///
+/// AppKit には「ファーストレスポンダが変わった」を伝える通知が無い。
+/// 行番号の強調を出し入れするために、ここで拾って伝える。
+///
+/// `window?.firstResponder` を見に行かないのは、`becomeFirstResponder()` の
+/// 時点ではウインドウ側がまだ更新されておらず、古い答えが返るため。
+final class FocusReportingTextView: NSTextView {
+
+    private(set) var isFocused = false
+    /// 焦点が変わったときに呼ぶ。行番号を描き直させる。
+    var onFocusChange: (() -> Void)?
+
+    /// 左余白に描く行番号。出さないときは `nil`。
+    var lineNumbers: LineNumberGutter? {
+        didSet { needsDisplay = true }
+    }
+
+    /// 本文より先に呼ばれる。ここで左余白へ行番号を描く。
+    override func drawBackground(in rect: NSRect) {
+        super.drawBackground(in: rect)
+        guard let lineNumbers else { return }
+        let active = isFocused ? lineNumbers.lineIndex.line(atUTF16Offset: selectedRange().location) : nil
+        lineNumbers.draw(in: rect, of: self, activeLine: active)
+    }
+
+    /// 見えているところだけ描き直す。カーソルが動くたびに全体を捨てない。
+    func redrawLineNumbers() {
+        guard lineNumbers != nil else { return }
+        setNeedsDisplay(visibleRect)
+    }
+
+    override func becomeFirstResponder() -> Bool {
+        let accepted = super.becomeFirstResponder()
+        if accepted, !isFocused {
+            isFocused = true
+            onFocusChange?()
+        }
+        return accepted
+    }
+
+    override func resignFirstResponder() -> Bool {
+        let resigned = super.resignFirstResponder()
+        if resigned, isFocused {
+            isFocused = false
+            onFocusChange?()
+        }
+        return resigned
+    }
+}
+
 extension MarkdownEditorView: NSViewRepresentable {
 
     public func makeNSView(context: Context) -> NSScrollView {
         let scrollView = NSTextView.scrollableTextView()
-        guard let textView = scrollView.documentView as? NSTextView else { return scrollView }
+        guard let base = scrollView.documentView as? NSTextView,
+              let container = base.textContainer
+        else { return scrollView }
+
+        // 焦点の出入りを知るためにテキストビューだけ差し替える。
+        // `scrollableTextView()` が組み立てた TextKit 一式（テキストストレージ、
+        // レイアウトマネージャ、テキストコンテナ）はそのまま引き継ぐので、
+        // 折り返しやスクロールの設定はここで作り直さなくてよい。
+        let textView = FocusReportingTextView(frame: base.frame, textContainer: container)
+        textView.autoresizingMask = base.autoresizingMask
+        textView.minSize = base.minSize
+        textView.maxSize = base.maxSize
+        textView.isVerticallyResizable = base.isVerticallyResizable
+        textView.isHorizontallyResizable = base.isHorizontallyResizable
+        scrollView.documentView = textView
+        textView.onFocusChange = { [weak coordinator = context.coordinator] in
+            coordinator?.gutterTextView?.redrawLineNumbers()
+        }
 
         textView.delegate = context.coordinator
         textView.allowsUndo = true
@@ -161,7 +230,7 @@ extension MarkdownEditorView: NSViewRepresentable {
         textView.isAutomaticDashSubstitutionEnabled = false
         textView.isAutomaticTextReplacementEnabled = false
         textView.isAutomaticSpellingCorrectionEnabled = false
-        textView.textContainerInset = NSSize(width: 12, height: 16)
+        textView.textContainerInset = NSSize(width: LineNumberGutter.textPadding, height: 16)
 
         scrollView.hasVerticalScroller = true
         scrollView.drawsBackground = true
@@ -185,27 +254,34 @@ extension MarkdownEditorView: NSViewRepresentable {
             object: scrollView.contentView
         )
 
-        updateRuler(on: scrollView, textView: textView, coordinator: context.coordinator)
+        updateGutter(on: scrollView, textView: textView, coordinator: context.coordinator)
         return scrollView
     }
 
-    /// 行番号の定規を、設定に合わせて付け外しする。
-    private func updateRuler(on scrollView: NSScrollView, textView: NSTextView, coordinator: Coordinator) {
+    /// 行番号を、設定に合わせて付け外しする。
+    ///
+    /// 本文の場所は `textContainerInset` で空ける。左右に等しく効くので
+    /// 右の余白も同じだけ広がるが、テキストコンテナの幅の決め方には触らないため
+    /// 折り返しの追従が壊れない。
+    private func updateGutter(on scrollView: NSScrollView, textView: NSTextView, coordinator: Coordinator) {
+        guard let textView = textView as? FocusReportingTextView else { return }
+
         guard showsLineNumbers else {
-            scrollView.rulersVisible = false
-            coordinator.ruler = nil
+            textView.lineNumbers = nil
+            coordinator.gutterTextView = nil
+            textView.textContainerInset.width = LineNumberGutter.textPadding
             return
         }
-        if coordinator.ruler == nil {
-            let ruler = LineNumberRulerView(scrollView: scrollView, textView: textView, theme: theme)
-            ruler.lineIndex = LineIndex(text)
-            coordinator.ruler = ruler
-            scrollView.verticalRulerView = ruler
+
+        var gutter = textView.lineNumbers ?? LineNumberGutter(theme: theme, lineIndex: LineIndex(text))
+        gutter.theme = theme
+        textView.lineNumbers = gutter
+        coordinator.gutterTextView = textView
+
+        let wanted = gutter.textContainerInsetWidth
+        if abs(textView.textContainerInset.width - wanted) > 0.5 {
+            textView.textContainerInset.width = wanted
         }
-        coordinator.ruler?.theme = theme
-        coordinator.ruler?.updateThickness()
-        scrollView.hasVerticalRuler = true
-        scrollView.rulersVisible = true
     }
 
     public func updateNSView(_ scrollView: NSScrollView, context: Context) {
@@ -240,7 +316,7 @@ extension MarkdownEditorView: NSViewRepresentable {
             coordinator.appliedScrollRequest = request
             coordinator.scroll(to: request.line)
         }
-        updateRuler(on: scrollView, textView: textView, coordinator: coordinator)
+        updateGutter(on: scrollView, textView: textView, coordinator: coordinator)
     }
 
     /// 外観はスクロールビューに設定する。中のテキストビューは親から受け継ぐ。
@@ -281,13 +357,18 @@ extension MarkdownEditorView.Coordinator: NSTextViewDelegate {
         let source = textView.string
         text.wrappedValue = source
         highlight(textView.textStorage, source: source)
-        ruler?.needsDisplay = true
+        gutterTextView?.redrawLineNumbers()
     }
 
     @objc func editorDidScroll(_ notification: Notification) {
         guard let textView else { return }
         reportTopLine(utf16Offset: textView.topVisibleCharacterIndex)
-        ruler?.needsDisplay = true
+        gutterTextView?.redrawLineNumbers()
+    }
+
+    /// カーソルが動いたら、強調する行番号を描き直す。
+    public func textViewDidChangeSelection(_ notification: Notification) {
+        gutterTextView?.redrawLineNumbers()
     }
 }
 

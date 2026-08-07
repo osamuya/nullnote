@@ -12,6 +12,9 @@ enum AppSettings {
     /// あとでユーザーが自分で変えれば、そちらが優先される。
     static func registerDefaults() {
         UserDefaults.standard.register(defaults: [
+            // 行番号は最初から出す。要らない人は設定画面で消せる。
+            lineNumbersKey: true,
+
             // 保存パネルは既定で折りたたまれ、保存先が「場所」ポップアップだけになる。
             // 書類アプリでは保存先を選びたい場面が多いので、最初から
             // ファイルブラウザが開いた状態にする。

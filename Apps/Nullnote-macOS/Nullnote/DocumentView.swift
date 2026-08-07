@@ -30,19 +30,23 @@ struct DocumentView: View {
     }
 
     var body: some View {
-        Group {
-            if showsOutline {
-                HSplitView {
-                    OutlineView(source: document.text, theme: theme) { line in
-                        scrollRequest = EditorScrollRequest(line: line)
-                    }
-                    .frame(minWidth: 160, idealWidth: outlineWidth, maxWidth: 400)
+        VStack(spacing: 0) {
+            Group {
+                if showsOutline {
+                    HSplitView {
+                        OutlineView(source: document.text, theme: theme) { line in
+                            scrollRequest = EditorScrollRequest(line: line)
+                        }
+                        .frame(minWidth: 160, idealWidth: outlineWidth, maxWidth: 400)
 
+                        mainArea
+                    }
+                } else {
                     mainArea
                 }
-            } else {
-                mainArea
             }
+            // 目次もプレビューも含めた窓の一番下に置く。
+            MarkdownStatusBar(source: document.text, theme: theme)
         }
         .frame(minWidth: 480, minHeight: 320)
         // ウインドウ全体（ツールバーやスプリッタも含む）を設定に合わせる。

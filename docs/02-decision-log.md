@@ -235,6 +235,82 @@ App Store 配布の必須要件。後から有効にすると、それまで通�
 
 ---
 
+## D-17. フッターの行数は、行番号と同じ数え方にする
+
+**やったこと**
+窓の下端に細い帯を置き、右寄せで「テーマ・文字サイズ・行数・大きさ」を出す。
+
+**文字コードは出さない**
+読み書きとも UTF-8 に固定していて選べない。選べないものを表示しても判断の材料にならない。
+（将来 Shift_JIS の読み込みに対応するなら、そのとき足す）
+
+**見つかった食い違い**
+作った直後、**行番号は 14 までなのにフッターは 15 行**と出た。
+
+原因は末尾の改行の後ろの空行。`layoutManager.enumerateLineFragments` は
+この行を渡してこない（グリフが1つも無いため）。一方 `LineIndex` は1行として数える。
+
+カーソルは置けるのだから行として存在する。行番号側を直した。
+
+```swift
+// 末尾が改行のとき、その後ろの空行は enumerateLineFragments に出てこない
+if layoutManager.extraLineFragmentTextContainer != nil {
+    drawNumber(lineIndex.lineCount, in: layoutManager.extraLineFragmentUsedRect)
+}
+```
+
+数え方が2か所に分かれてしまうため、`DocumentSize.lineCount` と `LineIndex.lineCount` が
+常に一致することをテストで縛った（`StatusBarTests`）。
+
+**大きさは UTF-8 のバイト数**
+文字数ではなく、保存したときのファイルの大きさと一致させる。
+日本語は1文字3バイトなので、文字数で数えていると気づかないままずれる。
+
+**教訓**
+同じものを2か所で数え始めたら、**その2つが一致することをテストにする。**
+今回は目で見て気づけたが、長い文書では気づけなかった。
+
+---
+
+## D-16. 行番号はテキストビューの左余白に描く
+
+**やったこと**
+編集画面の左端に行番号を出す。設定画面のスイッチで消せる。プレビューには出さない。
+
+**選択肢**
+
+| 案 | 評価 |
+|---|---|
+| 本文の左に `NSTextView` をもう1枚並べ、スクロールを同期させる | 却下。スクロール位置・行の高さ・折り返しを自分で合わせ続けることになる |
+| `NSScrollView` の定規（`NSRulerView`）として付ける | 最初はこれを採用したが、**あとで取りやめた**。定規があると AppKit がタイトルバーに縦線を引く（B-11） |
+| **テキストビューの左余白を広げ、`drawBackground(in:)` で描く** | **採用。番号が本文と同じ座標系に乗るので、位置合わせもスクロール追従も AppKit 任せ** |
+
+番号は本文と同じ座標系にあるので、行の位置は `usedRect` に
+`textContainerOrigin` を足すだけで求まる。スクロールしてもテキストビューごと
+動くため、追従のためのコードが要らない。
+
+**折り返した行に番号を振らない**
+`layoutManager.enumerateLineFragments` は折り返しでできた断片も1つずつ渡してくる。
+そのまま番号を振ると、折り返すたびに番号が増えてしまう。
+断片の先頭が論理行の先頭と一致するときだけ描くことで避けた。
+判定には目次と同じ `LineIndex`（行頭位置の索引）をそのまま使えた。
+
+```swift
+let characterIndex = layoutManager.characterIndexForGlyph(at: fragmentGlyphRange.location)
+let line = lineIndex.line(atUTF16Offset: characterIndex)
+guard lineIndex.utf16Offset(ofLine: line) == characterIndex else { return }  // 折り返しの続き
+```
+
+**幅は桁数で決める**
+1000 行を超えたときに数字が切れないよう、`lineCount` の桁数から帯の幅を計算し、
+`textContainerInset.width` に反映する。
+
+**iOS では作らない**
+`UITextView` の `drawBackground(in:)` に相当する差し込み口が無い。
+ファイルごと `#if canImport(AppKit)` で囲った。iOS で行番号を出すときは別の作りになる。
+
+---
+
 ## D-15. 目次はパーサに手を入れずに作れた
 
 **やったこと**
@@ -534,6 +610,169 @@ NSTextView.characterIndexForInsertion(at:)     PreviewBlock.sourceLine
 `updateNSView` で `textView.string != text` と比較していた。
 `NSTextView.string` は呼ぶたびに文字列を作り直すため、スクロールのたびに
 本文全体をコピーすることになっていた。Coordinator 側に控えを持って比較するよう変更。
+
+---
+
+### B-11. 定規を付けると、AppKit がタイトルバーに縦線を引く
+
+**症状**
+行番号の区切り線が、閉じるボタンの脇を通ってタイトルバーの中まで伸びる。
+ライトでもダークでも同じ。
+
+**まず自分を疑ったが、違った**
+`drawHashMarksAndLabels(in:)` は自分の `bounds` に閉じ込めてある（B-9）。
+計測でも定規はタイトルバーの下に収まっていた。
+
+```
+ruler→window       = (0, 0, 30, 791)
+contentLayoutRect  = (0, 0, 1061, 791)   ← タイトルバーを除いた領域と一致
+window.frame.height = 843                ← 上の 52pt がタイトルバー
+```
+
+**切り分け**
+アプリ自身に `NSThemeFrame` を `cacheDisplay` させて PNG に焼き、画素を数えた。
+（この環境では画面収録の権限が無く、スクリーンショットが撮れないため）
+
+| 試したこと | タイトルバーの縦線 |
+|---|---|
+| 区切り線をマゼンタにする | 色が変わらない → **自分の線ではない** |
+| 定規の幅を 30pt 広げる | 線も一緒に移動（x=29pt → 59pt）→ **定規に追従している** |
+| 行番号を消す（定規を外す） | **消える** |
+| `window.titlebarSeparatorStyle = .none` | 消えない |
+| ツールバーの項目一覧を確認 | 分離子（tracking separator）は入っていない |
+
+`NSScrollView` に定規があると、AppKit が定規の右端をなぞる線を
+タイトルバー（`_NSTitlebarDecorationView` の領域）まで引く。公開の設定では消せなかった。
+
+**対処: `NSRulerView` をやめる**
+
+| 案 | 結果 |
+|---|---|
+| スクロールビューに自前のビューを足し、`contentInsets` で本文を右へずらす | **失敗。** SwiftUI がまだ大きさを決めていない時点で `contentInsets` を入れると、テキストコンテナの幅が 7pt まで潰れて本文が消えた（D-14 と同じ罠） |
+| **テキストビューの左右の余白（`textContainerInset`）を広げ、`drawBackground(in:)` で左側へ描く** | **採用** |
+
+番号が本文と同じ座標系に乗るので、スクロールへの追従も行の位置合わせも
+AppKit 任せで済む。`usedRect` に `textContainerOrigin` を足すだけになった。
+
+**代償**: `textContainerInset.width` は左右に等しく効くので、右の余白も
+同じだけ広がる（12pt → 42pt）。テキストコンテナの幅の決め方に触れずに済むので、
+折り返しの追従を壊さないことを優先した。
+
+**教訓**
+「線が出ている」と「その線を自分が描いた」は別のこと。
+**色を変えて、動かして、消してみる。** 三つとも一致して初めて犯人が確定する。
+最初の計測（`convert(bounds, to: nil)`）は正しかったのに、
+症状と噛み合わないので疑ってしまった。計測が正しいときは、前提の方が間違っている。
+
+**細かい落とし穴**: `NSView.enclosingScrollView` は、スクロールビューの
+**直接の子では `nil` を返す**（クリップビューの中に居ることを前提にしている）。
+`superview` は `NSScrollView` なのに `nil`、という食い違いで一度止まった。
+
+---
+
+### B-10. 「システムのハイライト色」を文字色に使うと読めない
+
+**やろうとしたこと**
+カーソルのある行の番号を、OS のハイライトカラー設定の色で太字にする。
+
+**素直に実装すると失敗する**
+ハイライトカラーそのものは `NSColor.selectedTextBackgroundColor` だが、
+これは**選択範囲の背景**用に明度を上げてある色で、文字色には向かない。
+利用者の設定（黄色）で実測した値:
+
+| 色 | ライト | ダーク |
+|---|---|---|
+| `selectedTextBackgroundColor`（ハイライト色そのもの） | `#FFEEBE` | `#8B7A3F` |
+| `selectedContentBackgroundColor`（選択項目の背景色） | `#E1AC15` | `#D19E00` |
+| `controlAccentColor` | `#FFC726` | `#FFC600` |
+
+ライトの背景 `#F5F5F5` に対するコントラスト比は、
+`selectedTextBackgroundColor` が **1.43**、`selectedContentBackgroundColor` が **1.90**。
+前者は太字にしても背景に埋もれて読めなかった（画像で確認）。
+
+**採用**
+`selectedContentBackgroundColor` を文字色に使う。同じハイライト／アクセント設定から
+導かれる色なので、利用者が黄色以外に変えれば追従する点は変わらない。
+
+**「見分けが付くか」を明度で測ってはいけない**
+ふつうの行番号は灰色 `#A8AAB2`。琥珀色 `#E1AC15` との**コントラスト比は 1.12** しかない。
+明るさが近いだけで、実際は色相で明確に区別できる。
+回帰テストは彩度で見るようにした（灰色は彩度ほぼ 0、強調色は 0.9 前後）。
+
+**焦点の出入りを知る手段が AppKit に無い**
+ファーストレスポンダが変わったことを伝える通知は存在しない。
+`NSTextView` を継承して `becomeFirstResponder()` / `resignFirstResponder()` を
+拾う `FocusReportingTextView` を作った。
+
+`window?.firstResponder` を見に行かないのは、`becomeFirstResponder()` の時点では
+ウインドウ側がまだ更新されておらず、古い答えが返るため。自分で状態を持つ。
+
+テキストビューは `NSTextView.scrollableTextView()` が作ったものを差し替えているが、
+**TextKit 一式（テキストストレージ、レイアウトマネージャ、テキストコンテナ）は引き継ぐ**。
+自分で組み直すと折り返しやスクロールの設定を作り直すことになり、
+過去に何度も踏んだ落とし穴（D-14 のプレビュー）に戻る。
+
+**描き直しの合図**
+
+| きっかけ | 拾い方 |
+|---|---|
+| カーソルが動いた | `textViewDidChangeSelection(_:)` |
+| 焦点が出入りした | `FocusReportingTextView.onFocusChange` |
+| スクロールした | `boundsDidChangeNotification`（既存） |
+| 本文が変わった | `textDidChange(_:)`（既存） |
+
+---
+
+### B-9. 行番号を出すと本文が消える
+
+**症状**
+行番号は正しく出るのに、本文の領域が単色に塗りつぶされてテキストが見えなくなる。
+
+**切り分け**
+オフスクリーンに焼いた PNG の色数を数えて、どこまでが正常かを1段ずつ確かめた。
+
+| 状態 | 本文域の色数 |
+|---|---|
+| 定規なし | 822 |
+| 定規を付けるが、何も描かない | 822 |
+| 定規を付け、背景だけ塗る | **1** |
+| 定規を付け、全部描く | **1** |
+
+「付けるだけ」なら無事で「背景を塗ると」消える。犯人は描画の1行目だと確定した。
+
+**原因**
+`drawHashMarksAndLabels(in rect:)` に渡る `rect` を、定規の描画範囲だと思い込んでいた。
+実際の値を出すと **スクロールビュー全体の大きさ** だった。
+
+```
+bounds = (0, 0,  31, 560)   ← 定規の幅
+rect   = (0, 0, 520, 560)   ← 渡ってきた矩形。本文の上まで含む
+```
+
+`rect.fill()` が本文の上まで塗りつぶしていた。
+
+**対処**
+塗る範囲を必ず自分の `bounds` に閉じ込める。
+
+```swift
+let area = bounds.intersection(rect)
+guard !area.isEmpty else { return }
+theme.background.setFill()
+area.fill()
+```
+
+**教訓**
+描画メソッドに渡る矩形は「描いてよい範囲」ではなく「描き直しが要る範囲」であり、
+自分の領域より広いことがある。**塗りつぶす前に自分の `bounds` と交差させる。**
+
+回帰テストは `NSBitmapImageRep` に描かせて、定規の外の画素が
+番兵の色のまま残っているかを見る形にした（`LineNumberGutterTests`）。
+`area.fill()` を `rect.fill()` に戻すと落ちることも確かめてある。
+
+**ついでに直したこと**
+`Coordinator.appliedAppearanceName`（B-8 で足したもの）が `#if canImport(AppKit)` の
+外に出ていて、iOS 向けビルドが通らなくなっていた。iOS ビルドは
+`xcodebuild -destination 'generic/platform=iOS'` を回さないと気づけない。
 
 ---
 

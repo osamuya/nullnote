@@ -12,6 +12,15 @@ public enum MarkdownAppearance: String, CaseIterable, Identifiable, Sendable {
     case dark
 
     public var id: String { rawValue }
+
+    /// 画面に出す名前。設定画面とフッターで同じ言葉を使う。
+    public var label: String {
+        switch self {
+        case .system: "システム"
+        case .light: "ライト"
+        case .dark: "ダーク"
+        }
+    }
 }
 
 /// エディタとプレビューの配色・字送り。
@@ -77,6 +86,25 @@ public struct MarkdownTheme {
         self.link = link
         self.quote = quote
         self.accent = accent
+    }
+
+    /// 今カーソルがある行の番号に使う色。
+    ///
+    /// 配色表に持たず、OS のハイライト／アクセント設定に従う。
+    /// ここだけ利用者の設定色が出るのは意図的で、
+    /// 「今どこにいるか」は OS の選択表示と揃えた方が迷わない。
+    ///
+    /// **`selectedTextBackgroundColor`（ハイライト色そのもの）は使えない。**
+    /// あれは選択範囲の「背景」用に明度を上げた色で、文字色に使うと
+    /// ライトの背景（#F5F5F5）とのコントラスト比が 1.4 程度しか出ず読めない。
+    /// 同じ設定から導かれる `selectedContentBackgroundColor` は
+    /// 選択項目の背景色で、文字として置いても読める濃さがある。
+    public var activeLineNumber: PlatformColor {
+        #if canImport(AppKit)
+        .selectedContentBackgroundColor
+        #else
+        .tintColor
+        #endif
     }
 
     public static func standard(

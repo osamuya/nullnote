@@ -12,10 +12,17 @@ macOS 版と iOS 版が共有する SwiftUI レイヤ。トークンや AST を�
 | `Platform.swift` | AppKit と UIKit の差を吸収する**唯一の場所** |
 | `MarkdownTheme.swift` | 配色・文字サイズ・外観の指定 |
 | `MarkdownHighlighter.swift` | `MarkdownCore` のトークン → 文字属性 |
-| `MarkdownEditorView.swift` | `NSTextView` / `UITextView` の Representable |
+| `MarkdownEditorView.swift` | `NSTextView` / `UITextView` の Representable。焦点の出入りを知らせる `FocusReportingTextView` もここ |
+| `CodeSyntax.swift` | コードブロックの色分け（キーワード／文字列／コメント／数値） |
+| `LineNumberGutter.swift` | 編集画面の行番号。テキストビューの左余白に描く。macOS のみ |
 | `PreviewModel.swift` | swift-markdown の AST → プレビュー用の中間表現 |
 | `MarkdownPreview.swift` | 中間表現 → SwiftUI ビュー |
-| `LineIndex.swift` | 文字位置 ⇄ 行番号。スクロール同期で引く |
+| `PreviewText.swift` | プレビュー1ブロック分の描画。リンクのホバーもここ |
+| `DocumentOutline.swift` | 見出しを拾って目次の木を作る |
+| `OutlineView.swift` | 目次の表示と開閉 |
+| `SplitPane.swift` | 編集とプレビューを左右に並べる。比率を保つ |
+| `StatusBar.swift` | 窓の下端の帯。テーマ・文字サイズ・行数・大きさ |
+| `LineIndex.swift` | 文字位置 ⇄ 行番号。スクロール同期と行番号で引く |
 
 ## 配色
 
@@ -56,9 +63,13 @@ MarkdownTheme.standard(fontSize: 14, appearance: .dark)
 
 | 指定 | AppKit | UIKit | SwiftUI |
 |---|---|---|---|
-| `.system` | `appearance = nil`（親から受け継ぐ） | `.unspecified` | `preferredColorScheme(nil)` |
+| `.system` | `NSApp.effectiveAppearance`（解決してから渡す） | `.unspecified` | `preferredColorScheme(nil)` |
 | `.light` | `NSAppearance(named: .aqua)` | `.light` | `.light` |
 | `.dark` | `NSAppearance(named: .darkAqua)` | `.dark` | `.dark` |
+
+AppKit だけは `.system` でも **nil（＝親から継承）を渡してはいけない**。
+明示指定から継承へ戻したとき、実効外観が下位のビューへ伝わらず、
+「ライト → システム」で編集画面がライトのまま残る（決定記録の B-8）。
 
 配色を2組持って切り替える方法もあるが、片方だけ直して食い違う事故が起きやすい。
 動的な色に寄せておけば、色の定義は1か所で済み、システム追従もタダで付いてくる。
@@ -147,15 +158,32 @@ swift-markdown は GFM の `table` / `strikethrough` / `tasklist` は有効に�
 #else                  … UITextView / UIColor / UIFont
 ```
 
-この分岐は `Platform.swift` と `MarkdownEditorView.swift` の2ファイルにしかない。
+この分岐があるのは `Platform.swift` と `MarkdownEditorView.swift`、
+それに `MarkdownTheme.activeLineNumber`（システム色の名前が違う）だけ。
+`LineNumberGutter.swift` はファイルごと macOS 限定にしてある
+（`UITextView` に `drawBackground(in:)` の差し込み口が無く、iOS では別の作りになるため）。
+
 ここが増え始めたら、iOS 版が macOS 版の作り直しになる兆候。
+
+## 数え方をそろえる
+
+行数は2か所で数えている。**必ず同じ答えになること。**
+
+| どこ | 何を使うか |
+|---|---|
+| 行番号 | `LineIndex`（＋末尾が改行のときの空行を `extraLineFragmentRect` で補う） |
+| フッター | `DocumentSize.lineCount` |
+
+末尾が改行のとき、`enumerateLineFragments` はその後ろの空行を渡してこない。
+補わないと行番号だけ1つ少なくなる。両者の一致は `StatusBarTests` で縛ってある。
+
+大きさは **UTF-8 のバイト数**。文字数ではない（日本語は1文字3バイト）。
 
 ## 既知の制限
 
 - 差分ハイライトは未実装（上記のとおり、いまは全文を貼り直す）
 - 画像はプレビューでも描かない。代替テキストを表示するだけ
 - チェック済みのタスク項目の本文に取り消し線は引かない
-- コードブロックのシンタックスハイライトは無い（言語名を表示するだけ）
 - エディタのコードブロックの背景は行ごとに文字幅ぶんしか塗られない
 
 ## 検証

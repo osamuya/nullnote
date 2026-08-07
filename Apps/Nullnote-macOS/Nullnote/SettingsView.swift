@@ -45,13 +45,3 @@ struct SettingsView: View {
         .fixedSize(horizontal: false, vertical: true)
     }
 }
-
-extension MarkdownAppearance {
-    var label: String {
-        switch self {
-        case .system: "システム"
-        case .light: "ライト"
-        case .dark: "ダーク"
-        }
-    }
-}

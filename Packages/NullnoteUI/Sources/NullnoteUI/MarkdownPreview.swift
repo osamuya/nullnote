@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 /// Markdown を整形して表示する読み取り専用のビュー。
@@ -16,6 +17,7 @@ public struct MarkdownPreview: View {
     private let anchorLine: Int?
 
     @State private var blocks: [PreviewBlock] = []
+    @Environment(\.colorScheme) private var probeScheme
 
     public init(source: String, theme: MarkdownTheme, anchorLine: Int? = nil) {
         self.source = source
@@ -59,6 +61,16 @@ public struct MarkdownPreview: View {
         // インラインコードのフォントと色は解析時に焼き込まれるので、
         // 文字サイズや外観が変わったときも組み直す。
         .task(id: ReloadKey(theme: theme, source: source)) { await reload() }
+        .onChange(of: [String(describing: theme.appearance), String(describing: probeScheme)]) { _, _ in
+            guard ProcessInfo.processInfo.environment["PROBE"] != nil else { return }
+            let m = """
+            [調査] 設定=\(theme.appearance.rawValue) SwiftUIの配色=\(probeScheme) \
+            NSApp=\(NSApplication.shared.effectiveAppearance.name.rawValue) \
+            解決先=\(theme.appearance.platformAppearance.name.rawValue)
+
+            """
+            FileHandle.standardError.write(Data(m.utf8))
+        }
     }
 
     /// 指定した行を含むブロックを画面上端に合わせる。
