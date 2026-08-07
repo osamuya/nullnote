@@ -22,6 +22,7 @@ macOS 版と iOS 版が共有する SwiftUI レイヤ。トークンや AST を�
 | `OutlineView.swift` | 目次の表示と開閉 |
 | `SplitPane.swift` | 編集とプレビューを左右に並べる。比率を保つ |
 | `StatusBar.swift` | 窓の下端の帯。テーマ・文字サイズ・行数・大きさ |
+| `SystemAppearance.swift` | `.system` を具体的な配色に解決し、OS の変化を見張る |
 | `LineIndex.swift` | 文字位置 ⇄ 行番号。スクロール同期と行番号で引く |
 
 ## 配色
@@ -39,6 +40,8 @@ macOS 版と iOS 版が共有する SwiftUI レイヤ。トークンや AST を�
 | コード文字 | `#B43C5A` | 4.69※ | `#F096AF` | 5.20※ |
 | コードブロック背景 | `#EAEAEE` | 1.10 | `#323C43` | 1.16 |
 | 記法（`#` `*` `\|`） | `#A8AAB2` | 2.13 | `#767882` | 2.97 |
+| 表の見出し行の背景 | `#EAEAEE` | 1.10 | `#323C43` | 1.16 |
+| 表の罫線 | `#A8AAB2` 45% | — | `#767882` 45% | — |
 
 ※ コード文字はコードブロック背景に対する比。
 
@@ -61,15 +64,23 @@ macOS 版と iOS 版が共有する SwiftUI レイヤ。トークンや AST を�
 MarkdownTheme.standard(fontSize: 14, appearance: .dark)
 ```
 
-| 指定 | AppKit | UIKit | SwiftUI |
+| 指定 | AppKit | UIKit | SwiftUI（macOS） |
 |---|---|---|---|
-| `.system` | `NSApp.effectiveAppearance`（解決してから渡す） | `.unspecified` | `preferredColorScheme(nil)` |
+| `.system` | `NSApp.effectiveAppearance` | `.unspecified` | `SystemAppearance.current`（`.light` か `.dark`） |
 | `.light` | `NSAppearance(named: .aqua)` | `.light` | `.light` |
 | `.dark` | `NSAppearance(named: .darkAqua)` | `.dark` | `.dark` |
 
-AppKit だけは `.system` でも **nil（＝親から継承）を渡してはいけない**。
-明示指定から継承へ戻したとき、実効外観が下位のビューへ伝わらず、
-「ライト → システム」で編集画面がライトのまま残る（決定記録の B-8）。
+**`.system` でも nil を渡さない。** AppKit も SwiftUI も、
+明示指定から nil（＝継承・好みなし）へ戻したとき、配色が前のまま残る。
+「ライト → システム」で編集画面が（B-8）、プレビューとフッターが（B-12）ライトのままになった。
+
+そのため:
+
+- AppKit へは `platformAppearance`（非オプショナル）
+- SwiftUI へは `View.markdownColorScheme(_:)`。**`preferredColorScheme` を直に呼ばないこと**
+
+配色を固定した以上、OS の切り替えには自分で追従する必要がある。
+`SystemAppearance` が `NSApp.effectiveAppearance` を KVO で見張っている。
 
 配色を2組持って切り替える方法もあるが、片方だけ直して食い違う事故が起きやすい。
 動的な色に寄せておけば、色の定義は1か所で済み、システム追従もタダで付いてくる。

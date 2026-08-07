@@ -20,15 +20,6 @@ import SwiftUI
 
 extension MarkdownAppearance {
 
-    /// SwiftUI へ渡す値。`nil` はシステムに従う。
-    public var colorScheme: ColorScheme? {
-        switch self {
-        case .system: nil
-        case .light: .light
-        case .dark: .dark
-        }
-    }
-
     #if canImport(AppKit)
     /// AppKit のビューへ設定する値。**必ず具体的な外観を返す。**
     ///

@@ -50,7 +50,10 @@ struct DocumentView: View {
         }
         .frame(minWidth: 480, minHeight: 320)
         // ウインドウ全体（ツールバーやスプリッタも含む）を設定に合わせる。
-        .preferredColorScheme(appearance.colorScheme)
+        .markdownColorScheme(appearance)
+        // ヘッダは列ごとに切れず、窓の幅いっぱいに1本の帯として出す。
+        .toolbarBackground(.visible, for: .windowToolbar)
+        .straightHeader()
         .toolbar {
             ToolbarItem(placement: .navigation) {
                 Toggle(isOn: $showsOutline.animation(.easeInOut(duration: 0.15))) {

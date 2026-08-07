@@ -23,6 +23,44 @@ struct PreviewAttributesTests {
         )
     }
 
+    /// 表の列の揃え。
+    ///
+    /// 揃えは段落スタイルに入れる。テキストビューは提案された幅いっぱいに
+    /// 広がるため、外側の `frame(alignment:)` では効かない。
+    @Test(
+        "指定した揃えが段落スタイルに載る",
+        arguments: [NSTextAlignment.natural, .center, .right]
+    )
+    func alignmentIsCarried(alignment: NSTextAlignment) throws {
+        guard case .paragraph(let text) = PreviewBuilder.build("本文", theme: theme).first?.content else {
+            Issue.record("段落が作れない"); return
+        }
+        let attributed = PreviewAttributes.make(
+            from: text, theme: theme, baseFont: theme.bodyFont, baseColor: theme.text,
+            alignment: alignment
+        )
+        let style = attributed.attribute(.paragraphStyle, at: 0, effectiveRange: nil)
+        let paragraph = try #require(style as? NSParagraphStyle)
+        #expect(paragraph.alignment == alignment)
+    }
+
+    /// 回帰テスト（決定記録 D-18）。
+    ///
+    /// 測る側に揃えを入れると、グリフがコンテナ幅いっぱいに配置されて
+    /// 測った幅が実際の文字幅より広くなる。既定は必ず `.natural`。
+    @Test("既定では揃えを入れない（測定用に使うため）")
+    func defaultAlignmentIsNatural() throws {
+        guard case .paragraph(let text) = PreviewBuilder.build("本文", theme: theme).first?.content else {
+            Issue.record("段落が作れない"); return
+        }
+        let attributed = PreviewAttributes.make(
+            from: text, theme: theme, baseFont: theme.bodyFont, baseColor: theme.text
+        )
+        let style = attributed.attribute(.paragraphStyle, at: 0, effectiveRange: nil)
+        let paragraph = try #require(style as? NSParagraphStyle)
+        #expect(paragraph.alignment == .natural)
+    }
+
     /// 指定した部分文字列の位置にある属性を取り出す。
     func attributes(of substring: String, in source: String) -> [NSAttributedString.Key: Any] {
         let attributed = convert(source)

@@ -1,4 +1,3 @@
-import AppKit
 import SwiftUI
 
 /// Markdown を整形して表示する読み取り専用のビュー。
@@ -17,7 +16,6 @@ public struct MarkdownPreview: View {
     private let anchorLine: Int?
 
     @State private var blocks: [PreviewBlock] = []
-    @Environment(\.colorScheme) private var probeScheme
 
     public init(source: String, theme: MarkdownTheme, anchorLine: Int? = nil) {
         self.source = source
@@ -57,20 +55,10 @@ public struct MarkdownPreview: View {
         }
         }
         .background(Color(platform: theme.background))
-        .preferredColorScheme(theme.appearance.colorScheme)
+        .markdownColorScheme(theme.appearance)
         // インラインコードのフォントと色は解析時に焼き込まれるので、
         // 文字サイズや外観が変わったときも組み直す。
         .task(id: ReloadKey(theme: theme, source: source)) { await reload() }
-        .onChange(of: [String(describing: theme.appearance), String(describing: probeScheme)]) { _, _ in
-            guard ProcessInfo.processInfo.environment["PROBE"] != nil else { return }
-            let m = """
-            [調査] 設定=\(theme.appearance.rawValue) SwiftUIの配色=\(probeScheme) \
-            NSApp=\(NSApplication.shared.effectiveAppearance.name.rawValue) \
-            解決先=\(theme.appearance.platformAppearance.name.rawValue)
-
-            """
-            FileHandle.standardError.write(Data(m.utf8))
-        }
     }
 
     /// 指定した行を含むブロックを画面上端に合わせる。
@@ -302,38 +290,59 @@ private struct PreviewTableView: View {
     let table: PreviewTable
     let theme: MarkdownTheme
 
+    /// 罫線の太さ。マス目の隙間と外周に、この幅だけ下地の色を見せる。
+    private static let border: CGFloat = 1
+
     var body: some View {
         // 列が多いと横にはみ出すので、表だけ横スクロールさせる。
         ScrollView(.horizontal, showsIndicators: false) {
-            Grid(alignment: .topLeading, horizontalSpacing: 16, verticalSpacing: 8) {
+            // マス目のあいだを `border` だけ空け、下地に罫線の色を敷く。
+            // 各マスは不透明なので、空けたぶんだけが線として見える。
+            // 線を1本ずつ引くより、太さと交点のずれが出にくい。
+            Grid(alignment: .topLeading, horizontalSpacing: Self.border, verticalSpacing: Self.border) {
                 GridRow {
                     ForEach(Array(table.header.enumerated()), id: \.offset) { column, cell in
-                        PreviewText(cell, theme: theme, font: theme.bodyFont.addingTraits(bold: true))
-                            .frame(maxWidth: .infinity, alignment: alignment(of: column))
+                        cellView(
+                            cell,
+                            column: column,
+                            font: theme.bodyFont.addingTraits(bold: true),
+                            fill: theme.tableHeaderBackground
+                        )
                     }
                 }
-                Divider().overlay(Color(platform: theme.marker))
-
                 ForEach(Array(table.rows.enumerated()), id: \.offset) { _, row in
                     GridRow {
                         ForEach(Array(row.enumerated()), id: \.offset) { column, cell in
-                            PreviewText(cell, theme: theme)
-                                .frame(maxWidth: .infinity, alignment: alignment(of: column))
+                            cellView(cell, column: column, font: theme.bodyFont, fill: theme.background)
                         }
                     }
                 }
             }
             .font(.system(size: theme.fontSize))
             .foregroundStyle(Color(platform: theme.text))
-            .padding(12)
-            .background(
-                RoundedRectangle(cornerRadius: 6)
-                    .stroke(Color(platform: theme.marker).opacity(0.4), lineWidth: 1)
-            )
+            // 外周ぶんの下地。
+            .padding(Self.border)
+            .background(Color(platform: theme.tableBorder))
         }
     }
 
-    private func alignment(of column: Int) -> Alignment {
+    private func cellView(
+        _ cell: AttributedString,
+        column: Int,
+        font: PlatformFont,
+        fill: PlatformColor
+    ) -> some View {
+        // 揃えは文字列側（段落スタイル）で行う。
+        // テキストビューは提案された幅いっぱいに広がるので、
+        // 外側の `frame(alignment:)` では効かない。
+        PreviewText(cell, theme: theme, font: font, alignment: alignment(of: column))
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color(platform: fill))
+    }
+
+    private func alignment(of column: Int) -> TextAlignment {
         guard column < table.alignments.count else { return .leading }
         switch table.alignments[column] {
         case .center: return .center

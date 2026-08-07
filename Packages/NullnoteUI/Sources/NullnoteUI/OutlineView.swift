@@ -35,7 +35,7 @@ public struct OutlineView: View {
             }
         }
         .background(Color(platform: theme.background))
-        .preferredColorScheme(theme.appearance.colorScheme)
+        .markdownColorScheme(theme.appearance)
         .task(id: source) { await reload() }
         .onChange(of: selection) { _, id in
             guard let id, let item = items.flattened.first(where: { $0.id == id }) else { return }

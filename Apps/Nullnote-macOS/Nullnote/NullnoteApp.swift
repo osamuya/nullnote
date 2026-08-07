@@ -16,15 +16,6 @@ struct NullnoteApp: App {
 
     init() {
         AppSettings.registerDefaults()
-        if ProcessInfo.processInfo.environment["PROBE"] != nil {
-            // 利用者の操作（ライト → システム）を再現する。
-            for (delay, value) in [(4.0, MarkdownAppearance.light), (8.0, .system)] {
-                DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
-                    UserDefaults.standard.set(value.rawValue, forKey: AppSettings.appearanceKey)
-                    FileHandle.standardError.write(Data("[調査] テーマを \(value.rawValue) にした\n".utf8))
-                }
-            }
-        }
     }
 
     var body: some Scene {

@@ -88,6 +88,15 @@ public struct MarkdownTheme {
         self.accent = accent
     }
 
+    /// 表の見出し行の背景。本文の背景から一段ずらして、見出しだと分かるようにする。
+    ///
+    /// いまはコードブロックの背景と同じ値。役割が違うので名前は分けてある
+    /// （どちらかだけ変えたくなったときに困らない）。
+    public var tableHeaderBackground: PlatformColor { codeBackground }
+
+    /// 表の罫線。
+    public var tableBorder: PlatformColor { marker.withAlphaComponent(0.45) }
+
     /// 今カーソルがある行の番号に使う色。
     ///
     /// 配色表に持たず、OS のハイライト／アクセント設定に従う。

@@ -21,11 +21,19 @@ struct ThemeAppearanceTests {
         #expect(MarkdownTheme.standard(appearance: appearance).appearance == appearance)
     }
 
-    @Test("SwiftUI へ渡す値")
+    /// 回帰テスト（決定記録 B-12）。
+    ///
+    /// `.system` で nil を返すと、ライトなど明示指定から戻したときに
+    /// SwiftUI が解決する色（プレビューの背景やフッター）が古いまま残る。
+    @Test("SwiftUI へ渡す値も、必ず具体的な配色になる")
+    @MainActor
     func colorSchemeMapping() {
-        #expect(MarkdownAppearance.system.colorScheme == nil)
-        #expect(MarkdownAppearance.light.colorScheme == .light)
-        #expect(MarkdownAppearance.dark.colorScheme == .dark)
+        #expect(MarkdownAppearance.light.resolvedColorScheme == .light)
+        #expect(MarkdownAppearance.dark.resolvedColorScheme == .dark)
+
+        let resolved = MarkdownAppearance.system.resolvedColorScheme
+        #expect(resolved != nil, "システムのときに nil を返している")
+        #expect(resolved == SystemAppearance.current)
     }
 
     @Test("保存と復元ができる（@AppStorage が使う経路）")

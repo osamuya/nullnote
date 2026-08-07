@@ -39,7 +39,10 @@ struct PreviewText: View {
         // 属性の変換はここでは行わない。`body` は再描画のたびに評価されるため、
         // ウインドウのリサイズ中は毎フレーム全ブロックを作り直すことになる。
         // 実際に中身が変わったときだけ変換する（`updateNSView` を参照）。
-        PreviewTextRepresentable(text: text, theme: theme, baseFont: font, baseColor: color)
+        PreviewTextRepresentable(
+            text: text, theme: theme, baseFont: font, baseColor: color,
+            alignment: alignment.textAlignment
+        )
         // AppKit のビューはベースラインを持たない。教えないと
         // `HStack(alignment: .firstTextBaseline)` で並べたときにずれる。
         .alignmentGuide(.firstTextBaseline) { [ascender = font.ascender] _ in ascender }
@@ -65,13 +68,15 @@ enum PreviewAttributes {
         from text: AttributedString,
         theme: MarkdownTheme,
         baseFont: PlatformFont,
-        baseColor: PlatformColor
+        baseColor: PlatformColor,
+        alignment: NSTextAlignment = .natural
     ) -> NSAttributedString {
-        // 揃えは段落スタイルに入れない。中央・右揃えにすると
-        // グリフがコンテナ幅いっぱいに配置され、測定した幅が実際より広くなる。
-        // 揃えは SwiftUI 側の frame(alignment:) で行う。
+        // **測定用には必ず `.natural` を渡すこと。**
+        // 中央・右揃えにするとグリフがコンテナ幅いっぱいに配置され、
+        // 測った幅が実際の文字幅より広くなる。表示用にだけ揃えを入れる。
         let paragraph = NSMutableParagraphStyle()
         paragraph.lineSpacing = theme.fontSize * 0.22
+        paragraph.alignment = alignment
 
         let result = NSMutableAttributedString()
 
@@ -121,6 +126,8 @@ private struct PreviewTextRepresentable: NSViewRepresentable {
     let theme: MarkdownTheme
     let baseFont: PlatformFont
     let baseColor: PlatformColor
+    /// 表の列の揃え。**表示にだけ効かせる。** 測定は常に `.natural` で行う。
+    let alignment: NSTextAlignment
 
     /// 変換結果と、大きさを測るための道具を持つ。
     ///
@@ -133,6 +140,7 @@ private struct PreviewTextRepresentable: NSViewRepresentable {
         var appliedFontSize: CGFloat = 0
         /// 解決したあとの外観で比べる。`.system` のままでも OS 側が変われば貼り直す。
         var appliedAppearanceName: NSAppearance.Name?
+        var appliedAlignment: NSTextAlignment = .natural
 
         let measuringStorage = NSTextStorage()
         let measuringLayout = NSLayoutManager()
@@ -162,7 +170,15 @@ private struct PreviewTextRepresentable: NSViewRepresentable {
 
     func makeCoordinator() -> Coordinator { Coordinator() }
 
+    /// 画面に出す方。揃えが入る。
     private var attributed: NSAttributedString {
+        PreviewAttributes.make(
+            from: text, theme: theme, baseFont: baseFont, baseColor: baseColor, alignment: alignment
+        )
+    }
+
+    /// 幅と高さを測る方。揃えを入れない。
+    private var measuring: NSAttributedString {
         PreviewAttributes.make(from: text, theme: theme, baseFont: baseFont, baseColor: baseColor)
     }
 
@@ -171,12 +187,14 @@ private struct PreviewTextRepresentable: NSViewRepresentable {
         coordinator.appliedText != text
             || coordinator.appliedFontSize != theme.fontSize
             || coordinator.appliedAppearanceName != theme.appearance.platformAppearance.name
+            || coordinator.appliedAlignment != alignment
     }
 
     private func remember(in coordinator: Coordinator) {
         coordinator.appliedText = text
         coordinator.appliedFontSize = theme.fontSize
         coordinator.appliedAppearanceName = theme.appearance.platformAppearance.name
+        coordinator.appliedAlignment = alignment
     }
 
     func makeNSView(context: Context) -> LinkHoverTextView {
@@ -199,9 +217,8 @@ private struct PreviewTextRepresentable: NSViewRepresentable {
         textView.isHorizontallyResizable = false
         textView.autoresizingMask = [NSView.AutoresizingMask.width]
         apply(theme, to: textView)
-        let attributed = self.attributed
         textView.textStorage?.setAttributedString(attributed)
-        context.coordinator.measuringStorage.setAttributedString(attributed)
+        context.coordinator.measuringStorage.setAttributedString(measuring)
         remember(in: context.coordinator)
         return textView
     }
@@ -209,9 +226,8 @@ private struct PreviewTextRepresentable: NSViewRepresentable {
     func updateNSView(_ textView: LinkHoverTextView, context: Context) {
         guard needsRebuild(context.coordinator) else { return }
         apply(theme, to: textView)
-        let attributed = self.attributed
         textView.textStorage?.setAttributedString(attributed)
-        context.coordinator.measuringStorage.setAttributedString(attributed)
+        context.coordinator.measuringStorage.setAttributedString(measuring)
         remember(in: context.coordinator)
     }
 
@@ -309,4 +325,17 @@ final class LinkHoverTextView: NSTextView {
     }
 }
 
+#endif
+
+#if canImport(AppKit)
+extension TextAlignment {
+    /// AppKit の行揃えへ。
+    var textAlignment: NSTextAlignment {
+        switch self {
+        case .leading: .natural
+        case .center: .center
+        case .trailing: .right
+        }
+    }
+}
 #endif
