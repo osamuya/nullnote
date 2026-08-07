@@ -99,20 +99,23 @@ private struct PreviewBlockView: View {
 
     let block: PreviewBlock
     let theme: MarkdownTheme
+    /// 引用の中など、本文と違う色で描きたいときに引き継ぐ。
+    /// AppKit のテキストビューは SwiftUI の `foregroundStyle` を受け取らないため、
+    /// 色は明示的に渡す必要がある。
+    var textColor: PlatformColor?
 
     var body: some View {
         switch block.content {
         case .heading(let level, let text):
-            Text(text)
-                .font(.system(size: theme.headingFontSize(level: level), weight: .bold))
-                .foregroundStyle(Color(platform: theme.heading))
-                .padding(.top, level <= 2 ? theme.fontSize * 0.4 : 0)
+            PreviewText(
+                text, theme: theme,
+                font: .editorBody(size: theme.headingFontSize(level: level)).addingTraits(bold: true),
+                color: theme.heading
+            )
+            .padding(.top, level <= 2 ? theme.fontSize * 0.4 : 0)
 
         case .paragraph(let text):
-            Text(text)
-                .font(.system(size: theme.fontSize))
-                .foregroundStyle(Color(platform: theme.text))
-                .tint(Color(platform: theme.link))
+            PreviewText(text, theme: theme, color: textColor)
 
         case .quote(let blocks):
             HStack(alignment: .top, spacing: 0) {
@@ -120,14 +123,16 @@ private struct PreviewBlockView: View {
                     .fill(Color(platform: theme.marker))
                     .frame(width: 3)
                 VStack(alignment: .leading, spacing: theme.fontSize * 0.5) {
-                    ForEach(blocks) { PreviewBlockView(block: $0, theme: theme).erased }
+                    ForEach(blocks) {
+                        PreviewBlockView(block: $0, theme: theme, textColor: theme.quote).erased
+                    }
                 }
                 .foregroundStyle(Color(platform: theme.quote))
                 .padding(.leading, 12)
             }
 
         case .list(let list):
-            PreviewListView(list: list, theme: theme)
+            PreviewListView(list: list, theme: theme, textColor: textColor)
 
         case .codeBlock(let code, let language):
             PreviewCodeBlockView(code: code, language: language, theme: theme)
@@ -150,6 +155,7 @@ private struct PreviewListView: View {
 
     let list: PreviewList
     let theme: MarkdownTheme
+    var textColor: PlatformColor?
 
     var body: some View {
         VStack(alignment: .leading, spacing: theme.fontSize * 0.4) {
@@ -157,7 +163,9 @@ private struct PreviewListView: View {
                 HStack(alignment: .firstTextBaseline, spacing: 8) {
                     marker(for: item, at: index)
                     VStack(alignment: .leading, spacing: theme.fontSize * 0.4) {
-                        ForEach(item.blocks) { PreviewBlockView(block: $0, theme: theme).erased }
+                        ForEach(item.blocks) {
+                            PreviewBlockView(block: $0, theme: theme, textColor: textColor).erased
+                        }
                     }
                 }
             }
@@ -275,9 +283,12 @@ private struct PreviewTableView: View {
             Grid(alignment: .topLeading, horizontalSpacing: 16, verticalSpacing: 8) {
                 GridRow {
                     ForEach(Array(table.header.enumerated()), id: \.offset) { column, cell in
-                        Text(cell)
-                            .fontWeight(.semibold)
-                            .frame(maxWidth: .infinity, alignment: alignment(of: column))
+                        PreviewText(
+                            cell, theme: theme,
+                            font: theme.bodyFont.addingTraits(bold: true),
+                            alignment: textAlignment(of: column)
+                        )
+                        .frame(maxWidth: .infinity)
                     }
                 }
                 Divider().overlay(Color(platform: theme.marker))
@@ -285,7 +296,8 @@ private struct PreviewTableView: View {
                 ForEach(Array(table.rows.enumerated()), id: \.offset) { _, row in
                     GridRow {
                         ForEach(Array(row.enumerated()), id: \.offset) { column, cell in
-                            Text(cell).frame(maxWidth: .infinity, alignment: alignment(of: column))
+                            PreviewText(cell, theme: theme, alignment: textAlignment(of: column))
+                                .frame(maxWidth: .infinity)
                         }
                     }
                 }
@@ -297,6 +309,15 @@ private struct PreviewTableView: View {
                 RoundedRectangle(cornerRadius: 6)
                     .stroke(Color(platform: theme.marker).opacity(0.4), lineWidth: 1)
             )
+        }
+    }
+
+    private func textAlignment(of column: Int) -> TextAlignment {
+        guard column < table.alignments.count else { return .leading }
+        switch table.alignments[column] {
+        case .center: return .center
+        case .trailing: return .trailing
+        case .leading: return .leading
         }
     }
 
