@@ -11,7 +11,7 @@ cd Apps/Nullnote-macOS && xcodebuild -scheme Nullnote build
 | レイヤ | 状態 |
 |---|---|
 | `Packages/MarkdownCore` | ✅ 完成（72 テスト） |
-| `Packages/NullnoteUI` | ✅ 完成（74 テスト） |
+| `Packages/NullnoteUI` | ✅ 完成（101 テスト） |
 | `Apps/Nullnote-macOS` | ✅ 動作（起動・ファイル読み込み確認済み） |
 | `Apps/Nullnote-iOS` | ⬜ 未着手（パッケージは iOS ビルド通過済み） |
 
@@ -37,6 +37,8 @@ cd Apps/Nullnote-macOS && xcodebuild -scheme Nullnote build
   → 実装済み。設定でシステム追従／ライト／ダークを切り替える
 - 設定は可能な限りシンプルにする。文字サイズなどのみ
   → 実装済み。テーマと文字サイズの2つだけ
+- 左端に見出しの目次（階層表示・開閉・クリックで移動）
+  → 実装済み（[docs/02-decision-log.md](docs/02-decision-log.md) の D-15）
 - 画面のスクロール時に、左右の領域が可能な限り同期してスクロールする。（大幅にずれてしまう場合は、同期をキャンセルしてよい）
   → 実装済み。行番号で対応付けてブロック単位で吸着させるため、そもそも大きくずれない。
   いまはエディタ → プレビューの一方向（[docs/02-decision-log.md](docs/02-decision-log.md) の D-10）
@@ -116,7 +118,7 @@ AST は打鍵ごとに回すには重い（5万文字で 1フレームの3倍）
 
 ```sh
 swift test --package-path Packages/MarkdownCore      # 72 tests
-swift test --package-path Packages/NullnoteUI        # 74 tests
+swift test --package-path Packages/NullnoteUI        # 101 tests
 
 # iOS ビルド（UI 依存が混入していないことの確認）
 cd Packages/MarkdownCore && xcodebuild -scheme MarkdownCore -destination 'generic/platform=iOS' build

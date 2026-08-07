@@ -131,7 +131,8 @@ private struct PreviewTextRepresentable: NSViewRepresentable {
     final class Coordinator {
         var appliedText: AttributedString?
         var appliedFontSize: CGFloat = 0
-        var appliedAppearance: MarkdownAppearance?
+        /// 解決したあとの外観で比べる。`.system` のままでも OS 側が変われば貼り直す。
+        var appliedAppearanceName: NSAppearance.Name?
 
         let measuringStorage = NSTextStorage()
         let measuringLayout = NSLayoutManager()
@@ -169,13 +170,13 @@ private struct PreviewTextRepresentable: NSViewRepresentable {
     private func needsRebuild(_ coordinator: Coordinator) -> Bool {
         coordinator.appliedText != text
             || coordinator.appliedFontSize != theme.fontSize
-            || coordinator.appliedAppearance != theme.appearance
+            || coordinator.appliedAppearanceName != theme.appearance.platformAppearance.name
     }
 
     private func remember(in coordinator: Coordinator) {
         coordinator.appliedText = text
         coordinator.appliedFontSize = theme.fontSize
-        coordinator.appliedAppearance = theme.appearance
+        coordinator.appliedAppearanceName = theme.appearance.platformAppearance.name
     }
 
     func makeNSView(context: Context) -> LinkHoverTextView {

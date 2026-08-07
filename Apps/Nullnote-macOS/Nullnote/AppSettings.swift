@@ -4,6 +4,7 @@ enum AppSettings {
     /// `UserDefaults` のキー。`@AppStorage` の綴り間違いを1か所に閉じ込める。
     static let fontSizeKey = "editorFontSize"
     static let appearanceKey = "editorAppearance"
+    static let lineNumbersKey = "editorShowsLineNumbers"
 
     /// 起動時に一度だけ呼ぶ。
     ///

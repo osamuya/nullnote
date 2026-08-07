@@ -5,6 +5,7 @@ struct SettingsView: View {
 
     @Binding var fontSize: Double
     @Binding var appearance: MarkdownAppearance
+    @Binding var showsLineNumbers: Bool
 
     var body: some View {
         Form {
@@ -17,6 +18,11 @@ struct SettingsView: View {
                 .pickerStyle(.segmented)
                 .labelsHidden()
                 .frame(width: 240)
+            }
+
+            LabeledContent("編集画面") {
+                Toggle("行番号を表示", isOn: $showsLineNumbers)
+                    .frame(width: 240, alignment: .leading)
             }
 
             LabeledContent("文字サイズ") {

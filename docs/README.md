@@ -1,6 +1,7 @@
 # docs
 
 Nullnote の開発ドキュメント。
+Git repository: [nullnote](https://github.com/roughlang/nullnote)
 
 ## この中にあるもの
 

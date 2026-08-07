@@ -30,12 +30,17 @@ extension MarkdownAppearance {
     }
 
     #if canImport(AppKit)
-    /// AppKit のビューへ設定する値。`nil` は親から受け継ぐ＝システムに従う。
-    var platformAppearance: NSAppearance? {
+    /// AppKit のビューへ設定する値。**必ず具体的な外観を返す。**
+    ///
+    /// `.system` のときに `nil`（＝親から継承）を設定してはいけない。
+    /// 明示指定から継承へ戻したとき、AppKit が実効外観を下位のビューへ伝えず、
+    /// 「ライト → システム」でライトのまま残る（`docs/02-decision-log.md` の B-8）。
+    /// システムの現在の外観へ自分で解決する。
+    @MainActor var platformAppearance: NSAppearance {
         switch self {
-        case .system: nil
-        case .light: NSAppearance(named: .aqua)
-        case .dark: NSAppearance(named: .darkAqua)
+        case .system: NSApp?.effectiveAppearance ?? NSAppearance(named: .aqua)!
+        case .light: NSAppearance(named: .aqua)!
+        case .dark: NSAppearance(named: .darkAqua)!
         }
     }
     #elseif canImport(UIKit)

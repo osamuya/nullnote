@@ -33,17 +33,24 @@ public struct MarkdownEditorView {
     var topVisibleLine: Binding<Int>?
     /// 目次などから「ここへ移動して」と言われたときの依頼。
     var scrollRequest: EditorScrollRequest?
+    /// 左端に行番号を出すか。
+    var showsLineNumbers: Bool
+    /// システムの外観が変わったときに再評価させるためだけに読む。
+    /// `.system` を実際の外観に解決している以上、OS 側の変化を拾う必要がある。
+    @Environment(\.colorScheme) private var systemColorScheme
 
     public init(
         text: Binding<String>,
         theme: MarkdownTheme,
         topVisibleLine: Binding<Int>? = nil,
-        scrollRequest: EditorScrollRequest? = nil
+        scrollRequest: EditorScrollRequest? = nil,
+        showsLineNumbers: Bool = false
     ) {
         self._text = text
         self.theme = theme
         self.topVisibleLine = topVisibleLine
         self.scrollRequest = scrollRequest
+        self.showsLineNumbers = showsLineNumbers
     }
 
     public func makeCoordinator() -> Coordinator {
@@ -57,7 +64,8 @@ public struct MarkdownEditorView {
         var highlighter: MarkdownHighlighter
         /// 最後に適用したテーマ。設定が変わったときだけ貼り直す。
         var appliedFontSize: CGFloat
-        var appliedAppearance: MarkdownAppearance
+        /// 解決したあとの外観で比べる。`.system` のままでも OS 側が変われば貼り直す。
+        var appliedAppearanceName: NSAppearance.Name?
         /// 本文が変わったときだけ作り直す行の索引。
         private var lineIndex: LineIndex
         /// 最後に報告した行。同じ値を書き戻して再描画を誘発しないため。
@@ -71,13 +79,19 @@ public struct MarkdownEditorView {
         weak var textView: PlatformTextView?
         /// 最後に処理したスクロール依頼。同じものを二度実行しないため。
         var appliedScrollRequest: EditorScrollRequest?
+        #if canImport(AppKit)
+        /// 行番号の定規。表示していないときは作らない。
+        var ruler: LineNumberRulerView?
+        #endif
 
         init(text: Binding<String>, theme: MarkdownTheme, topVisibleLine: Binding<Int>?) {
             self.text = text
             self.topVisibleLine = topVisibleLine
             self.highlighter = MarkdownHighlighter(theme: theme)
             self.appliedFontSize = theme.fontSize
-            self.appliedAppearance = theme.appearance
+            #if canImport(AppKit)
+            self.appliedAppearanceName = theme.appearance.platformAppearance.name
+            #endif
             self.appliedText = text.wrappedValue
             self.lineIndex = LineIndex(text.wrappedValue)
         }
@@ -87,6 +101,10 @@ public struct MarkdownEditorView {
             appliedText = source
             lineIndex = LineIndex(source)
             highlighter.apply(to: storage, text: source)
+            #if canImport(AppKit)
+            ruler?.lineIndex = lineIndex
+            ruler?.updateThickness()
+            #endif
         }
 
         /// その行が画面の上端に来るようスクロールする。
@@ -167,7 +185,27 @@ extension MarkdownEditorView: NSViewRepresentable {
             object: scrollView.contentView
         )
 
+        updateRuler(on: scrollView, textView: textView, coordinator: context.coordinator)
         return scrollView
+    }
+
+    /// 行番号の定規を、設定に合わせて付け外しする。
+    private func updateRuler(on scrollView: NSScrollView, textView: NSTextView, coordinator: Coordinator) {
+        guard showsLineNumbers else {
+            scrollView.rulersVisible = false
+            coordinator.ruler = nil
+            return
+        }
+        if coordinator.ruler == nil {
+            let ruler = LineNumberRulerView(scrollView: scrollView, textView: textView, theme: theme)
+            ruler.lineIndex = LineIndex(text)
+            coordinator.ruler = ruler
+            scrollView.verticalRulerView = ruler
+        }
+        coordinator.ruler?.theme = theme
+        coordinator.ruler?.updateThickness()
+        scrollView.hasVerticalRuler = true
+        scrollView.rulersVisible = true
     }
 
     public func updateNSView(_ scrollView: NSScrollView, context: Context) {
@@ -178,8 +216,9 @@ extension MarkdownEditorView: NSViewRepresentable {
         coordinator.topVisibleLine = topVisibleLine
         coordinator.highlighter.theme = theme
 
+        let resolved = theme.appearance.platformAppearance
         let themeChanged = coordinator.appliedFontSize != theme.fontSize
-            || coordinator.appliedAppearance != theme.appearance
+            || coordinator.appliedAppearanceName != resolved.name
         let textChanged = coordinator.appliedText != text
 
         if textChanged {
@@ -190,7 +229,7 @@ extension MarkdownEditorView: NSViewRepresentable {
         }
         if themeChanged {
             coordinator.appliedFontSize = theme.fontSize
-            coordinator.appliedAppearance = theme.appearance
+            coordinator.appliedAppearanceName = resolved.name
             apply(theme, to: scrollView)
             scrollView.backgroundColor = theme.background
         }
@@ -201,6 +240,7 @@ extension MarkdownEditorView: NSViewRepresentable {
             coordinator.appliedScrollRequest = request
             coordinator.scroll(to: request.line)
         }
+        updateRuler(on: scrollView, textView: textView, coordinator: coordinator)
     }
 
     /// 外観はスクロールビューに設定する。中のテキストビューは親から受け継ぐ。
@@ -241,11 +281,13 @@ extension MarkdownEditorView.Coordinator: NSTextViewDelegate {
         let source = textView.string
         text.wrappedValue = source
         highlight(textView.textStorage, source: source)
+        ruler?.needsDisplay = true
     }
 
     @objc func editorDidScroll(_ notification: Notification) {
         guard let textView else { return }
         reportTopLine(utf16Offset: textView.topVisibleCharacterIndex)
+        ruler?.needsDisplay = true
     }
 }
 
@@ -283,7 +325,6 @@ extension MarkdownEditorView: UIViewRepresentable {
         coordinator.highlighter.theme = theme
 
         let themeChanged = coordinator.appliedFontSize != theme.fontSize
-            || coordinator.appliedAppearance != theme.appearance
         let textChanged = coordinator.appliedText != text
 
         if textChanged {
@@ -293,7 +334,6 @@ extension MarkdownEditorView: UIViewRepresentable {
         }
         if themeChanged {
             coordinator.appliedFontSize = theme.fontSize
-            coordinator.appliedAppearance = theme.appearance
             apply(theme, to: textView)
         }
         if textChanged || themeChanged {

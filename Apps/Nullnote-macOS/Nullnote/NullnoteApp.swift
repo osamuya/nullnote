@@ -11,13 +11,21 @@ struct NullnoteApp: App {
     @AppStorage(AppSettings.appearanceKey)
     private var appearance: MarkdownAppearance = .system
 
+    @AppStorage(AppSettings.lineNumbersKey)
+    private var showsLineNumbers = false
+
     init() {
         AppSettings.registerDefaults()
     }
 
     var body: some Scene {
         DocumentGroup(newDocument: MarkdownDocument()) { file in
-            DocumentView(document: file.$document, fontSize: fontSize, appearance: appearance)
+            DocumentView(
+                document: file.$document,
+                fontSize: fontSize,
+                appearance: appearance,
+                showsLineNumbers: showsLineNumbers
+            )
         }
         .commands {
             CommandGroup(after: .sidebar) {
@@ -45,7 +53,11 @@ struct NullnoteApp: App {
         }
 
         Settings {
-            SettingsView(fontSize: $fontSize, appearance: $appearance)
+            SettingsView(
+                fontSize: $fontSize,
+                appearance: $appearance,
+                showsLineNumbers: $showsLineNumbers
+            )
         }
     }
 }

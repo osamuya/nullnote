@@ -36,11 +36,17 @@ struct ThemeAppearanceTests {
     }
 
     #if canImport(AppKit)
-    @Test("AppKit へ渡す値。system は親から受け継ぐので nil")
+    @Test("AppKit へ渡す値は必ず具体的な外観になる")
+    @MainActor
     func platformAppearanceMapping() {
-        #expect(MarkdownAppearance.system.platformAppearance == nil)
-        #expect(MarkdownAppearance.light.platformAppearance?.name == .aqua)
-        #expect(MarkdownAppearance.dark.platformAppearance?.name == .darkAqua)
+        #expect(MarkdownAppearance.light.platformAppearance.name == .aqua)
+        #expect(MarkdownAppearance.dark.platformAppearance.name == .darkAqua)
+
+        // `.system` でも nil（＝親から継承）を返してはいけない。
+        // 明示指定から継承へ戻したとき、AppKit が実効外観を下位へ伝えず、
+        // 「ライト → システム」でライトのまま残る（決定記録の B-8）。
+        let resolved = MarkdownAppearance.system.platformAppearance.name
+        #expect(resolved == .aqua || resolved == .darkAqua)
     }
 
     @Test("外観を指定すると、同じ動的な色が別の値に解決する")
