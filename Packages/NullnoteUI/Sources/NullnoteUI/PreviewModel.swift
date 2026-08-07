@@ -234,6 +234,10 @@ struct PreviewBuilder {
             var fragment = inline(link, intent: intent)
             if let destination = link.destination, let url = URL(string: destination) {
                 fragment.link = url
+                // クリックできることを示す。SwiftUI の Text はリンク単位のホバーを
+                // 扱えないため（`docs/02-decision-log.md` の D-13）、常に下線を引く。
+                // エディタ側で URL に下線を引いているのとも揃う。
+                fragment.underlineStyle = Text.LineStyle.single
             }
             return fragment
 
@@ -301,6 +305,7 @@ struct PreviewBuilder {
             guard !alreadyHandled else { continue }
 
             text[range].link = url
+            text[range].underlineStyle = Text.LineStyle.single
         }
     }
 

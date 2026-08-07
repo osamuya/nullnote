@@ -195,6 +195,26 @@ struct PreviewModelTests {
             return
         }
         #expect(text.runs.contains { $0.link == URL(string: "https://apple.com") })
+        // クリックできることを示すため、リンクには常に下線を引く。
+        #expect(text.runs.contains { $0.link != nil && $0.underlineStyle != nil })
+    }
+
+    @Test("裸の URL にも下線が引かれる")
+    func bareURLIsUnderlined() {
+        guard case .paragraph(let text) = blocks("見て https://example.com").first?.content else {
+            Issue.record("段落が取れていない")
+            return
+        }
+        #expect(text.runs.contains { $0.link != nil && $0.underlineStyle != nil })
+    }
+
+    @Test("リンクでない文字列には下線を引かない")
+    func plainTextIsNotUnderlined() {
+        guard case .paragraph(let text) = blocks("ただの本文です").first?.content else {
+            Issue.record("段落が取れていない")
+            return
+        }
+        #expect(text.runs.allSatisfy { $0.underlineStyle == nil })
     }
 
     @Test("裸の URL もリンクになる")

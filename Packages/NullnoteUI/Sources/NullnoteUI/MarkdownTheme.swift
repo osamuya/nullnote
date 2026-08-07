@@ -31,8 +31,15 @@ public struct MarkdownTheme {
     /// 記法そのもの（`#` `*` `|` など）。本文より薄くして目立たせない。
     public var marker: PlatformColor
     public var heading: PlatformColor
+    /// インラインコード（`` `code` ``）の文字色。
     public var code: PlatformColor
     public var codeBackground: PlatformColor
+    /// コードブロックの中の簡易ハイライト。
+    /// これ以外（識別子など）は `text` で描く。
+    public var codeKeyword: PlatformColor
+    public var codeString: PlatformColor
+    public var codeComment: PlatformColor
+    public var codeNumber: PlatformColor
     public var link: PlatformColor
     public var quote: PlatformColor
     /// チェックボックスや表の見出しなど、注意を引かせたい要素。
@@ -47,6 +54,10 @@ public struct MarkdownTheme {
         heading: PlatformColor,
         code: PlatformColor,
         codeBackground: PlatformColor,
+        codeKeyword: PlatformColor,
+        codeString: PlatformColor,
+        codeComment: PlatformColor,
+        codeNumber: PlatformColor,
         link: PlatformColor,
         quote: PlatformColor,
         accent: PlatformColor
@@ -59,6 +70,10 @@ public struct MarkdownTheme {
         self.heading = heading
         self.code = code
         self.codeBackground = codeBackground
+        self.codeKeyword = codeKeyword
+        self.codeString = codeString
+        self.codeComment = codeComment
+        self.codeNumber = codeNumber
         self.link = link
         self.quote = quote
         self.accent = accent
@@ -77,6 +92,10 @@ public struct MarkdownTheme {
             heading: .dynamic(light: .rgb(10, 10, 12), dark: .rgb(245, 245, 248)),
             code: .dynamic(light: .rgb(180, 60, 90), dark: .rgb(240, 150, 175)),
             codeBackground: .dynamic(light: .rgb(234, 234, 238), dark: .rgb(50, 60, 67)),
+            codeKeyword: .dynamic(light: .rgb(122, 62, 157), dark: .rgb(206, 147, 240)),
+            codeString: .dynamic(light: .rgb(154, 74, 46), dark: .rgb(240, 174, 121)),
+            codeComment: .dynamic(light: .rgb(63, 107, 46), dark: .rgb(140, 192, 111)),
+            codeNumber: .dynamic(light: .rgb(23, 107, 117), dark: .rgb(143, 220, 230)),
             link: .dynamic(light: .rgb(20, 105, 200), dark: .rgb(105, 170, 250)),
             quote: .dynamic(light: .rgb(105, 110, 122), dark: .rgb(150, 155, 168)),
             accent: .dynamic(light: .rgb(0, 128, 255), dark: .rgb(0, 128, 255))

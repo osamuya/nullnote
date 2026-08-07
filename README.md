@@ -11,7 +11,7 @@ cd Apps/Nullnote-macOS && xcodebuild -scheme Nullnote build
 | レイヤ | 状態 |
 |---|---|
 | `Packages/MarkdownCore` | ✅ 完成（72 テスト） |
-| `Packages/NullnoteUI` | ✅ 完成（57 テスト） |
+| `Packages/NullnoteUI` | ✅ 完成（74 テスト） |
 | `Apps/Nullnote-macOS` | ✅ 動作（起動・ファイル読み込み確認済み） |
 | `Apps/Nullnote-iOS` | ⬜ 未着手（パッケージは iOS ビルド通過済み） |
 
@@ -23,6 +23,7 @@ cd Apps/Nullnote-macOS && xcodebuild -scheme Nullnote build
 |---|---|
 | [docs/01-native-app-anatomy.md](docs/01-native-app-anatomy.md) | macOS アプリの構造。ソースが `.app` になるまで、リンク、DerivedData、署名 |
 | [docs/02-decision-log.md](docs/02-decision-log.md) | なぜこの作りにしたか。捨てた案、実測値、見つけた不具合 |
+| [docs/04-development-flow.md](docs/04-development-flow.md) | 開発の手順。ビルド・起動・テスト・インストール |
 | [Packages/MarkdownCore/README.md](Packages/MarkdownCore/README.md) | パースの設計と既知の制限 |
 | [Packages/NullnoteUI/README.md](Packages/NullnoteUI/README.md) | ハイライトとプレビューの実装 |
 | [Apps/Nullnote-macOS/README.md](Apps/Nullnote-macOS/README.md) | ターゲット設定、UTType、操作方法 |
@@ -115,7 +116,7 @@ AST は打鍵ごとに回すには重い（5万文字で 1フレームの3倍）
 
 ```sh
 swift test --package-path Packages/MarkdownCore      # 72 tests
-swift test --package-path Packages/NullnoteUI        # 57 tests
+swift test --package-path Packages/NullnoteUI        # 74 tests
 
 # iOS ビルド（UI 依存が混入していないことの確認）
 cd Packages/MarkdownCore && xcodebuild -scheme MarkdownCore -destination 'generic/platform=iOS' build

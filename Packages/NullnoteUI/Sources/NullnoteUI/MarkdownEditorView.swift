@@ -102,12 +102,15 @@ extension MarkdownEditorView: NSViewRepresentable {
         textView.isAutomaticSpellingCorrectionEnabled = false
         textView.textContainerInset = NSSize(width: 12, height: 16)
 
-        textView.string = text
-        context.coordinator.highlight(textView.textStorage, source: text)
-
         scrollView.hasVerticalScroller = true
         scrollView.drawsBackground = true
+
+        // 順序が重要。`apply` は `textView.textColor` を設定するが、これは
+        // 本文全体の色を塗り替える。ハイライトより後に呼ぶと装飾が消える。
+        // 必ず「テーマ → 本文 → ハイライト」の順で行う。
+        textView.string = text
         apply(theme, to: scrollView)
+        context.coordinator.highlight(textView.textStorage, source: text)
 
         // スクロールに追従してプレビューを動かすため、表示範囲の変化を拾う。
         // target/selector 形式の監視は、監視者が解放された時点で自動的に外れるため

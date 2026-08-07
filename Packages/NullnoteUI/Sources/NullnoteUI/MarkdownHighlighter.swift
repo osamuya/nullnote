@@ -39,26 +39,61 @@ public struct MarkdownHighlighter {
         let lines = tokenizer.tokenizeLines(text)
         var lineStartUTF16 = 0
 
+        // フェンス付きコードブロックの言語と、行をまたぐブロックコメントの状態。
+        var codeLanguage: CodeSyntax.Language?
+        var codeState = CodeSyntax.State()
+
         for (offset, line) in lines.enumerated() {
             let lineStart = line.range.lowerBound
             let headingLevel = line.headingLevel
 
-            for token in line.tokens {
-                let location = lineStartUTF16
-                    + text.utf16.distance(from: lineStart, to: token.range.lowerBound)
-                let length = text.utf16.distance(from: token.range.lowerBound, to: token.range.upperBound)
-                guard length > 0, location + length <= storage.length else { continue }
+            // ```swift の swift を拾って、以降の行の色分けに使う。
+            for token in line.tokens where token.kind == .codeLanguage {
+                codeLanguage = CodeSyntax.language(named: String(text[token.range]))
+                codeState = CodeSyntax.State()
+            }
 
-                apply(
-                    token.kind,
-                    to: storage,
-                    range: NSRange(location: location, length: length),
-                    headingLevel: headingLevel
-                )
+            func nsRange(_ range: Range<String.Index>) -> NSRange? {
+                let location = lineStartUTF16 + text.utf16.distance(from: lineStart, to: range.lowerBound)
+                let length = text.utf16.distance(from: range.lowerBound, to: range.upperBound)
+                guard length > 0, location >= 0, location + length <= storage.length else { return nil }
+                return NSRange(location: location, length: length)
+            }
+
+            for token in line.tokens {
+                guard let range = nsRange(token.range) else { continue }
+                apply(token.kind, to: storage, range: range, headingLevel: headingLevel)
+
+                // コードブロックの中だけ、さらに簡易ハイライトを重ねる。
+                if token.kind == .codeBlock, let language = codeLanguage {
+                    let result = CodeSyntax.tokenize(
+                        text, range: token.range, language: language, state: codeState
+                    )
+                    codeState = result.stateAfter
+                    for code in result.tokens {
+                        guard let codeRange = nsRange(code.range) else { continue }
+                        storage.addAttribute(.foregroundColor, value: color(for: code.kind), range: codeRange)
+                    }
+                }
+            }
+
+            // フェンスを抜けたら言語の指定も終わり。
+            if case .fencedCode = line.stateAfter {} else {
+                codeLanguage = nil
+                codeState = CodeSyntax.State()
             }
 
             let nextLineStart = offset + 1 < lines.count ? lines[offset + 1].range.lowerBound : text.endIndex
             lineStartUTF16 += text.utf16.distance(from: lineStart, to: nextLineStart)
+        }
+    }
+
+    private func color(for kind: CodeSyntax.Kind) -> PlatformColor {
+        switch kind {
+        case .keyword: theme.codeKeyword
+        case .string: theme.codeString
+        case .comment: theme.codeComment
+        case .number: theme.codeNumber
         }
     }
 
@@ -99,7 +134,16 @@ public struct MarkdownHighlighter {
             storage.addAttribute(.foregroundColor, value: theme.quote, range: range)
             addTraits(italic: true, to: storage, range: range)
 
-        case .codeBlock, .inlineCode:
+        case .codeBlock:
+            // 構文の色を重ねるので、地の色は本文と同じにする。
+            // ここをピンクにすると、キーワードや文字列の色が沈んで見える。
+            storage.addAttributes([
+                .font: theme.monospacedFont,
+                .foregroundColor: theme.text,
+                .backgroundColor: theme.codeBackground,
+            ], range: range)
+
+        case .inlineCode:
             storage.addAttributes([
                 .font: theme.monospacedFont,
                 .foregroundColor: theme.code,

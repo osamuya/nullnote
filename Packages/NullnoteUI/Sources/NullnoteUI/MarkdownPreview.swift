@@ -209,9 +209,9 @@ private struct PreviewCodeBlockView: View {
                     .font(.system(size: theme.fontSize * 0.8, design: .monospaced))
                     .foregroundStyle(Color(platform: theme.marker))
             }
-            Text(code)
+            Text(highlighted)
                 .font(.system(size: theme.fontSize, design: .monospaced))
-                .foregroundStyle(Color(platform: theme.code))
+                .foregroundStyle(Color(platform: theme.text))
         }
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -219,6 +219,46 @@ private struct PreviewCodeBlockView: View {
             RoundedRectangle(cornerRadius: 6)
                 .fill(Color(platform: theme.codeBackground))
         )
+    }
+
+    /// エディタ側と同じ規則で、キーワード・文字列・コメント・数値だけ色を付ける。
+    private var highlighted: AttributedString {
+        var result = AttributedString(code)
+        guard let language = CodeSyntax.language(named: language) else { return result }
+
+        var state = CodeSyntax.State()
+        let characters = result.characters
+
+        // 行ごとに走査する。ブロックコメントの状態だけ次の行へ引き継ぐ。
+        var lineStart = code.startIndex
+        while lineStart <= code.endIndex {
+            let lineEnd = code[lineStart...].firstIndex(where: \.isNewline) ?? code.endIndex
+            let outcome = CodeSyntax.tokenize(
+                code, range: lineStart..<lineEnd, language: language, state: state
+            )
+            state = outcome.stateAfter
+
+            for token in outcome.tokens {
+                let lower = code.distance(from: code.startIndex, to: token.range.lowerBound)
+                let upper = code.distance(from: code.startIndex, to: token.range.upperBound)
+                let from = characters.index(characters.startIndex, offsetBy: lower)
+                let to = characters.index(characters.startIndex, offsetBy: upper)
+                result[from..<to].foregroundColor = Color(platform: color(for: token.kind))
+            }
+
+            guard lineEnd < code.endIndex else { break }
+            lineStart = code.index(after: lineEnd)
+        }
+        return result
+    }
+
+    private func color(for kind: CodeSyntax.Kind) -> PlatformColor {
+        switch kind {
+        case .keyword: theme.codeKeyword
+        case .string: theme.codeString
+        case .comment: theme.codeComment
+        case .number: theme.codeNumber
+        }
     }
 }
 
