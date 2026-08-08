@@ -31,6 +31,7 @@ cd Apps/Nullnote-macOS && xcodebuild -scheme Nullnote build
 
 ## Specification
 
+### 2026-08-06
 - エディタのデフォルトは、画面がひとつで左右に分かれていない。上部のボタンで左右でプレビューする。
 - 対応記法は CommonMark 基本セット + GFM 拡張（表、タスクリスト、取り消し線、拡張オートリンク）
 - Light と Dark のテーマ
@@ -42,6 +43,10 @@ cd Apps/Nullnote-macOS && xcodebuild -scheme Nullnote build
 - 画面のスクロール時に、左右の領域が可能な限り同期してスクロールする。（大幅にずれてしまう場合は、同期をキャンセルしてよい）
   → 実装済み。行番号で対応付けてブロック単位で吸着させるため、そもそも大きくずれない。
   いまはエディタ → プレビューの一方向（[docs/02-decision-log.md](docs/02-decision-log.md) の D-10）
+
+### 2026-08-08
+- 検索機能：ヒットした部分のハイライト
+-  [Command + D]のヒットした単語の同時選択
 
 | 項目 | 設定値 |
 | --- | --- |

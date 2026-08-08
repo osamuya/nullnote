@@ -184,8 +184,63 @@ xcrun altool --validate-app -f build/export/Nullnote.pkg -t macos ...
 
 ## 次回の入口
 
-**T1-1（アイコン）と T1-3（`/Applications` へ配置）から始める。**
-アイコンの元絵があれば持参する。無ければ暫定のものを作ることもできる。
+第1段階（ローカル常用）は完了。**第2段階の入口に立っている。**
 
-並行して **T2-1（Developer Program 登録）** と **T2-2（名称・ドメイン確認）** を
-先に動かしておくと、待ち時間が重ならない。
+### 分かっていること（2026-08-08 時点で実機を調べた結果）
+
+Apple Developer Program のアカウントは**所持済み**。
+ただしこの Mac には署名の材料が何も無い。
+
+```sh
+security find-identity -v -p codesigning   # → 0 valid identities found
+ls ~/Library/Developer/Xcode/UserData/Provisioning\ Profiles/   # → 空
+defaults read com.apple.dt.Xcode DVTDeveloperAccountManagerAppleIDLists  # → 未設定
+```
+
+証明書は Mac ごとに作るものなので、これは異常ではない。Xcode にアカウントを
+追加すれば作られる。
+
+### アプリ側の棚卸し
+
+| 項目 | 状態 |
+|---|---|
+| Bundle ID `com.roughlang.Nullnote` | ✅ |
+| `LSApplicationCategoryType = public.app-category.productivity` | ✅ |
+| `LSMinimumSystemVersion = 14.0` | ✅ |
+| アプリアイコン（16〜1024） | ✅ |
+| `MARKETING_VERSION = 0.1` / `CURRENT_PROJECT_VERSION = 1` | ⚠️ 公開前に決め直す（`1.0` / `1` を提案） |
+| `NSHumanReadableCopyright` | ❌ 空 |
+| `ITSAppUsesNonExemptEncryption` | ❌ 未設定。入れておくと申請ごとの質問を省ける |
+| 署名 | ❌ `Signature=adhoc` / `TeamIdentifier=not set` |
+| `com.apple.security.get-task-allow` | ⚠️ **入っている。Release からは必ず外す**（審査で弾かれる） |
+
+確認に使ったコマンド:
+
+```sh
+/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" /Applications/Nullnote.app/Contents/Info.plist
+codesign -dv --entitlements - /Applications/Nullnote.app
+```
+
+### 最初の一手（利用者にしかできない）
+
+Xcode にアカウントを追加し、**Team 名と Team ID を控える**。
+
+```
+Xcode → Settings… → Accounts → ＋ → Apple ID → サインイン
+```
+
+年会費の有効期限も併せて確認する（切れているとアップロードできない）。
+
+### Team ID が分かってから、こちらで進めること
+
+1. `DEVELOPMENT_TEAM` を設定し、署名をアドホックから Apple Distribution へ
+2. `get-task-allow` を Release ビルドから外す（Debug には残す）
+3. `NSHumanReadableCopyright` と `ITSAppUsesNonExemptEncryption` を Info.plist へ
+4. バージョンを `1.0` / ビルド `1` に
+5. アーカイブとバリデーションのコマンド化
+
+### 並行して進められること（Team ID を待たない）
+
+- App Store で「Nullnote」の同名アプリを検索
+- サポート URL とプライバシーポリシー URL に使うドメインを決める
+- 掲載文の下書き、スクリーンショットの生成
