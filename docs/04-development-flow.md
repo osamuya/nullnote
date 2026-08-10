@@ -31,7 +31,7 @@ swift test          速い。ここで落ちたら先に進まない
 cd /Users/osamu-yamakami/Develop/macapp/MacApp/MarkdownEditor
 
 swift test --package-path Packages/MarkdownCore    # 72件
-swift test --package-path Packages/NullnoteUI      # 57件
+swift test --package-path Packages/NullnoteUI      # 147件
 ```
 
 `Packages/` を直したときは、アプリを起動する前にこれを通す。
@@ -115,6 +115,23 @@ stat -f "%Sm" /Applications/Nullnote.app/Contents/MacOS/Nullnote
 > **調べるときの落とし穴**: 起動テストを続けて回すと、
 > 前のプロセスが終了しきる前に `pgrep` して古い方を掴む。
 > 必ず `pgrep` が 0 件になるのを待ってから測ること。
+
+### `open` が `-600` で失敗する
+
+```
+_LSOpenURLsWithCompletionHandler() failed ... with error -600.
+```
+
+`-600` は procNotFound。**強制終了（`pkill`）した直後に `open` すると出る。**
+プロセスはもう無いのに、LaunchServices の側がまだ「起動中」と思っている。
+
+少し待って開き直せば起動する。`run.sh` は、プロセスが消えるのを待ったうえで
+`open` を最大10回まで再試行するようにしてある。
+
+そもそも強制終了に至る原因は、**同名のアプリが2つ動いていること**。
+`osascript -e 'tell application "Nullnote" to quit'` は名前で1つに解決されるので、
+DerivedData のものと `/Applications` のものが両方動いていると片方しか終了しない。
+残った方が `pgrep` に引っかかり続けて、待ち時間切れ → 強制終了、という順で起きる。
 
 ## 関連
 

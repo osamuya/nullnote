@@ -33,6 +33,11 @@ struct NullnoteApp: App {
                 TogglePreviewButton()
                 Divider()
             }
+            // 検索は編集メニューの、カット・コピー・ペーストの下。macOS の定位置。
+            CommandGroup(after: .pasteboard) {
+                Divider()
+                FindButtons()
+            }
             CommandGroup(after: .textEditing) {
                 Divider()
                 Button("文字を大きく") {
@@ -72,6 +77,29 @@ private struct ToggleOutlineButton: View {
         }
         .keyboardShortcut("s", modifiers: [.control, .command])
         .disabled(visibility == nil)
+    }
+}
+
+/// 検索・次を検索・前を検索。
+///
+/// 3つとも前面のウインドウの検索状態に触るので、1つの `View` にまとめて
+/// `@FocusedValue` を1回だけ読む。
+private struct FindButtons: View {
+
+    @FocusedValue(\.searchCommands) private var commands
+
+    var body: some View {
+        Button("検索…") { commands?.open() }
+            .keyboardShortcut("f", modifiers: .command)
+            .disabled(commands == nil)
+
+        Button("次を検索") { commands?.next() }
+            .keyboardShortcut("g", modifiers: .command)
+            .disabled(commands?.hasMatches != true)
+
+        Button("前を検索") { commands?.previous() }
+            .keyboardShortcut("g", modifiers: [.command, .shift])
+            .disabled(commands?.hasMatches != true)
     }
 }
 

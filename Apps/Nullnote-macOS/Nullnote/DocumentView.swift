@@ -18,6 +18,14 @@ struct DocumentView: View {
     /// 目次から「ここへ移動して」と伝えるための依頼。
     @State private var scrollRequest: EditorScrollRequest?
 
+    /// 検索の帯を出しているか。
+    @State private var showsSearch = false
+    /// 検索語・ヒットの一覧・いま何番目か。
+    @State private var search = SearchSession()
+    /// 検索から「このヒットを見せて」と伝えるための依頼。
+    @State private var selectionRequest: EditorSelectionRequest?
+    @FocusState private var searchFocused: Bool
+
     /// エディタとプレビューの幅の比率。開いたときは半々。
     /// 中央の線を動かせばその比率を保つ（ウインドウを広げても割合は変わらない）。
     @State private var editorRatio = 0.5
@@ -61,6 +69,28 @@ struct DocumentView: View {
                 }
                 .help(showsOutline ? "目次を隠す" : "見出しの目次を表示")
             }
+            // 検索欄は 🔍 の左に伸びる。出していないときは幅を 0 にして畳む。
+            //
+            // **項目を出し入れしない。中身を空にもしない。** どちらも効かなかった:
+            // - `if showsSearch { ToolbarItem(...) }` … 項目が増減すると SwiftUI が
+            //   後続の項目を取り違える（🔍 を押すとプレビューが消えた）
+            // - `ToolbarItem { Group { if showsSearch { ... } } }` … 中身が空の状態で
+            //   組まれた項目は、あとから中身を入れても現れない
+            // 常に同じ中身を置き、幅と不透明度だけ変える。
+            ToolbarItem(placement: .primaryAction) {
+                searchField
+                    .frame(width: showsSearch ? nil : 0)
+                    .opacity(showsSearch ? 1 : 0)
+                    .disabled(!showsSearch)
+                    .clipped()
+                    .accessibilityHidden(!showsSearch)
+            }
+            ToolbarItem(placement: .primaryAction) {
+                Toggle(isOn: searchVisibility) {
+                    Label("検索", systemImage: "magnifyingglass")
+                }
+                .help(showsSearch ? "検索を閉じる" : "文書内を検索（⌘F）")
+            }
             ToolbarItem(placement: .primaryAction) {
                 Toggle(isOn: $showsPreview.animation(.easeInOut(duration: 0.15))) {
                     Label("プレビュー", systemImage: "sidebar.squares.right")
@@ -71,6 +101,87 @@ struct DocumentView: View {
         // メニューやキーボードショートカットから切り替えられるようにする。
         .focusedSceneValue(\.previewVisibility, $showsPreview)
         .focusedSceneValue(\.outlineVisibility, $showsOutline)
+        .focusedSceneValue(\.searchCommands, SearchCommands(
+            open: openSearch,
+            next: { move { $0.moveToNext() } },
+            previous: { move { $0.moveToPrevious() } },
+            hasMatches: search.currentRange != nil
+        ))
+        // 本文が変わったらヒットを数え直す。**移動はしない。**
+        // 打鍵のたびに画面が飛ぶのを避けるため、送るのは操作したときだけ。
+        .onChange(of: document.text) { _, source in
+            guard showsSearch else { return }
+            search.refresh(in: source)
+        }
+        // 検索語が変わったら数え直して、そのヒットを見せる。
+        // 検索欄は畳んだ状態でも居続けるので、監視はこちら（本体）に置く。
+        .onChange(of: search.query) { _, _ in
+            search.refresh(in: document.text)
+            showCurrentMatch()
+        }
+        // 入力欄が有効になってから焦点を移す。
+        .onChange(of: showsSearch) { _, shown in
+            if shown { searchFocused = true }
+        }
+    }
+
+    // MARK: - 検索
+
+    private var searchField: some View {
+        MarkdownSearchField(
+            query: $search.query,
+            countLabel: search.countLabel,
+            hasMatches: search.currentRange != nil,
+            theme: theme,
+            focus: $searchFocused,
+            onNext: { move { $0.moveToNext() } },
+            onPrevious: { move { $0.moveToPrevious() } },
+            onClose: closeSearch
+        )
+    }
+
+    /// ツールバーの 🔍 が読み書きする値。
+    ///
+    /// `$showsSearch` を直に渡さない。出すときは入力欄へ焦点を移し、
+    /// 閉じるときはハイライトも消す必要があり、素の代入では足りないため。
+    private var searchVisibility: Binding<Bool> {
+        Binding(
+            get: { showsSearch },
+            set: { wanted in wanted ? openSearch() : closeSearch() }
+        )
+    }
+
+    /// 検索欄を出す。すでに出ているときは入力欄へ戻すだけ。
+    ///
+    /// 出すときにここで焦点を移さないのは、畳んでいるあいだ入力欄を
+    /// `disabled` にしてあるため。同じ呼び出しの中で焦点を指定しても、
+    /// まだ無効なので効かない。描き直しのあとに移す（`onChange`）。
+    private func openSearch() {
+        guard !showsSearch else {
+            searchFocused = true
+            return
+        }
+        withAnimation(.easeInOut(duration: 0.15)) { showsSearch = true }
+    }
+
+    private func closeSearch() {
+        withAnimation(.easeInOut(duration: 0.15)) { showsSearch = false }
+        searchFocused = false
+        // ハイライトも一緒に消す。閉じたのに色が残っていると、
+        // 何が塗られているのか分からなくなる。
+        search = SearchSession()
+        selectionRequest = nil
+    }
+
+    /// 前後へ送って、そのヒットを見せる。
+    private func move(_ step: (inout SearchSession) -> Void) {
+        step(&search)
+        showCurrentMatch()
+    }
+
+    private func showCurrentMatch() {
+        guard let range = search.currentRange else { return }
+        selectionRequest = EditorSelectionRequest(range: range)
     }
 
     /// エディタと、開いていればプレビュー。
@@ -95,6 +206,8 @@ struct DocumentView: View {
             theme: theme,
             topVisibleLine: showsPreview ? $topVisibleLine : nil,
             scrollRequest: scrollRequest,
+            selectionRequest: selectionRequest,
+            searchHighlight: showsSearch ? search.highlight : nil,
             showsLineNumbers: showsLineNumbers
         )
     }
@@ -102,12 +215,28 @@ struct DocumentView: View {
 
 // MARK: - メニューへの受け渡し
 
+/// 前面の書類ウインドウの検索操作。
+///
+/// 「いま何番目か」の計算はウインドウ側（`SearchSession`）に置いたまま、
+/// メニューへは呼び出し口だけを渡す。メニュー側に状態を持たせない。
+struct SearchCommands {
+    let open: () -> Void
+    let next: () -> Void
+    let previous: () -> Void
+    /// 送り先があるか。無いときは「次を検索」「前を検索」を灰色にする。
+    let hasMatches: Bool
+}
+
 private struct PreviewVisibilityKey: FocusedValueKey {
     typealias Value = Binding<Bool>
 }
 
 private struct OutlineVisibilityKey: FocusedValueKey {
     typealias Value = Binding<Bool>
+}
+
+private struct SearchCommandsKey: FocusedValueKey {
+    typealias Value = SearchCommands
 }
 
 extension FocusedValues {
@@ -121,5 +250,11 @@ extension FocusedValues {
     var outlineVisibility: Binding<Bool>? {
         get { self[OutlineVisibilityKey.self] }
         set { self[OutlineVisibilityKey.self] = newValue }
+    }
+
+    /// 前面の書類ウインドウの検索操作。
+    var searchCommands: SearchCommands? {
+        get { self[SearchCommandsKey.self] }
+        set { self[SearchCommandsKey.self] = newValue }
     }
 }

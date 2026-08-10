@@ -24,6 +24,20 @@ public struct EditorScrollRequest: Equatable, Sendable {
     }
 }
 
+/// 「この範囲を見えるところまで持ってきてほしい」という依頼。
+///
+/// 検索で前後のヒットへ送るときに使う。`EditorScrollRequest` と分けてあるのは、
+/// あちらが行の先頭を上端に合わせるのに対し、こちらは範囲を画面の中ほどに
+/// 置いたうえでカーソルも移すため。同じヒットへ二度送っても効くよう `id` を持つ。
+public struct EditorSelectionRequest: Equatable, Sendable {
+    public let range: NSRange
+    private let id = UUID()
+
+    public init(range: NSRange) {
+        self.range = range
+    }
+}
+
 @MainActor
 public struct MarkdownEditorView {
 
@@ -33,6 +47,10 @@ public struct MarkdownEditorView {
     var topVisibleLine: Binding<Int>?
     /// 目次などから「ここへ移動して」と言われたときの依頼。
     var scrollRequest: EditorScrollRequest?
+    /// 検索バーから「ここを選んで見せて」と言われたときの依頼。
+    var selectionRequest: EditorSelectionRequest?
+    /// 検索でヒットした範囲。塗るだけで、移動はさせない。
+    var searchHighlight: SearchHighlight?
     /// 左端に行番号を出すか。
     var showsLineNumbers: Bool
     /// システムの外観が変わったときに再評価させるためだけに読む。
@@ -44,12 +62,16 @@ public struct MarkdownEditorView {
         theme: MarkdownTheme,
         topVisibleLine: Binding<Int>? = nil,
         scrollRequest: EditorScrollRequest? = nil,
+        selectionRequest: EditorSelectionRequest? = nil,
+        searchHighlight: SearchHighlight? = nil,
         showsLineNumbers: Bool = false
     ) {
         self._text = text
         self.theme = theme
         self.topVisibleLine = topVisibleLine
         self.scrollRequest = scrollRequest
+        self.selectionRequest = selectionRequest
+        self.searchHighlight = searchHighlight
         self.showsLineNumbers = showsLineNumbers
     }
 
@@ -81,6 +103,10 @@ public struct MarkdownEditorView {
         weak var textView: PlatformTextView?
         /// 最後に処理したスクロール依頼。同じものを二度実行しないため。
         var appliedScrollRequest: EditorScrollRequest?
+        /// 最後に処理した選択依頼。同上。
+        var appliedSelectionRequest: EditorSelectionRequest?
+        /// いま塗ってある検索のヒット。ハイライトのたびに上へ重ねる。
+        var searchHighlight: SearchHighlight?
         #if canImport(AppKit)
         /// 行番号を描いているテキストビュー。表示していないときは nil のまま。
         weak var gutterTextView: FocusReportingTextView?
@@ -103,9 +129,36 @@ public struct MarkdownEditorView {
             appliedText = source
             lineIndex = LineIndex(source)
             highlighter.apply(to: storage, text: source)
+            // ハイライタは属性を貼り直す（既存を捨てる）ので、検索の塗りは必ずその後。
+            applySearchHighlight(to: storage)
             #if canImport(AppKit)
             gutterTextView?.lineNumbers?.lineIndex = lineIndex
             #endif
+        }
+
+        /// 検索でヒットした範囲を塗る。
+        ///
+        /// 文字色は `searchMatchText`（外観に追従しない暗い色）に差し替える。
+        /// コードブロックの中では構文の色が付いており、背景だけ変えると
+        /// 読めない組み合わせが出る。見出しの色もここで落ちるが、読めることを優先する。
+        private func applySearchHighlight(to storage: NSTextStorage) {
+            guard let searchHighlight, !searchHighlight.matches.isEmpty else { return }
+            let theme = highlighter.theme
+
+            storage.beginEditing()
+            defer { storage.endEditing() }
+
+            for (index, range) in searchHighlight.matches.enumerated() {
+                // 本文と数え直しのあいだにずれがあり得る（依頼が1周期ぶん古い）。
+                // 範囲外は塗らずに飛ばす。
+                guard range.location >= 0, range.location + range.length <= storage.length else { continue }
+                storage.addAttributes([
+                    .backgroundColor: index == searchHighlight.current
+                        ? theme.searchCurrentMatch
+                        : theme.searchMatch,
+                    .foregroundColor: theme.searchMatchText,
+                ], range: range)
+            }
         }
 
         /// その行が画面の上端に来るようスクロールする。
@@ -129,6 +182,53 @@ public struct MarkdownEditorView {
             #elseif canImport(UIKit)
             guard let textView else { return }
             textView.scrollRangeToVisible(NSRange(location: offset, length: 0))
+            #endif
+        }
+
+        /// その範囲を画面の中ほどへ持ってきて、先頭にカーソルを置く。
+        ///
+        /// 上端合わせ（`scroll(to:)`）にしないのは、検索では前後の文脈も見たいため。
+        /// カーソルを置くのは、検索バーを閉じたあとそのまま編集を続けられるようにするため。
+        ///
+        /// **範囲を「選択」してはいけない。** 検索欄に入力の焦点があるあいだ、
+        /// テキストビューは非アクティブなので、AppKit が選択範囲を灰色
+        /// （`unemphasizedSelectedTextBackgroundColor`）で塗る。これは属性の
+        /// 背景色より後に描かれるため、ヒットの色が灰色に隠れる。
+        /// 長さ 0 のカーソルなら塗りが出ない。
+        func reveal(_ range: NSRange) {
+            guard let textView else { return }
+            // `textStorage` は AppKit では省略可能、UIKit では必ずある。
+            #if canImport(AppKit)
+            let length = textView.textStorage?.length ?? 0
+            #else
+            let length = textView.textStorage.length
+            #endif
+            let location = min(max(range.location, 0), length)
+            let clamped = NSRange(location: location, length: min(range.length, length - location))
+            // 送り先の見当を付けるのは範囲全体。置くのは先頭のカーソルだけ。
+            let caret = NSRange(location: location, length: 0)
+
+            #if canImport(AppKit)
+            textView.setSelectedRange(caret)
+            guard let layoutManager = textView.layoutManager,
+                  let container = textView.textContainer,
+                  let scrollView = textView.enclosingScrollView
+            else { return }
+
+            let glyphRange = layoutManager.glyphRange(
+                forCharacterRange: clamped, actualCharacterRange: nil
+            )
+            let rect = layoutManager.boundingRect(forGlyphRange: glyphRange, in: container)
+            let visibleHeight = scrollView.contentView.bounds.height
+            // テキストコンテナの座標系はビューの余白ぶんずれている。足してから中央に置く。
+            let center = rect.midY + textView.textContainerInset.height - visibleHeight / 2
+            let limit = max(0, textView.frame.height - visibleHeight)
+
+            scrollView.contentView.scroll(to: NSPoint(x: 0, y: min(max(0, center), limit)))
+            scrollView.reflectScrolledClipView(scrollView.contentView)
+            #elseif canImport(UIKit)
+            textView.selectedRange = caret
+            textView.scrollRangeToVisible(clamped)
             #endif
         }
 
@@ -240,6 +340,7 @@ extension MarkdownEditorView: NSViewRepresentable {
         // 必ず「テーマ → 本文 → ハイライト」の順で行う。
         textView.string = text
         apply(theme, to: scrollView)
+        context.coordinator.searchHighlight = searchHighlight
         context.coordinator.highlight(textView.textStorage, source: text)
 
         // スクロールに追従してプレビューを動かすため、表示範囲の変化を拾う。
@@ -296,6 +397,7 @@ extension MarkdownEditorView: NSViewRepresentable {
         let themeChanged = coordinator.appliedFontSize != theme.fontSize
             || coordinator.appliedAppearanceName != resolved.name
         let textChanged = coordinator.appliedText != text
+        let searchChanged = coordinator.searchHighlight != searchHighlight
 
         if textChanged {
             // 外から本文が差し替わったとき（ファイルを開いた、取り消した）。
@@ -309,12 +411,21 @@ extension MarkdownEditorView: NSViewRepresentable {
             apply(theme, to: scrollView)
             scrollView.backgroundColor = theme.background
         }
-        if textChanged || themeChanged {
+        if searchChanged {
+            coordinator.searchHighlight = searchHighlight
+        }
+        if textChanged || themeChanged || searchChanged {
+            // 検索の塗りだけを剥がす手は無い（コードブロックの背景と区別が付かない）。
+            // 全文を貼り直す。5万文字で 5.3 ms なので、送るたびに走らせても間に合う。
             coordinator.highlight(textView.textStorage, source: text)
         }
         if let request = scrollRequest, request != coordinator.appliedScrollRequest {
             coordinator.appliedScrollRequest = request
             coordinator.scroll(to: request.line)
+        }
+        if let request = selectionRequest, request != coordinator.appliedSelectionRequest {
+            coordinator.appliedSelectionRequest = request
+            coordinator.reveal(request.range)
         }
         updateGutter(on: scrollView, textView: textView, coordinator: coordinator)
     }
@@ -395,6 +506,7 @@ extension MarkdownEditorView: UIViewRepresentable {
         textView.text = text
         apply(theme, to: textView)
         context.coordinator.textView = textView
+        context.coordinator.searchHighlight = searchHighlight
         context.coordinator.highlight(textView.textStorage, source: text)
         return textView
     }
@@ -407,6 +519,7 @@ extension MarkdownEditorView: UIViewRepresentable {
 
         let themeChanged = coordinator.appliedFontSize != theme.fontSize
         let textChanged = coordinator.appliedText != text
+        let searchChanged = coordinator.searchHighlight != searchHighlight
 
         if textChanged {
             let selection = textView.selectedRange
@@ -417,12 +530,19 @@ extension MarkdownEditorView: UIViewRepresentable {
             coordinator.appliedFontSize = theme.fontSize
             apply(theme, to: textView)
         }
-        if textChanged || themeChanged {
+        if searchChanged {
+            coordinator.searchHighlight = searchHighlight
+        }
+        if textChanged || themeChanged || searchChanged {
             coordinator.highlight(textView.textStorage, source: text)
         }
         if let request = scrollRequest, request != coordinator.appliedScrollRequest {
             coordinator.appliedScrollRequest = request
             coordinator.scroll(to: request.line)
+        }
+        if let request = selectionRequest, request != coordinator.appliedSelectionRequest {
+            coordinator.appliedSelectionRequest = request
+            coordinator.reveal(request.range)
         }
     }
 

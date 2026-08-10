@@ -19,25 +19,46 @@ BUILD_DIR=$(xcodebuild -scheme Nullnote -configuration Debug -showBuildSettings 
             | awk -F' = ' '/ BUILT_PRODUCTS_DIR/{print $2}' | head -1)
 APP="$BUILD_DIR/Nullnote.app"
 
+PATTERN="Nullnote.app/Contents/MacOS/Nullnote"
+
 # 起動しっぱなしだと古いコードを見ることになる。必ず落とす。
-if pgrep -f "Nullnote.app/Contents/MacOS/Nullnote" > /dev/null; then
+if pgrep -f "$PATTERN" > /dev/null; then
     echo "==> 起動中の Nullnote を終了"
+    # 名前で quit を送る。同名のアプリが複数あるとき（DerivedData のものと
+    # /Applications のもの）片方にしか届かないので、残りは下で強制終了する。
     osascript -e 'tell application "Nullnote" to quit' 2>/dev/null || true
     # 終了しきるまで待つ。ここを待たないと古いプロセスを掴む。
     i=0
-    while pgrep -f "Nullnote.app/Contents/MacOS/Nullnote" > /dev/null; do
+    while pgrep -f "$PATTERN" > /dev/null; do
         i=$((i + 1))
-        [ "$i" -gt 20 ] && { echo "    終了しないので強制終了"; pkill -f "Nullnote.app/Contents/MacOS/Nullnote"; break; }
+        [ "$i" -gt 20 ] && { echo "    終了しないので強制終了"; pkill -f "$PATTERN"; break; }
+        sleep 0.5
+    done
+
+    # 強制終了したあとも、プロセスが消えるまで待つ。
+    # ここを飛ばすと LaunchServices がまだ「起動中」と思っていて、
+    # 続く open が -600（procNotFound）で失敗する。
+    i=0
+    while pgrep -f "$PATTERN" > /dev/null; do
+        i=$((i + 1))
+        [ "$i" -gt 20 ] && { echo "    プロセスが残っています" >&2; exit 1; }
         sleep 0.5
     done
 fi
 
 echo "==> 起動"
-if [ $# -gt 0 ]; then
-    open -a "$APP" "$@"
-else
-    open -a "$APP"
-fi
+# プロセスが消えても LaunchServices の側が追いつくまで一拍ある。
+# 一度の失敗で諦めず、少しだけ待って開き直す。
+i=0
+until open -a "$APP" "$@" 2>/dev/null; do
+    i=$((i + 1))
+    if [ "$i" -gt 10 ]; then
+        echo "    起動できません。理由を出します" >&2
+        open -a "$APP" "$@"      # ← エラーを隠さずに出して終わる
+        exit 1
+    fi
+    sleep 0.5
+done
 
 sleep 4
 

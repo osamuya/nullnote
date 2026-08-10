@@ -53,6 +53,16 @@ public struct MarkdownTheme {
     public var quote: PlatformColor
     /// チェックボックスや表の見出しなど、注意を引かせたい要素。
     public var accent: PlatformColor
+    /// 検索でヒットした語の背景。
+    public var searchMatch: PlatformColor
+    /// 検索でいま見ているヒットの背景。ほかのヒットより一段強くする。
+    public var searchCurrentMatch: PlatformColor
+    /// ヒットの上に載せる文字の色。
+    ///
+    /// **外観に追従させない。** 追従させると、ダークでは白い文字を載せることになり、
+    /// 背景の側を暗く濁らせるほかなくなる（黄色が茶色になる）。
+    /// 明るい原色を両方の外観で使うために、文字の方を暗い色で固定する。
+    public var searchMatchText: PlatformColor
 
     public init(
         fontSize: CGFloat,
@@ -69,7 +79,10 @@ public struct MarkdownTheme {
         codeNumber: PlatformColor,
         link: PlatformColor,
         quote: PlatformColor,
-        accent: PlatformColor
+        accent: PlatformColor,
+        searchMatch: PlatformColor,
+        searchCurrentMatch: PlatformColor,
+        searchMatchText: PlatformColor
     ) {
         self.fontSize = fontSize
         self.appearance = appearance
@@ -86,6 +99,9 @@ public struct MarkdownTheme {
         self.link = link
         self.quote = quote
         self.accent = accent
+        self.searchMatch = searchMatch
+        self.searchCurrentMatch = searchCurrentMatch
+        self.searchMatchText = searchMatchText
     }
 
     /// 取り消した文字。
@@ -147,7 +163,13 @@ public struct MarkdownTheme {
             codeNumber: .dynamic(light: .rgb(23, 107, 117), dark: .rgb(143, 220, 230)),
             link: .dynamic(light: .rgb(20, 105, 200), dark: .rgb(105, 170, 250)),
             quote: .dynamic(light: .rgb(105, 110, 122), dark: .rgb(150, 155, 168)),
-            accent: .dynamic(light: .rgb(0, 128, 255), dark: .rgb(0, 128, 255))
+            accent: .dynamic(light: .rgb(0, 128, 255), dark: .rgb(0, 128, 255)),
+            // ヒットは**ライトとダークで同じ色**にする。文字の方を暗い色で固定した以上、
+            // 外観ごとに変える理由が無い。地の色（薄い灰／濃い青灰）のどちらに対しても
+            // 十分に浮く、彩度の高い黄と橙を選んである。
+            searchMatch: .rgb(255, 214, 10),
+            searchCurrentMatch: .rgb(255, 149, 0),
+            searchMatchText: .rgb(28, 28, 30)
         )
     }
 
