@@ -18,6 +18,14 @@ struct NullnoteApp: App {
         AppSettings.registerDefaults()
     }
 
+    /// ボタンやトグルの色。
+    ///
+    /// **OS のアクセントカラーに従わせない。** 従わせると、利用者の設定しだいで
+    /// ツールバーのボタンの色が変わる。配色を1組に決めている以上、ここも自分で持つ。
+    private var control: Color {
+        Color(platform: MarkdownTheme.standard(appearance: appearance).control)
+    }
+
     var body: some Scene {
         DocumentGroup(newDocument: MarkdownDocument()) { file in
             DocumentView(
@@ -26,6 +34,7 @@ struct NullnoteApp: App {
                 appearance: appearance,
                 showsLineNumbers: showsLineNumbers
             )
+            .tint(control)
         }
         .commands {
             CommandGroup(after: .sidebar) {
@@ -63,6 +72,7 @@ struct NullnoteApp: App {
                 appearance: $appearance,
                 showsLineNumbers: $showsLineNumbers
             )
+            .tint(control)
         }
     }
 }

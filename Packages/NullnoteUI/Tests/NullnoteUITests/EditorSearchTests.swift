@@ -192,4 +192,164 @@ struct EditorSearchSelectionTests {
         #expect(selection.location + selection.length <= (textView.string as NSString).length)
     }
 }
+/// 目次から飛んだ行を光らせる表示。
+///
+/// 検索のハイライトと違い、**残さない**。1 秒ほど置いてから 5 秒かけて薄れる。
+@Suite("ジャンプ先の点灯")
+@MainActor
+struct EditorFlashTests {
+
+    let theme = MarkdownTheme.standard()
+
+    func makeEditor(text: String) -> (NSTextView, MarkdownEditorView.Coordinator)? {
+        let scrollView = NSTextView.scrollableTextView()
+        scrollView.frame = NSRect(x: 0, y: 0, width: 400, height: 200)
+        guard let textView = scrollView.documentView as? NSTextView else { return nil }
+        textView.string = text
+        let coordinator = MarkdownEditorView.Coordinator(
+            text: .constant(text), theme: theme, topVisibleLine: nil
+        )
+        coordinator.textView = textView
+        coordinator.highlight(textView.textStorage, source: text)
+        return (textView, coordinator)
+    }
+
+    func background(of textView: NSTextView, at location: Int) -> NSColor? {
+        textView.textStorage?.attribute(.backgroundColor, at: location, effectiveRange: nil) as? NSColor
+    }
+
+    @Test("飛んだ行が光る")
+    func lightsTheLine() throws {
+        let made = try #require(makeEditor(text: "# 一行目\n\n## リンク\n\n本文\n"))
+        let (textView, coordinator) = made
+
+        #expect(background(of: textView, at: 0) == nil)
+        coordinator.flash(line: 3)
+
+        // 「## リンク」の行全体。記法文字も本文も塗られる。
+        let line = try #require(coordinator.flashRange)
+        #expect((textView.string as NSString).substring(with: line) == "## リンク")
+        #expect(background(of: textView, at: line.location) != nil)
+        #expect(background(of: textView, at: line.location + line.length - 1) != nil)
+    }
+
+    @Test("光らせる範囲に改行は含めない")
+    func excludesNewline() throws {
+        let made = try #require(makeEditor(text: "あ\nいう\nえ\n"))
+        let (_, coordinator) = made
+
+        coordinator.flash(line: 2)
+        #expect(coordinator.flashRange == NSRange(location: 2, length: 2))
+    }
+
+    @Test("薄い色で塗る。文字色には触らない")
+    func staysTranslucent() throws {
+        // 不透明にすると見出しの文字が読めなくなる。地の色と混ぜて濃さを稼ぐ。
+        let made = try #require(makeEditor(text: "## 見出し\n"))
+        let (textView, coordinator) = made
+        let headingColor = textView.textStorage?.attribute(.foregroundColor, at: 3, effectiveRange: nil) as? NSColor
+
+        coordinator.flash(line: 1)
+
+        let painted = try #require(background(of: textView, at: 3))
+        for appearance in [NSAppearance(named: .aqua), NSAppearance(named: .darkAqua)] {
+            appearance?.performAsCurrentDrawingAppearance {
+                let alpha = painted.usingColorSpace(.sRGB)?.alphaComponent ?? 1
+                #expect(alpha < 1)
+                #expect(alpha > 0)
+            }
+        }
+        // 文字色は見出しのまま。
+        #expect((textView.textStorage?.attribute(.foregroundColor, at: 3, effectiveRange: nil) as? NSColor) === headingColor)
+    }
+
+    @Test("点灯の濃さは外観ごとに変える", arguments: [MarkdownAppearance.light, .dark])
+    func alphaDependsOnAppearance(appearance: MarkdownAppearance) throws {
+        // 黄色は明るいので、ダークで同じ濃さにすると白い文字とのコントラストが落ちる。
+        let theme = MarkdownTheme.standard(appearance: appearance)
+        let target = try #require(NSAppearance(named: appearance == .light ? .aqua : .darkAqua))
+
+        var alpha = 0.0
+        var contrast = 0.0
+        target.performAsCurrentDrawingAppearance {
+            let flash = theme.jumpFlash(progress: 1).usingColorSpace(.sRGB)
+            alpha = Double(flash?.alphaComponent ?? 0)
+            contrast = Self.contrast(theme.heading, Self.blend(flash, over: theme.background))
+        }
+
+        #expect(alpha == (appearance == .light ? 0.55 : 0.35))
+        #expect(contrast >= 4.5, "点灯中に見出しが読めない: \\(contrast)")
+    }
+
+    @Test("薄れきると濃さが 0 になる")
+    func fadesToNothing() throws {
+        let theme = MarkdownTheme.standard(appearance: .dark)
+        let target = try #require(NSAppearance(named: .darkAqua))
+        target.performAsCurrentDrawingAppearance {
+            #expect(theme.jumpFlash(progress: 0).usingColorSpace(.sRGB)?.alphaComponent == 0)
+        }
+    }
+
+    /// 半透明の色を、地の色の上に重ねた結果。
+    private static func blend(_ color: NSColor?, over background: NSColor) -> NSColor {
+        guard let color = color?.usingColorSpace(.sRGB),
+              let base = background.usingColorSpace(.sRGB)
+        else { return background }
+        let a = color.alphaComponent
+        return NSColor(
+            srgbRed: color.redComponent * a + base.redComponent * (1 - a),
+            green: color.greenComponent * a + base.greenComponent * (1 - a),
+            blue: color.blueComponent * a + base.blueComponent * (1 - a),
+            alpha: 1
+        )
+    }
+
+    /// WCAG のコントラスト比。
+    private static func contrast(_ a: NSColor, _ b: NSColor) -> Double {
+        func luminance(_ color: NSColor) -> Double {
+            guard let c = color.usingColorSpace(.sRGB) else { return 0 }
+            func channel(_ v: Double) -> Double {
+                v <= 0.03928 ? v / 12.92 : pow((v + 0.055) / 1.055, 2.4)
+            }
+            return 0.2126 * channel(c.redComponent)
+                + 0.7152 * channel(c.greenComponent)
+                + 0.0722 * channel(c.blueComponent)
+        }
+        let high = max(luminance(a), luminance(b))
+        let low = min(luminance(a), luminance(b))
+        return (high + 0.05) / (low + 0.05)
+    }
+
+    @Test("打鍵で貼り直しても点灯は消えない")
+    func survivesRehighlight() throws {
+        let source = "## 見出し\n"
+        let made = try #require(makeEditor(text: source))
+        let (textView, coordinator) = made
+
+        coordinator.flash(line: 1)
+        // ハイライタは属性を捨ててから貼る。点灯がその後に載っていないと消える。
+        coordinator.highlight(textView.textStorage, source: source)
+        #expect(background(of: textView, at: 3) != nil)
+    }
+
+    @Test("空行を指されても塗らない")
+    func ignoresEmptyLine() throws {
+        let made = try #require(makeEditor(text: "あ\n\nい\n"))
+        let (_, coordinator) = made
+
+        coordinator.flash(line: 2)
+        #expect(coordinator.flashRange == nil)
+    }
+
+    @Test("次のジャンプが来たら、そちらへ移る")
+    func movesToNewLine() throws {
+        let made = try #require(makeEditor(text: "# あ\n# い\n"))
+        let (_, coordinator) = made
+
+        coordinator.flash(line: 1)
+        #expect(coordinator.flashRange?.location == 0)
+        coordinator.flash(line: 2)
+        #expect(coordinator.flashRange?.location == 4)
+    }
+}
 #endif

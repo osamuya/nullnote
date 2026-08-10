@@ -135,10 +135,11 @@ struct LineNumberGutterTests {
 
     /// 回帰テスト（決定記録 B-10）。
     ///
-    /// ハイライト色（`selectedTextBackgroundColor`）は選択範囲の「背景」用に
-    /// 明度を上げた色で、文字色に使うとライトの背景に埋もれて読めない。
-    @Test("強調の色は、ハイライト色そのものより背景と見分けやすい", arguments: [MarkdownAppearance.light, .dark])
-    func activeColorIsMoreLegibleThanRawHighlight(appearance: MarkdownAppearance) throws {
+    /// かつては OS のハイライト色に従わせていたが、`selectedTextBackgroundColor` は
+    /// 選択範囲の「背景」用に明度を上げた色で、文字色に使うとライトの背景に埋もれて読めない。
+    /// いまは配色表に取り込んだ固定色だが、同じ罠を踏んでいないことを縛っておく。
+    @Test("カーソル行の番号は背景に対して読める", arguments: [MarkdownAppearance.light, .dark])
+    func activeLineNumberIsLegible(appearance: MarkdownAppearance) throws {
         let theme = MarkdownTheme.standard(appearance: appearance)
         let target = try #require(NSAppearance(named: appearance == .light ? .aqua : .darkAqua))
 
@@ -151,10 +152,27 @@ struct LineNumberGutterTests {
             saturation = Double(theme.activeLineNumber.usingColorSpace(.sRGB)?.saturationComponent ?? 0)
         }
 
-        #expect(chosen > raw, "ハイライト色そのままより読みにくい色を選んでいる")
+        #expect(chosen >= 4.5, "本文と同じ基準（4.5）を満たしていない: \(chosen)")
+        #expect(chosen > raw, "OS のハイライト色そのままより読みにくい色を選んでいる")
         // ふつうの行番号は灰色なので、色が付いていること自体が見分けの手がかりになる。
         // 明度で比べても意味が無い（琥珀色と灰色は明るさが近い）。
         #expect(saturation > 0.4, "行番号の灰色と見分けが付く色になっていない")
+    }
+
+    /// 利用者が OS のアクセントカラーを何にしていても、見た目が変わらないこと。
+    @Test("配色は OS の設定に左右されない", arguments: [MarkdownAppearance.light, .dark])
+    func paletteIgnoresSystemAccent(appearance: MarkdownAppearance) throws {
+        let theme = MarkdownTheme.standard(appearance: appearance)
+        let target = try #require(NSAppearance(named: appearance == .light ? .aqua : .darkAqua))
+
+        target.performAsCurrentDrawingAppearance {
+            let system = [NSColor.controlAccentColor, .selectedContentBackgroundColor, .selectedTextBackgroundColor]
+                .compactMap { $0.usingColorSpace(.sRGB) }
+            for color in [theme.control, theme.activeLineNumber, theme.outlineSelection, theme.searchMatch] {
+                let resolved = color.usingColorSpace(.sRGB)
+                #expect(system.allSatisfy { $0 != resolved }, "OS の色をそのまま使っている")
+            }
+        }
     }
 
     /// WCAG のコントラスト比。

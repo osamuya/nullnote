@@ -107,6 +107,23 @@ public struct MarkdownEditorView {
         var appliedSelectionRequest: EditorSelectionRequest?
         /// いま塗ってある検索のヒット。ハイライトのたびに上へ重ねる。
         var searchHighlight: SearchHighlight?
+
+        // MARK: - ジャンプ先の点灯
+
+        /// 目次から飛んだ直後に光らせている行の範囲。消えたら nil。
+        var flashRange: NSRange?
+        /// 点灯の残り具合。1 が点いた直後、0 で消えている。
+        /// 実際の濃さは外観ごとに違うので、決めるのはテーマ側（`jumpFlash(progress:)`）。
+        var flashProgress: CGFloat = 0
+        /// 薄れさせている最中の処理。次のジャンプが来たら取り消す。
+        private var flashTask: Task<Void, Never>?
+
+        /// 濃いまま置く時間。
+        static let flashHold = Duration.milliseconds(800)
+        /// 薄れていく時間。
+        static let flashFade = Duration.milliseconds(5200)
+        /// 薄れていく途中の書き直しの回数。30 fps 相当。
+        static let flashSteps = 156
         #if canImport(AppKit)
         /// 行番号を描いているテキストビュー。表示していないときは nil のまま。
         weak var gutterTextView: FocusReportingTextView?
@@ -131,6 +148,8 @@ public struct MarkdownEditorView {
             highlighter.apply(to: storage, text: source)
             // ハイライタは属性を貼り直す（既存を捨てる）ので、検索の塗りは必ずその後。
             applySearchHighlight(to: storage)
+            // 点灯はさらにその上。打鍵で貼り直されても消えないよう、ここに含める。
+            applyFlash(to: storage)
             #if canImport(AppKit)
             gutterTextView?.lineNumbers?.lineIndex = lineIndex
             #endif
@@ -159,6 +178,67 @@ public struct MarkdownEditorView {
                     .foregroundColor: theme.searchMatchText,
                 ], range: range)
             }
+        }
+
+        /// ジャンプ先の行を光らせて、ゆっくり消す。
+        ///
+        /// 「どこに降りたか」を示すためだけの表示なので、残さない。
+        /// ただし急に消えると見落とすので、1 秒ほど置いてから 5 秒かけて薄れさせる。
+        func flash(line: Int) {
+            flashTask?.cancel()
+
+            let range = lineIndex.utf16Range(ofLine: line)
+            guard range.length > 0 else {
+                flashRange = nil
+                flashProgress = 0
+                return
+            }
+            flashRange = range
+            flashProgress = 1
+            repaintFlash()
+
+            flashTask = Task { [weak self] in
+                try? await Task.sleep(for: Self.flashHold)
+                guard !Task.isCancelled else { return }
+
+                let interval = Self.flashFade / Self.flashSteps
+                for step in 1...Self.flashSteps {
+                    try? await Task.sleep(for: interval)
+                    guard !Task.isCancelled, let self else { return }
+                    self.flashProgress = 1 - CGFloat(step) / CGFloat(Self.flashSteps)
+                    self.repaintFlash()
+                }
+
+                guard !Task.isCancelled, let self else { return }
+                // 薄れきったら、下に隠していた属性（コードブロックの背景など）を戻す。
+                self.flashRange = nil
+                self.flashProgress = 0
+                self.highlight(self.textView?.textStorage, source: self.appliedText)
+            }
+        }
+
+        /// 点灯している範囲だけ塗り直す。
+        ///
+        /// 全文を貼り直さない。薄れさせるあいだ 30 fps で走るので、
+        /// ここで 5 ms を払うと目に見えて重くなる。
+        private func repaintFlash() {
+            guard let storage = textView?.textStorage else { return }
+            applyFlash(to: storage)
+        }
+
+        /// ジャンプ先の行を、半透明の色で塗る。
+        private func applyFlash(to storage: NSMutableAttributedString) {
+            guard let flashRange, flashProgress > 0.01,
+                  flashRange.location >= 0,
+                  flashRange.length > 0,
+                  flashRange.location + flashRange.length <= storage.length
+            else { return }
+
+            storage.addAttribute(
+                .backgroundColor,
+                value: highlighter.theme.jumpFlash(progress: flashProgress),
+                range: flashRange
+            )
         }
 
         /// その行が画面の上端に来るようスクロールする。
@@ -422,6 +502,8 @@ extension MarkdownEditorView: NSViewRepresentable {
         if let request = scrollRequest, request != coordinator.appliedScrollRequest {
             coordinator.appliedScrollRequest = request
             coordinator.scroll(to: request.line)
+            // 目次から飛んだことが分かるよう、その行を光らせる。
+            coordinator.flash(line: request.line)
         }
         if let request = selectionRequest, request != coordinator.appliedSelectionRequest {
             coordinator.appliedSelectionRequest = request
@@ -539,6 +621,8 @@ extension MarkdownEditorView: UIViewRepresentable {
         if let request = scrollRequest, request != coordinator.appliedScrollRequest {
             coordinator.appliedScrollRequest = request
             coordinator.scroll(to: request.line)
+            // 目次から飛んだことが分かるよう、その行を光らせる。
+            coordinator.flash(line: request.line)
         }
         if let request = selectionRequest, request != coordinator.appliedSelectionRequest {
             coordinator.appliedSelectionRequest = request

@@ -114,7 +114,27 @@ public struct MarkdownTheme {
     ///
     /// OS のアクセント色は使わない。窓が前面かどうかで色が変わってしまい、
     /// 「今どこを見ているか」を示すだけの用途には強すぎる。
-    public var outlineSelection: PlatformColor { marker.withAlphaComponent(0.32) }
+    ///
+    /// 半透明の黄色。**不透明にしない。** 地の色と混ぜることで、
+    /// 項目の文字色に手を入れずに読める濃さに収まる（ダークで 4.99、ライトで 15 以上）。
+    public var outlineSelection: PlatformColor { searchMatch.withAlphaComponent(0.28) }
+
+    /// 目次から飛んだ行を光らせる色。`progress` は 1 から 0 へ落ちる。
+    ///
+    /// **濃さを外観ごとに変えている。** 黄色はもともと明るいので、
+    /// ダークで同じ濃さにすると本文の白い文字とのコントラストが 3.3 まで落ちる。
+    /// ライト 0.55 / ダーク 0.35 で、どちらも見出しの文字が読める
+    /// （ライト 15 以上、ダーク 4.96）。
+    ///
+    /// 半透明のまま地の色と混ぜるので、**文字色には触らなくてよい。**
+    /// 触ると、薄れていく途中で元の色へ戻す処理が要る。
+    public func jumpFlash(progress: CGFloat) -> PlatformColor {
+        let level = max(0, min(1, progress))
+        return .dynamic(
+            light: .rgb(255, 214, 10).withAlphaComponent(0.55 * level),
+            dark: .rgb(255, 214, 10).withAlphaComponent(0.35 * level)
+        )
+    }
 
     /// 表の見出し行の背景。本文の背景から一段ずらして、見出しだと分かるようにする。
     ///
@@ -125,23 +145,27 @@ public struct MarkdownTheme {
     /// 表の罫線。
     public var tableBorder: PlatformColor { marker.withAlphaComponent(0.45) }
 
+    /// ボタンやトグルが「オン」のときの色。
+    ///
+    /// **OS のアクセントカラーに従わせない。** 利用者の設定しだいで
+    /// 目次・検索・プレビューのボタンの色が変わってしまい、
+    /// 配色を1組に決めている意味が薄れる。
+    ///
+    /// いまは検索のヒットと同じ黄色。役割が違うので名前は分けてある
+    /// （どちらかだけ変えたくなったときに困らない）。
+    public var control: PlatformColor { searchMatch }
+
     /// 今カーソルがある行の番号に使う色。
     ///
-    /// 配色表に持たず、OS のハイライト／アクセント設定に従う。
-    /// ここだけ利用者の設定色が出るのは意図的で、
-    /// 「今どこにいるか」は OS の選択表示と揃えた方が迷わない。
+    /// **かつては OS のハイライト／アクセント設定に従わせていた。**
+    /// 「今どこにいるか」を OS の選択表示と揃える意図だったが、
+    /// 利用者の設定しだいで読めない色にもなり得るのをやめ、配色表に取り込んだ。
     ///
-    /// **`selectedTextBackgroundColor`（ハイライト色そのもの）は使えない。**
-    /// あれは選択範囲の「背景」用に明度を上げた色で、文字色に使うと
-    /// ライトの背景（#F5F5F5）とのコントラスト比が 1.4 程度しか出ず読めない。
-    /// 同じ設定から導かれる `selectedContentBackgroundColor` は
-    /// 選択項目の背景色で、文字として置いても読める濃さがある。
+    /// ライトでは暗い琥珀、ダークでは `control` と同じ黄色。**同じ値にはできない。**
+    /// `#FFD60A` は文字色として置くとライトの背景（#F5F5F5）との比が 1.29 しかなく読めない
+    /// （システム色を使っていた頃に踏んだ B-10 と同じ罠）。
     public var activeLineNumber: PlatformColor {
-        #if canImport(AppKit)
-        .selectedContentBackgroundColor
-        #else
-        .tintColor
-        #endif
+        .dynamic(light: .rgb(126, 96, 0), dark: .rgb(255, 214, 10))
     }
 
     public static func standard(
