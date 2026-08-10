@@ -82,6 +82,9 @@ defaults read ~/Library/Containers/com.roughlang.Nullnote/Data/Library/Preferenc
 テーマは配色を2組持つのではなく、動的な色の解決先を上書きしている
 （`docs/02-decision-log.md` の D-11）。
 
+**ボタンの色は OS のアクセントカラーに従わない。** `.tint()` で `#FFD60A` に固定してある
+（同 D-22）。利用者の設定で目次・検索・プレビューのボタンの色が変わらないようにするため。
+
 macOS 標準の書類まわりは AppKit が用意する。**間違えやすいので明記しておく:**
 
 | 操作 | ショートカット | 注意 |

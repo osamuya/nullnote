@@ -79,9 +79,11 @@ enum PreviewAttributes {
         paragraph.alignment = alignment
 
         let result = NSMutableAttributedString()
+        /// インラインコードの範囲。あとで前後に隙間を作るために覚えておく。
+        var codeRanges: [NSRange] = []
 
         for run in text.runs {
-            let piece = String(text[run.range].characters)
+            var piece = String(text[run.range].characters)
             guard !piece.isEmpty else { continue }
 
             let intent = run.inlinePresentationIntent ?? []
@@ -91,8 +93,13 @@ enum PreviewAttributes {
 
             if intent.contains(.code) {
                 font = .editorMonospaced(size: baseFont.pointSize)
-                color = theme.code
-                attributes[.backgroundColor] = theme.codeBackground
+                color = theme.inlineCodeText
+                // 角丸の札は `InlineCodeLayoutManager` が描く。
+                // ここは「背景色が付いている」ことだけ伝える。
+                attributes[.backgroundColor] = theme.inlineCodeBackground
+                // 左の余白を作るための、幅ゼロの文字を頭に足す（後述）。
+                piece = Self.leadingSpacer + piece
+                codeRanges.append(NSRange(location: result.length, length: (piece as NSString).length))
             }
             font = font.addingTraits(
                 bold: intent.contains(.stronglyEmphasized),
@@ -115,13 +122,105 @@ enum PreviewAttributes {
             attributes[.foregroundColor] = color
             result.append(NSAttributedString(string: piece, attributes: attributes))
         }
+        addSpacing(around: codeRanges, in: result, padding: theme.inlineCodePadding)
         return result
+    }
+
+    /// 札の左の余白を作るための、幅ゼロの文字。
+    ///
+    /// **U+2060（WORD JOINER）を使う。** 同じ幅ゼロでも U+200B（ZERO WIDTH SPACE）は
+    /// 改行してよい位置として扱われ、札の頭だけが行末に取り残されることがある。
+    static let leadingSpacer = "\u{2060}"
+
+    /// インラインコードの前後に余白と隙間を作る。
+    ///
+    /// **札の矩形を左右に広げる形にはできない。** 文字の位置は変わらないので隣の字にかぶるし、
+    /// 行やマスの先頭では左に広げる余地が無く、余白が 0 に潰れる（実際に潰れていた）。
+    /// 余白も隙間も、字送りを広げて**実体のある空き**として作る。
+    ///
+    /// `kern` は「その文字の**後ろ**」に空きを足す。置き場所は3つ。
+    ///
+    /// ```
+    /// あ    ⁠[  code  ]    い
+    ///   ↑   ↑        ↑
+    ///   隙間 左の余白  右の余白＋隙間
+    ///   直前 幅ゼロの   最後の文字（半分は札に、半分は隙間に）
+    ///   の字 文字
+    /// ```
+    ///
+    /// 先頭の空きは札の中（幅ゼロの文字）に置くので、**行頭でも潰れない。**
+    ///
+    /// 測定用の文字列にも同じ処理が入る。入れないと、札のぶんだけ幅が足りなくなる。
+    private static func addSpacing(around ranges: [NSRange], in string: NSMutableAttributedString, padding: CGFloat) {
+        for range in ranges where range.length > 1 {
+            // 直前の字との隙間。
+            if range.location > 0 {
+                string.addAttribute(.kern, value: padding, range: NSRange(location: range.location - 1, length: 1))
+            }
+            // 札の中の、左の余白。
+            string.addAttribute(.kern, value: padding, range: NSRange(location: range.location, length: 1))
+            // 札の中の右の余白と、次の字との隙間。描く側で半分だけ札に取り込む。
+            string.addAttribute(.kern, value: padding * 2, range: NSRange(location: NSMaxRange(range) - 1, length: 1))
+        }
     }
 }
 
 // MARK: - macOS の実装
 
 #if canImport(AppKit)
+
+/// インラインコードを、角丸の札として描くレイアウトマネージャ。
+///
+/// `NSAttributedString` の `.backgroundColor` は**角の無い矩形**をそのまま塗る。
+/// 余白も付かないので、記法文字（バッククォート）が消えたプレビューでは
+/// ただの色付きの文字にしか見えない。塗るところだけ差し替える。
+///
+/// `fillBackgroundRectArray` は AppKit が背景色の続く範囲ごとに呼ぶ。
+/// **行をまたぐと矩形が複数渡る**ので、受け取った数だけ描く。
+///
+/// プレビューで `.backgroundColor` を使うのはインラインコードだけ
+/// （コードブロックと表の見出しは SwiftUI 側で敷いている）。
+/// ここが増えたら、色で見分けるのではなく専用の属性を足すこと。
+final class InlineCodeLayoutManager: NSLayoutManager {
+
+    /// 角丸と余白の寸法を決めるために持つ。設定されるまでは既定の描き方に任せる。
+    var theme: MarkdownTheme?
+
+    override func fillBackgroundRectArray(
+        _ rectArray: UnsafePointer<NSRect>,
+        count: Int,
+        forCharacterRange charRange: NSRange,
+        color: NSColor
+    ) {
+        guard let theme else {
+            return super.fillBackgroundRectArray(rectArray, count: count, forCharacterRange: charRange, color: color)
+        }
+
+        let padding = theme.inlineCodePadding
+        let radius = theme.inlineCodeCornerRadius
+        color.setFill()
+        theme.inlineCodeBorder.setStroke()
+
+        for index in 0..<count {
+            var rect = rectArray[index]
+
+            // 左の余白は札の中（幅ゼロの文字）に入っているので、ここでは触らない。
+            // 右端に付けた空き（padding * 2）だけ、半分を隣との隙間として残す。
+            rect.size.width = max(0, rect.width - padding)
+
+            // 高さは行の高さではなく文字の大きさから決める。行間まで塗ると
+            // 札が縦に伸びて、行が詰まって見える。
+            let height = min(rect.height, theme.inlineCodeHeight)
+            rect.origin.y += ((rect.height - height) / 2).rounded()
+            rect.size.height = height
+
+            let path = NSBezierPath(roundedRect: rect.insetBy(dx: 0.5, dy: 0.5), xRadius: radius, yRadius: radius)
+            path.fill()
+            path.lineWidth = 1
+            path.stroke()
+        }
+    }
+}
 
 private struct PreviewTextRepresentable: NSViewRepresentable {
 
@@ -168,7 +267,17 @@ private struct PreviewTextRepresentable: NSViewRepresentable {
         }
 
         /// 折り返さずに1行で並べたときの幅。
-        var naturalWidth: CGFloat { ceil(measuringStorage.size().width) }
+        ///
+        /// **`NSAttributedString.size()` は使わない。** 実際に組んだときの幅と
+        /// 食い違うことがある（インラインコードの頭に入れた幅ゼロの文字の
+        /// 字送りが数えられず、表の列が1文字ぶん足りなくなった）。
+        /// 高さと同じレイアウトで測れば、必ず表示と一致する。
+        var naturalWidth: CGFloat {
+            measuringContainer.containerSize =
+                NSSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
+            measuringLayout.ensureLayout(for: measuringContainer)
+            return ceil(measuringLayout.usedRect(for: measuringContainer).width)
+        }
     }
 
     func makeCoordinator() -> Coordinator { Coordinator() }
@@ -204,7 +313,8 @@ private struct PreviewTextRepresentable: NSViewRepresentable {
         // レイアウトの寸法を測るため、TextKit 1 で組み立てる。
         // `NSTextView(frame:)` だけだと TextKit 2 になり、`layoutManager` が nil になる。
         let storage = NSTextStorage()
-        let layoutManager = NSLayoutManager()
+        let layoutManager = InlineCodeLayoutManager()
+        layoutManager.theme = theme
         let container = NSTextContainer(size: NSSize(width: 0, height: CGFloat.greatestFiniteMagnitude))
         container.widthTracksTextView = true
         container.lineFragmentPadding = 0
@@ -228,6 +338,8 @@ private struct PreviewTextRepresentable: NSViewRepresentable {
 
     func updateNSView(_ textView: LinkHoverTextView, context: Context) {
         guard needsRebuild(context.coordinator) else { return }
+        // 文字サイズが変わると角丸と余白の寸法も変わる。渡し直す。
+        (textView.layoutManager as? InlineCodeLayoutManager)?.theme = theme
         apply(theme, to: textView)
         textView.textStorage?.setAttributedString(attributed)
         context.coordinator.measuringStorage.setAttributedString(measuring)

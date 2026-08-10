@@ -136,6 +136,44 @@ public struct MarkdownTheme {
         )
     }
 
+    // MARK: - プレビューのインラインコード
+
+    // プレビューだけ、インラインコード（`` `code` ``）を角丸の札として描く。
+    // **編集画面はこの色を使わない。** あちらは記法文字（バッククォート）が見えている
+    // ぶん、地の色をうっすら変えるだけで十分に区別が付く。
+    // プレビューは記法文字が消えるので、輪郭のある札にしないと本文に埋もれる。
+
+    // 色は1つずつ作り置きする。呼ぶたびに作ると、文字の並びの数だけ
+    // 動的な色が生まれるうえ、同じ色かどうかを同一性で比べられなくなる。
+
+    /// 札の中の文字。ライトは黒、ダークは白。
+    public var inlineCodeText: PlatformColor { Self.inlineCodeTextColor }
+    /// 札の地。
+    public var inlineCodeBackground: PlatformColor { Self.inlineCodeBackgroundColor }
+    /// 札の枠線。ライトは薄い灰、ダークは薄い白。
+    ///
+    /// ライトは地と背景の差が 1.06 しかないので、線が無いと札の形が分からない。
+    /// ダークは地だけでも浮く（1.65）が、線を入れると縁が締まる。
+    /// **ダークは不透明な白にしない。** 地より明るい線が主張しすぎる。
+    public var inlineCodeBorder: PlatformColor { Self.inlineCodeBorderColor }
+
+    private static let inlineCodeTextColor: PlatformColor =
+        .dynamic(light: .rgb(28, 28, 30), dark: .rgb(255, 255, 255))
+    private static let inlineCodeBackgroundColor: PlatformColor =
+        .dynamic(light: .rgb(237, 237, 241), dark: .rgb(71, 83, 91))
+    private static let inlineCodeBorderColor: PlatformColor =
+        .dynamic(light: .rgb(192, 192, 200), dark: .rgb(255, 255, 255).withAlphaComponent(0.22))
+
+    /// 札の角の丸み。**丸めすぎない。** 角丸が大きいと薬のカプセルのようになり、
+    /// 文中に置いたときボタンと見分けが付かなくなる。
+    public var inlineCodeCornerRadius: CGFloat { (fontSize * 0.20).rounded() }
+
+    /// 札の中の左右の余白。同じ幅だけ、隣の文字との間もあける。
+    public var inlineCodePadding: CGFloat { (fontSize * 0.30).rounded() }
+
+    /// 札の高さ。行の高さではなく文字の大きさから決める。
+    public var inlineCodeHeight: CGFloat { (fontSize * 1.55).rounded() }
+
     /// 表の見出し行の背景。本文の背景から一段ずらして、見出しだと分かるようにする。
     ///
     /// いまはコードブロックの背景と同じ値。役割が違うので名前は分けてある

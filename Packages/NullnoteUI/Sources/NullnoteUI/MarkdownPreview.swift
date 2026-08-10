@@ -338,7 +338,10 @@ private struct PreviewTableView: View {
         PreviewText(cell, theme: theme, font: font, alignment: alignment(of: column))
             .padding(.horizontal, 10)
             .padding(.vertical, 6)
-            .frame(maxWidth: .infinity, alignment: .leading)
+            // **縦にも広げること。** `Grid` は行の高さを一番高いマスに合わせるが、
+            // マスの方を引き伸ばしはしない。背の低いマス（空のマスや、
+            // 隣が折り返して2行になった行）の下に下地の罫線色がそのまま出る。
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             .background(Color(platform: fill))
     }
 
