@@ -17,6 +17,8 @@ public struct MarkdownSearchField: View {
     private let hasMatches: Bool
     private let theme: MarkdownTheme
     private let focus: FocusState<Bool>.Binding
+    /// 「焦点を取れ」の合図。値が変わるたびに入力欄へ焦点を移す。
+    private let focusGeneration: Int
     private let onNext: () -> Void
     private let onPrevious: () -> Void
     private let onClose: () -> Void
@@ -27,6 +29,7 @@ public struct MarkdownSearchField: View {
         hasMatches: Bool,
         theme: MarkdownTheme,
         focus: FocusState<Bool>.Binding,
+        focusGeneration: Int = 0,
         onNext: @escaping () -> Void,
         onPrevious: @escaping () -> Void,
         onClose: @escaping () -> Void
@@ -36,6 +39,7 @@ public struct MarkdownSearchField: View {
         self.hasMatches = hasMatches
         self.theme = theme
         self.focus = focus
+        self.focusGeneration = focusGeneration
         self.onNext = onNext
         self.onPrevious = onPrevious
         self.onClose = onClose
@@ -91,6 +95,7 @@ public struct MarkdownSearchField: View {
                 // 奪ってしまう。前へ戻るのは ⌘⇧G とボタンに任せる。
                 .onSubmit(onNext)
                 .accessibilityLabel("検索")
+                .focusFromAppKit(generation: focusGeneration)
 
             if !query.isEmpty {
                 Button {
@@ -132,6 +137,16 @@ public struct MarkdownSearchField: View {
 }
 
 private extension View {
+    /// AppKit の側から焦点を渡す。SwiftUI の焦点指定はツールバーの中まで届かない。
+    @ViewBuilder
+    func focusFromAppKit(generation: Int) -> some View {
+        #if canImport(AppKit)
+        background(SearchFieldFocuser(generation: generation).frame(width: 0, height: 0))
+        #else
+        self
+        #endif
+    }
+
     /// esc で閉じる。macOS だけの作法なので、ここで platform 差を吸収する。
     @ViewBuilder
     func dismissesOnEscape(_ action: @escaping () -> Void) -> some View {
@@ -142,3 +157,71 @@ private extension View {
         #endif
     }
 }
+
+#if canImport(AppKit)
+
+/// 入力欄に、AppKit の側から焦点を渡す。
+///
+/// **SwiftUI の `@FocusState` はツールバーの中まで届かない。**
+/// ツールバーの項目は本文とは別の階層に載るため、`focused(_:)` を書いても
+/// 焦点が移らなかった（⌘F を押しても本文にカーソルが残ったまま）。
+///
+/// 入力欄の隣に大きさゼロのビューを1枚置き、そこから兄弟の `NSTextField` を
+/// 探して first responder にする。
+struct SearchFieldFocuser: NSViewRepresentable {
+
+    /// 「いま焦点を取れ」の合図。値が変わるたびに1回だけ効く。
+    let generation: Int
+
+    final class Coordinator {
+        var applied: Int?
+    }
+
+    func makeCoordinator() -> Coordinator { Coordinator() }
+
+    func makeNSView(context: Context) -> NSView {
+        let view = NSView(frame: .zero)
+        view.setContentHuggingPriority(.required, for: .horizontal)
+        return view
+    }
+
+    func updateNSView(_ view: NSView, context: Context) {
+        guard context.coordinator.applied != generation else { return }
+        context.coordinator.applied = generation
+
+        // このビューがまだ窓に載っていないことがある（出した直後）。
+        // 描き終わってから探す。
+        DispatchQueue.main.async {
+            guard let window = view.window, let field = view.enclosingTextField else { return }
+            window.makeFirstResponder(field)
+        }
+    }
+}
+
+private extension NSView {
+    /// 自分の下にある最初の `NSTextField`。SwiftUI の `TextField` はこれで描かれる。
+    var firstTextField: NSTextField? {
+        if let field = self as? NSTextField { return field }
+        for subview in subviews {
+            if let found = subview.firstTextField { return found }
+        }
+        return nil
+    }
+
+    /// 近くにある入力欄。自分から親をたどって探す。
+    ///
+    /// 窓の全体から探さないのは、ツールバーが本文とは別の階層
+    /// （`NSTitlebarContainerView`）に載っていて、たどり方が変わるため。
+    /// 段数は区切る。見つからないなら、そもそも置き場所が想定と違う。
+    var enclosingTextField: NSTextField? {
+        var ancestor = superview
+        for _ in 0..<6 {
+            guard let current = ancestor else { return nil }
+            if let field = current.firstTextField { return field }
+            ancestor = current.superview
+        }
+        return nil
+    }
+}
+
+#endif

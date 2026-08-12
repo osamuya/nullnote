@@ -38,6 +38,15 @@ public struct EditorSelectionRequest: Equatable, Sendable {
     }
 }
 
+/// 「入力の焦点を編集画面に戻して」という依頼。
+///
+/// 検索欄を閉じたときに使う。閉じただけでは焦点が宙に浮き、
+/// そのまま打っても本文に入らない。同じ依頼を続けて出しても効くよう `id` を持つ。
+public struct EditorFocusRequest: Equatable, Sendable {
+    private let id = UUID()
+    public init() {}
+}
+
 @MainActor
 public struct MarkdownEditorView {
 
@@ -51,6 +60,8 @@ public struct MarkdownEditorView {
     var selectionRequest: EditorSelectionRequest?
     /// 検索でヒットした範囲。塗るだけで、移動はさせない。
     var searchHighlight: SearchHighlight?
+    /// 「入力の焦点を戻して」という依頼。検索欄を閉じたときに来る。
+    var focusRequest: EditorFocusRequest?
     /// 左端に行番号を出すか。
     var showsLineNumbers: Bool
     /// システムの外観が変わったときに再評価させるためだけに読む。
@@ -64,6 +75,7 @@ public struct MarkdownEditorView {
         scrollRequest: EditorScrollRequest? = nil,
         selectionRequest: EditorSelectionRequest? = nil,
         searchHighlight: SearchHighlight? = nil,
+        focusRequest: EditorFocusRequest? = nil,
         showsLineNumbers: Bool = false
     ) {
         self._text = text
@@ -72,6 +84,7 @@ public struct MarkdownEditorView {
         self.scrollRequest = scrollRequest
         self.selectionRequest = selectionRequest
         self.searchHighlight = searchHighlight
+        self.focusRequest = focusRequest
         self.showsLineNumbers = showsLineNumbers
     }
 
@@ -105,6 +118,8 @@ public struct MarkdownEditorView {
         var appliedScrollRequest: EditorScrollRequest?
         /// 最後に処理した選択依頼。同上。
         var appliedSelectionRequest: EditorSelectionRequest?
+        /// 最後に処理した焦点の依頼。同上。
+        var appliedFocusRequest: EditorFocusRequest?
         /// いま塗ってある検索のヒット。ハイライトのたびに上へ重ねる。
         var searchHighlight: SearchHighlight?
         /// 直前の打鍵で書き換わった範囲。差分ハイライトの起点にする。
@@ -322,6 +337,16 @@ public struct MarkdownEditorView {
             #endif
         }
 
+        /// 入力の焦点を編集画面に戻す。
+        func takeFocus() {
+            guard let textView else { return }
+            #if canImport(AppKit)
+            textView.window?.makeFirstResponder(textView)
+            #elseif canImport(UIKit)
+            textView.becomeFirstResponder()
+            #endif
+        }
+
         /// 書き換わった範囲を覚える。
         ///
         /// `NSTextStorageDelegate` として受け取る。テキストビューの delegate は
@@ -535,6 +560,10 @@ extension MarkdownEditorView: NSViewRepresentable {
             coordinator.appliedSelectionRequest = request
             coordinator.reveal(request.range)
         }
+        if let request = focusRequest, request != coordinator.appliedFocusRequest {
+            coordinator.appliedFocusRequest = request
+            coordinator.takeFocus()
+        }
         updateGutter(on: scrollView, textView: textView, coordinator: coordinator)
     }
 
@@ -678,6 +707,10 @@ extension MarkdownEditorView: UIViewRepresentable {
         if let request = selectionRequest, request != coordinator.appliedSelectionRequest {
             coordinator.appliedSelectionRequest = request
             coordinator.reveal(request.range)
+        }
+        if let request = focusRequest, request != coordinator.appliedFocusRequest {
+            coordinator.appliedFocusRequest = request
+            coordinator.takeFocus()
         }
     }
 

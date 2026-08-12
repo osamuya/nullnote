@@ -25,6 +25,10 @@ struct DocumentView: View {
     /// 検索から「このヒットを見せて」と伝えるための依頼。
     @State private var selectionRequest: EditorSelectionRequest?
     @FocusState private var searchFocused: Bool
+    /// 検索欄に「焦点を取れ」と伝えるための合図。⌘F のたびに増やす。
+    @State private var searchFocusGeneration = 0
+    /// 検索欄を閉じたとき、編集画面へ焦点を返すための依頼。
+    @State private var editorFocusRequest: EditorFocusRequest?
 
     /// エディタとプレビューの幅の比率。開いたときは半々。
     /// 中央の線を動かせばその比率を保つ（ウインドウを広げても割合は変わらない）。
@@ -134,6 +138,7 @@ struct DocumentView: View {
             hasMatches: search.currentRange != nil,
             theme: theme,
             focus: $searchFocused,
+            focusGeneration: searchFocusGeneration,
             onNext: { move { $0.moveToNext() } },
             onPrevious: { move { $0.moveToPrevious() } },
             onClose: closeSearch
@@ -157,6 +162,8 @@ struct DocumentView: View {
     /// `disabled` にしてあるため。同じ呼び出しの中で焦点を指定しても、
     /// まだ無効なので効かない。描き直しのあとに移す（`onChange`）。
     private func openSearch() {
+        // 合図を増やすと、入力欄が AppKit の側から焦点を取りに行く。
+        searchFocusGeneration += 1
         guard !showsSearch else {
             searchFocused = true
             return
@@ -171,6 +178,9 @@ struct DocumentView: View {
         // 何が塗られているのか分からなくなる。
         search = SearchSession()
         selectionRequest = nil
+        // 焦点を編集画面へ返す。返さないと、閉じたあと打っても本文に入らない。
+        // カーソルは検索で降りた場所のまま。そこから続けて直せる。
+        editorFocusRequest = EditorFocusRequest()
     }
 
     /// 前後へ送って、そのヒットを見せる。
@@ -208,6 +218,7 @@ struct DocumentView: View {
             scrollRequest: scrollRequest,
             selectionRequest: selectionRequest,
             searchHighlight: showsSearch ? search.highlight : nil,
+            focusRequest: editorFocusRequest,
             showsLineNumbers: showsLineNumbers
         )
     }
