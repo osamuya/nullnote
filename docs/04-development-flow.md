@@ -31,7 +31,7 @@ swift test          速い。ここで落ちたら先に進まない
 cd /Users/osamu-yamakami/Develop/macapp/MacApp/MarkdownEditor
 
 swift test --package-path Packages/MarkdownCore    # 72件
-swift test --package-path Packages/NullnoteUI      # 189件
+swift test --package-path Packages/NullnoteUI      # 197件
 ```
 
 `Packages/` を直したときは、アプリを起動する前にこれを通す。

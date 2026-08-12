@@ -11,7 +11,7 @@ cd Apps/Nullnote-macOS && xcodebuild -scheme Nullnote build
 | レイヤ | 状態 |
 |---|---|
 | `Packages/MarkdownCore` | ✅ 完成（72 テスト） |
-| `Packages/NullnoteUI` | ✅ 完成（189 テスト） |
+| `Packages/NullnoteUI` | ✅ 完成（197 テスト） |
 | `Apps/Nullnote-macOS` | ✅ 動作（起動・ファイル読み込み確認済み） |
 | `Apps/Nullnote-iOS` | ⬜ 未着手（パッケージは iOS ビルド通過済み） |
 
@@ -130,7 +130,7 @@ AST は打鍵ごとに回すには重い（5万文字で 1フレームの3倍）
 
 ```sh
 swift test --package-path Packages/MarkdownCore      # 72 tests
-swift test --package-path Packages/NullnoteUI        # 189 tests
+swift test --package-path Packages/NullnoteUI        # 197 tests
 
 # iOS ビルド（UI 依存が混入していないことの確認）
 cd Packages/MarkdownCore && xcodebuild -scheme MarkdownCore -destination 'generic/platform=iOS' build

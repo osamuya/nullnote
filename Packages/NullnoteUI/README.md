@@ -16,7 +16,7 @@ macOS 版と iOS 版が共有する SwiftUI レイヤ。トークンや AST を�
 | `CodeSyntax.swift` | コードブロックの色分け（キーワード／文字列／コメント／数値） |
 | `LineNumberGutter.swift` | 編集画面の行番号。テキストビューの左余白に描く。macOS のみ |
 | `PreviewModel.swift` | swift-markdown の AST → プレビュー用の中間表現 |
-| `MarkdownPreview.swift` | 中間表現 → SwiftUI ビュー |
+| `MarkdownPreview.swift` | 中間表現 → SwiftUI ビュー。ブロック間の間隔（`PreviewSpacing`）もここ |
 | `PreviewText.swift` | プレビュー1ブロック分の描画。リンクのホバーと、インラインコードの角丸もここ |
 | `DocumentOutline.swift` | 見出しを拾って目次の木を作る |
 | `OutlineView.swift` | 目次の表示と開閉 |

@@ -32,9 +32,16 @@ public struct MarkdownPreview: View {
         GeometryReader { geometry in
         ScrollViewReader { proxy in
             ScrollView {
-                VStack(alignment: .leading, spacing: theme.fontSize * 0.85) {
-                    ForEach(blocks) { block in
+                // 間隔はブロックの組で決める（`PreviewSpacing`）。
+                // `VStack(spacing:)` の一律の値だと、見出しの前も段落どうしも同じになる。
+                VStack(alignment: .leading, spacing: 0) {
+                    ForEach(Array(blocks.enumerated()), id: \.element.id) { index, block in
                         PreviewBlockView(block: block, theme: theme).erased
+                            .padding(.top, PreviewSpacing.gap(
+                                before: block,
+                                after: index > 0 ? blocks[index - 1] : nil,
+                                fontSize: theme.fontSize
+                            ))
                     }
                 }
                 .frame(
@@ -103,6 +110,52 @@ public struct MarkdownPreview: View {
     }
 }
 
+// MARK: - ブロックの間隔
+
+/// ブロックとブロックのあいだに空ける量。
+///
+/// **一律にしない。** 段落どうしと、見出しの前と、表やコードの前では、
+/// 必要な間隔が違う。詰まっていると、どこまでが一続きの話なのか分からなくなる。
+///
+/// 決め方は「前のブロックが**下に**求める量」と「次のブロックが**上に**求める量」の
+/// 大きい方。足し算にすると、重いブロックが続いたときに空きすぎる。
+enum PreviewSpacing {
+
+    /// 文字サイズに対する倍率。`14pt` のときの実寸を併記する。
+    private struct Margin {
+        let top: CGFloat
+        let bottom: CGFloat
+    }
+
+    private static func margin(of block: PreviewBlock) -> Margin {
+        switch block.content {
+        case .heading(let level, _):
+            // 見出しは前の話の区切り。上を大きく空け、下は本文と近づける。
+            level <= 2
+                ? Margin(top: 2.4, bottom: 1.1)     // 33.6pt / 15.4pt
+                : Margin(top: 1.9, bottom: 1.1)     // 26.6pt / 15.4pt
+
+        case .paragraph:
+            Margin(top: 0.85, bottom: 0.85)         // 11.9pt
+
+        case .codeBlock, .table, .list, .quote, .thematicBreak:
+            // 地の色や罫線を持つ塊。本文と同じ間隔だと貼り付いて見える。
+            //
+            // **差を付けすぎるくらいでちょうどよい。** 行そのものが持つ行間が
+            // 常に足されるので、指定の差はそのままの見え方にはならない
+            // （0.85 と 1.3 では、実測で 3pt しか違わなかった）。
+            Margin(top: 1.6, bottom: 1.6)           // 22.4pt
+        }
+    }
+
+    /// `block` の上に空ける量。`previous` は直前のブロック（先頭なら nil）。
+    static func gap(before block: PreviewBlock, after previous: PreviewBlock?, fontSize: CGFloat) -> CGFloat {
+        // 先頭は外周の余白に任せる。
+        guard let previous else { return 0 }
+        return max(margin(of: previous).bottom, margin(of: block).top) * fontSize
+    }
+}
+
 // MARK: - ブロック
 
 private struct PreviewBlockView: View {
@@ -122,7 +175,6 @@ private struct PreviewBlockView: View {
                 font: .editorBody(size: theme.headingFontSize(level: level)).addingTraits(bold: true),
                 color: theme.heading
             )
-            .padding(.top, level <= 2 ? theme.fontSize * 0.4 : 0)
 
         case .paragraph(let text):
             PreviewText(text, theme: theme, color: textColor)
