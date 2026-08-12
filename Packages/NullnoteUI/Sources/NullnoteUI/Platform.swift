@@ -4,12 +4,16 @@ import AppKit
 public typealias PlatformColor = NSColor
 public typealias PlatformFont = NSFont
 public typealias PlatformTextView = NSTextView
+/// 文字列の記憶域が「何を書き換えたか」。AppKit と UIKit で型の名前が違う。
+typealias PlatformTextStorageEditActions = NSTextStorageEditActions
 #elseif canImport(UIKit)
 import UIKit
 
 public typealias PlatformColor = UIColor
 public typealias PlatformFont = UIFont
 public typealias PlatformTextView = UITextView
+/// 文字列の記憶域が「何を書き換えたか」。AppKit と UIKit で型の名前が違う。
+typealias PlatformTextStorageEditActions = NSTextStorage.EditActions
 #endif
 
 import CoreGraphics

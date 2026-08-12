@@ -107,6 +107,11 @@ public struct MarkdownEditorView {
         var appliedSelectionRequest: EditorSelectionRequest?
         /// いま塗ってある検索のヒット。ハイライトのたびに上へ重ねる。
         var searchHighlight: SearchHighlight?
+        /// 直前の打鍵で書き換わった範囲。差分ハイライトの起点にする。
+        ///
+        /// テキストビューの delegate（`textDidChange`）は「どこが変わったか」を
+        /// 教えてくれない。文字列の記憶域の側から受け取る。
+        var pendingEdit: NSRange?
 
         // MARK: - ジャンプ先の点灯
 
@@ -141,11 +146,16 @@ public struct MarkdownEditorView {
             self.lineIndex = LineIndex(text.wrappedValue)
         }
 
-        func highlight(_ storage: NSTextStorage?, source: String) {
+        /// 属性を貼り直す。
+        ///
+        /// - Parameter edited: 直前の編集で書き換わった範囲。
+        ///   渡せばその周辺だけ貼り直す。`nil` なら全文
+        ///   （初回、テーマ変更、外から本文が差し替わったとき）。
+        func highlight(_ storage: NSTextStorage?, source: String, edited: NSRange? = nil) {
             guard let storage else { return }
             appliedText = source
             lineIndex = LineIndex(source)
-            highlighter.apply(to: storage, text: source)
+            highlighter.apply(to: storage, text: source, edited: edited)
             // ハイライタは属性を貼り直す（既存を捨てる）ので、検索の塗りは必ずその後。
             applySearchHighlight(to: storage)
             // 点灯はさらにその上。打鍵で貼り直されても消えないよう、ここに含める。
@@ -312,6 +322,20 @@ public struct MarkdownEditorView {
             #endif
         }
 
+        /// 書き換わった範囲を覚える。
+        ///
+        /// `NSTextStorageDelegate` として受け取る。テキストビューの delegate は
+        /// 「変わった」ことしか教えてくれず、**どこが**変わったかは記憶域の側にしかない。
+        ///
+        /// ここでは記録だけ。編集の処理中に属性を触ってはいけない。
+        ///
+        /// 型の名前が AppKit と UIKit で違うので、`Platform.swift` の別名で受ける。
+        func rememberEdit(range: NSRange, actions: PlatformTextStorageEditActions) {
+            // 属性だけの変更（自分で貼ったハイライトなど）は無視する。
+            guard actions.contains(.editedCharacters) else { return }
+            pendingEdit = range
+        }
+
         /// 表示範囲の先頭にある文字位置から行番号を求め、変わっていれば報告する。
         func reportTopLine(utf16Offset: Int) {
             guard let topVisibleLine else { return }
@@ -402,6 +426,8 @@ extension MarkdownEditorView: NSViewRepresentable {
         }
 
         textView.delegate = context.coordinator
+        // 「どこが書き換わったか」を受け取る。差分ハイライトの起点になる。
+        textView.textStorage?.delegate = context.coordinator
         textView.allowsUndo = true
         // 書式付きテキストを持ち込ませない。装飾はハイライタだけが付ける。
         textView.isRichText = false
@@ -543,13 +569,37 @@ extension NSTextView {
     }
 }
 
+/// `NSTextStorageDelegate` は主スレッド専用と宣言されていない
+/// （文字列の記憶域自体は他スレッドでも使えるため）。
+/// ここで見ているのは画面に載っているテキストビューの記憶域だけなので、
+/// 呼ばれるのは必ず主スレッド。`@preconcurrency` で受ける。
+extension MarkdownEditorView.Coordinator: @preconcurrency NSTextStorageDelegate {
+
+    public func textStorage(
+        _ textStorage: NSTextStorage,
+        didProcessEditing editedMask: NSTextStorageEditActions,
+        range editedRange: NSRange,
+        changeInLength delta: Int
+    ) {
+        rememberEdit(range: editedRange, actions: editedMask)
+    }
+}
+
 extension MarkdownEditorView.Coordinator: NSTextViewDelegate {
 
     public func textDidChange(_ notification: Notification) {
         guard let textView = notification.object as? NSTextView else { return }
-        let source = textView.string
+        var source = textView.string
+        // **必ず Swift 側の記憶域へ写すこと。**
+        // `NSTextView.string` は NSString 由来の文字列を返す。1文字ずつ走査すると
+        // 橋渡しの費用が毎回かかり、トークン化が 2.6 ms → 9.0 ms、
+        // 行の索引作りが 0.3 ms → 2.5 ms まで落ちる（1.8万文字で実測）。
+        // 写すのは 0.6 ms。打鍵のたびに払っても釣りが来る。
+        source.makeContiguousUTF8()
         text.wrappedValue = source
-        highlight(textView.textStorage, source: source)
+        let edited = pendingEdit
+        pendingEdit = nil
+        highlight(textView.textStorage, source: source, edited: edited)
         gutterTextView?.redrawLineNumbers()
     }
 
@@ -576,6 +626,7 @@ extension MarkdownEditorView: UIViewRepresentable {
     public func makeUIView(context: Context) -> UITextView {
         let textView = UITextView()
         textView.delegate = context.coordinator
+        textView.textStorage.delegate = context.coordinator
         textView.alwaysBounceVertical = true
         // Markdown では自動修正・自動変換が邪魔になる。
         textView.autocorrectionType = .no
@@ -640,12 +691,32 @@ extension MarkdownEditorView: UIViewRepresentable {
     }
 }
 
+/// `NSTextStorageDelegate` は主スレッド専用と宣言されていない
+/// （文字列の記憶域自体は他スレッドでも使えるため）。
+/// ここで見ているのは画面に載っているテキストビューの記憶域だけなので、
+/// 呼ばれるのは必ず主スレッド。`@preconcurrency` で受ける。
+extension MarkdownEditorView.Coordinator: @preconcurrency NSTextStorageDelegate {
+
+    public func textStorage(
+        _ textStorage: NSTextStorage,
+        didProcessEditing editedMask: NSTextStorage.EditActions,
+        range editedRange: NSRange,
+        changeInLength delta: Int
+    ) {
+        rememberEdit(range: editedRange, actions: editedMask)
+    }
+}
+
 extension MarkdownEditorView.Coordinator: UITextViewDelegate {
 
     public func textViewDidChange(_ textView: UITextView) {
-        let source = textView.text ?? ""
+        // NSString 由来のままだと走査が遅い。Swift 側の記憶域へ写す（macOS 側の注記を参照）。
+        var source = textView.text ?? ""
+        source.makeContiguousUTF8()
         text.wrappedValue = source
-        highlight(textView.textStorage, source: source)
+        let edited = pendingEdit
+        pendingEdit = nil
+        highlight(textView.textStorage, source: source, edited: edited)
     }
 
     /// `UITextView` は `UIScrollView` なので、スクロールもこの delegate に届く。

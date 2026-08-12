@@ -16,7 +16,7 @@ struct MarkdownHighlighterTests {
     /// ソースをハイライトし、指定した部分文字列の位置にある属性を返す。
     func attributes(of substring: String, in source: String) -> [NSAttributedString.Key: Any] {
         let storage = NSMutableAttributedString(string: source)
-        MarkdownHighlighter(theme: theme).apply(to: storage, text: source)
+        var highlighter = MarkdownHighlighter(theme: theme); highlighter.apply(to: storage, text: source)
 
         let range = (source as NSString).range(of: substring)
         #expect(range.location != NSNotFound, "\"\(substring)\" が見つからない")
@@ -138,7 +138,7 @@ struct MarkdownHighlighterTests {
     @Test("空文字列でも落ちない")
     func emptyDocument() {
         let storage = NSMutableAttributedString(string: "")
-        MarkdownHighlighter(theme: theme).apply(to: storage, text: "")
+        var highlighter = MarkdownHighlighter(theme: theme); highlighter.apply(to: storage, text: "")
         #expect(storage.length == 0)
     }
 
@@ -146,7 +146,7 @@ struct MarkdownHighlighterTests {
     func attributesCoverWholeDocument() {
         let source = "# Title\n\n- [ ] task\n\n| a | b |\n| - | - |\n| 1 | 2 |\n"
         let storage = NSMutableAttributedString(string: source)
-        MarkdownHighlighter(theme: theme).apply(to: storage, text: source)
+        var highlighter = MarkdownHighlighter(theme: theme); highlighter.apply(to: storage, text: source)
 
         var covered = 0
         storage.enumerateAttribute(.font, in: NSRange(location: 0, length: storage.length)) { value, range, _ in

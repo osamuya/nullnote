@@ -11,7 +11,7 @@ cd Apps/Nullnote-macOS && xcodebuild -scheme Nullnote build
 | レイヤ | 状態 |
 |---|---|
 | `Packages/MarkdownCore` | ✅ 完成（72 テスト） |
-| `Packages/NullnoteUI` | ✅ 完成（173 テスト） |
+| `Packages/NullnoteUI` | ✅ 完成（189 テスト） |
 | `Apps/Nullnote-macOS` | ✅ 動作（起動・ファイル読み込み確認済み） |
 | `Apps/Nullnote-iOS` | ⬜ 未着手（パッケージは iOS ビルド通過済み） |
 
@@ -122,13 +122,15 @@ iOS 展開でやり直しになる最大の原因が、この2つの破れ。
 AST は打鍵ごとに回すには重い（5万文字で 1フレームの3倍）。
 統合しようとすると、遅くなるだけで見返りが無い。
 
-エディタは打鍵ごとに全文を貼り直す。プレビューは入力が止まって 150 ms 後に解析する。
+エディタは打鍵ごとに全文をトークン化するが、属性を貼るのは変わった行だけ
+（1.8万文字で打鍵1回 3.6 ms。全文を貼り直していた頃は 30 ms かかっていた → D-24）。
+プレビューは入力が止まって 150 ms 後に解析する。
 
 ## 検証
 
 ```sh
 swift test --package-path Packages/MarkdownCore      # 72 tests
-swift test --package-path Packages/NullnoteUI        # 173 tests
+swift test --package-path Packages/NullnoteUI        # 189 tests
 
 # iOS ビルド（UI 依存が混入していないことの確認）
 cd Packages/MarkdownCore && xcodebuild -scheme MarkdownCore -destination 'generic/platform=iOS' build

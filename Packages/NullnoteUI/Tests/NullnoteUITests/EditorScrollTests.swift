@@ -88,7 +88,7 @@ struct EditorSetupOrderTests {
         textView.string = source
         textView.font = theme.bodyFont
         textView.textColor = theme.text
-        MarkdownHighlighter(theme: theme).apply(to: try #require(textView.textStorage), text: source)
+        var highlighter = MarkdownHighlighter(theme: theme); highlighter.apply(to: try #require(textView.textStorage), text: source)
 
         #expect(headingColor(of: textView, theme: theme) === theme.heading)
     }
@@ -99,7 +99,7 @@ struct EditorSetupOrderTests {
         let textView = makeTextView(theme: theme)
 
         textView.string = source
-        MarkdownHighlighter(theme: theme).apply(to: try #require(textView.textStorage), text: source)
+        var highlighter = MarkdownHighlighter(theme: theme); highlighter.apply(to: try #require(textView.textStorage), text: source)
         textView.textColor = theme.text   // ← これが全体を塗り替える
 
         // 見出しの色が本文の色になってしまう。この挙動を記録しておく。
