@@ -195,16 +195,19 @@ struct DocumentView: View {
     }
 
     /// エディタと、開いていればプレビュー。
-    @ViewBuilder
+    /// **プレビューの有無で `editor` の居場所を変えないこと。**
+    /// `if showsPreview { SplitPane { editor } } else { editor }` と書くと、
+    /// 切り替えたときに SwiftUI が別のビューとみなし、`NSTextView` を作り直す。
+    /// 本文の貼り直しと組版が最初からやり直しになり、編集画面が一瞬消える。
     private var mainArea: some View {
-        if showsPreview {
-            SplitPane(ratio: $editorRatio, theme: theme) {
-                editor
-            } trailing: {
+        SplitPane(ratio: $editorRatio, showsTrailing: showsPreview, theme: theme) {
+            editor
+        } trailing: {
+            // 閉じているあいだは中身を作らない。作ると解析と NSTextView の
+            // 組み立てが動き続ける（表の多い文書ではマスの数だけ増える）。
+            if showsPreview {
                 MarkdownPreview(source: document.text, theme: theme, anchorLine: topVisibleLine)
             }
-        } else {
-            editor
         }
     }
 

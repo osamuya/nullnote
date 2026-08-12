@@ -11,6 +11,9 @@ public struct SplitPane<Leading: View, Trailing: View>: View {
 
     /// 左側が占める割合。0…1。
     @Binding private var ratio: Double
+    /// 右側を出すか。**出していないときも、左側は同じ場所に置いたままにする。**
+    /// 入れ替えると SwiftUI が別のビューとみなし、中の `NSTextView` が作り直される。
+    private let showsTrailing: Bool
     private let minimumPaneWidth: CGFloat
     private let theme: MarkdownTheme
     private let leading: Leading
@@ -21,12 +24,14 @@ public struct SplitPane<Leading: View, Trailing: View>: View {
 
     public init(
         ratio: Binding<Double>,
+        showsTrailing: Bool = true,
         minimumPaneWidth: CGFloat = 280,
         theme: MarkdownTheme,
         @ViewBuilder leading: () -> Leading,
         @ViewBuilder trailing: () -> Trailing
     ) {
         self._ratio = ratio
+        self.showsTrailing = showsTrailing
         self.minimumPaneWidth = minimumPaneWidth
         self.theme = theme
         self.leading = leading()
@@ -39,13 +44,22 @@ public struct SplitPane<Leading: View, Trailing: View>: View {
 
     public var body: some View {
         GeometryReader { geometry in
-            let available = max(0, geometry.size.width - Self.dividerWidth)
-            let leadingWidth = width(in: available)
+            let available = max(0, geometry.size.width - (showsTrailing ? Self.dividerWidth : 0))
+            let leadingWidth = showsTrailing ? width(in: available) : available
 
+            // **中身の並びは変えない。** 右側を隠すときも、線も右側も置いたまま
+            // 幅を 0 にする。`if` で出し入れすると左側の居場所が変わり、
+            // SwiftUI が `NSTextView` を作り直して編集画面が一瞬消える。
             HStack(spacing: 0) {
                 leading.frame(width: leadingWidth)
                 divider(available: available)
-                trailing.frame(width: max(0, available - leadingWidth))
+                    .frame(width: showsTrailing ? Self.grabWidth : 0)
+                    .opacity(showsTrailing ? 1 : 0)
+                    .allowsHitTesting(showsTrailing)
+                    .clipped()
+                trailing
+                    .frame(width: max(0, available - leadingWidth))
+                    .clipped()
             }
         }
     }
@@ -63,7 +77,7 @@ public struct SplitPane<Leading: View, Trailing: View>: View {
         Rectangle()
             .fill(Color(platform: theme.marker).opacity(0.35))
             .frame(width: Self.dividerWidth)
-            .frame(width: Self.grabWidth)          // 当たり判定を広げる
+            .frame(maxWidth: .infinity)            // 当たり判定は外側の幅いっぱい
             .contentShape(Rectangle())
             .onHover { inside in
                 #if canImport(AppKit)

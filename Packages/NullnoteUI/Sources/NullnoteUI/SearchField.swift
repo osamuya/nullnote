@@ -52,8 +52,13 @@ public struct MarkdownSearchField: View {
                 .font(.system(size: 11).monospacedDigit())
                 .foregroundStyle(Color(platform: theme.quote))
                 .lineLimit(1)
-                // 件数が 1 桁と 2 桁を行き来しても、前後のボタンが動かない幅を確保する。
-                .frame(minWidth: 54, alignment: .leading)
+                // 件数が伸び縮みしても入力欄が動かないよう、幅を先に確保しておく。
+                //
+                // **ボタンの位置はこの値と関係ない。** ツールバーの項目は右端に寄せて
+                // 並ぶので、中身が増えたぶんは左へ伸びる。動くのは入力欄の側。
+                // 確保しすぎると、その空きぶん入力欄が左へ押し出される
+                // （54pt にしていたときは 10pt ぶん余っていた）。
+                .frame(minWidth: 44, alignment: .leading)
 
             step(systemImage: "chevron.up", help: "前のヒットへ（⌘⇧G）", action: onPrevious)
             step(systemImage: "chevron.down", help: "次のヒットへ（⌘G）", action: onNext)
@@ -69,12 +74,17 @@ public struct MarkdownSearchField: View {
             .help("検索を閉じる（esc）")
             .accessibilityLabel("検索を閉じる")
         }
-        // 左だけ余白を足す。
+        // ツールバーが項目の背景をカプセル状に敷く。その縁と中身が近すぎると、
+        // 角が丸いぶん**入力欄が縁に食い込んで見える**。左は広めに取る。
         //
-        // ツールバーは項目の背景をカプセル状に敷くが、その左端より内側から
-        // 中身が始まってくれない（実測で 2.5pt はみ出していた）。
-        // 右端は ✕ ボタンの当たり判定（18pt）がそのまま余白になるので足りている。
-        .padding(.leading, 8)
+        // **左右で値が違う。** 右端は ✕ ボタンの当たり判定（18pt）の余りが
+        // そのまま余白として効いているので、足す量は少なくてよい。
+        // 実測（2x のスクリーンショット）で、縁からの距離を次のように合わせてある。
+        //
+        //     左  カプセルの縁 → 入力欄     31px（15.5pt）
+        //     右  ✕ のグリフ → カプセルの縁  18px（9pt。うち 5pt はボタンの余り）
+        .padding(.leading, 15.5)
+        .padding(.trailing, 2.5)
         .dismissesOnEscape(onClose)
     }
 
