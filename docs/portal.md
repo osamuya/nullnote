@@ -3,6 +3,13 @@
 Nullnote の開発ドキュメント。
 Git repository: [nullnote](https://github.com/roughlang/nullnote)
 
+## 起動方法
+
+```bash
+% cd /Users/osamu-yamakami/Develop/macapp/MacApp/MarkdownEditor
+% ./Apps/Nullnote-macOS/run.sh 
+```
+
 ## この中にあるもの
 
 | ファイル | 内容 | こんなとき |

@@ -30,7 +30,13 @@ public struct MarkdownStatusBar: View {
         }
         .font(.system(size: 11).monospacedDigit())
         .foregroundStyle(Color(platform: theme.quote))
-        .padding(.horizontal, 12)
+        // **右だけ広く取る。** この帯は窓の右下の角にあり、角の丸みが余白を食う。
+        // 左右とも 12pt にしていたときは、文字の右端から窓の縁まで 9.5pt しかなく、
+        // 少し下の行では曲線が文字に寄っていた（実測）。
+        //
+        // 左は広げても見た目に出ない（右寄せなので左側には何も無い）。
+        .padding(.leading, 12)
+        .padding(.trailing, 40)
         .frame(height: 22)
         .background(alignment: .top) {
             // 本文と地続きに見せたうえで、細い線だけで区切る。

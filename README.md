@@ -2,6 +2,16 @@
 
 Markdown エディタ。macOS 版が動いている。同じロジックで iOS 版へ展開する。
 
+```bash
+install.sh
+```
+
+```bash
+% cd Apps/Nullnote-macOS && ./run.sh
+（または）
+% ./Apps/Nullnote-macOS/run.sh
+```
+
 ```sh
 cd Apps/Nullnote-macOS && xcodebuild -scheme Nullnote build
 ```
