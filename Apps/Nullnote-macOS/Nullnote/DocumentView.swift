@@ -7,6 +7,8 @@ import SwiftUI
 struct DocumentView: View {
 
     @Binding var document: MarkdownDocument
+    /// 書類のファイル。新規で未保存のときは nil。
+    let fileURL: URL?
     let fontSize: Double
     let appearance: MarkdownAppearance
     let showsLineNumbers: Bool
@@ -25,6 +27,13 @@ struct DocumentView: View {
     /// 検索から「このヒットを見せて」と伝えるための依頼。
     @State private var selectionRequest: EditorSelectionRequest?
     @FocusState private var searchFocused: Bool
+
+    /// 外でファイルが書き換わったことを知らせる見張り。
+    @State private var watcher: FileWatcher?
+    /// 見張りからの知らせ。値が変わるたびに1回、取り込みを検討する。
+    @State private var externalChangeCount = 0
+    /// 最後に、画面とディスクが一致していた内容。合流の基準にする。
+    @State private var lastSyncedText: String?
     /// 検索欄に「焦点を取れ」と伝えるための合図。⌘F のたびに増やす。
     @State private var searchFocusGeneration = 0
     /// 検索欄を閉じたとき、編集画面へ焦点を返すための依頼。
@@ -127,6 +136,64 @@ struct DocumentView: View {
         .onChange(of: showsSearch) { _, shown in
             if shown { searchFocused = true }
         }
+        // 外でファイルが書き換わったら取り込む。
+        .task(id: fileURL) { startWatching() }
+        .onChange(of: externalChangeCount) { _, _ in takeInExternalChange() }
+    }
+
+    // MARK: - 外の変更を取り込む
+
+    /// ファイルの見張りを張り直す。書類が別のファイルになったときも呼ばれる。
+    private func startWatching() {
+        watcher?.stop()
+        guard let fileURL else {
+            watcher = nil
+            return
+        }
+        // いま開いた内容は、ディスクと一致しているはず。ここを基準にする。
+        lastSyncedText = document.text
+        watcher = FileWatcher(url: fileURL) { externalChangeCount += 1 }
+    }
+
+    /// ディスクの内容を見て、取り込めるなら取り込む。
+    ///
+    /// **編集中のものがあるときは触らない。** そちらは合流の話になる。
+    private func takeInExternalChange() {
+        guard let fileURL, let disk = readFromDisk(fileURL) else { return }
+
+        switch ExternalChangeResolver.resolve(
+            disk: disk,
+            editor: document.text,
+            hasLocalEdits: DocumentBridge.hasUnsavedChanges(at: fileURL),
+            lastSynced: lastSyncedText
+        ) {
+        case .ignore:
+            // 画面とディスクが一致した。ここが次の合流の基準になる。
+            lastSyncedText = disk
+
+        case .reload(let text):
+            document.text = text
+            lastSyncedText = text
+            // 本文の差し替えは SwiftUI 側の仕事で、書類の状態が追いつくのは次の周回。
+            // 同じ周回で片付けようとすると、こちらの後始末が上書きされる。
+            Task { @MainActor in DocumentBridge.acceptExternalContents(at: fileURL) }
+
+        case .merge(let base, let ours, let theirs):
+            let result = ThreeWayMerge.merge(base: base, ours: ours, theirs: theirs)
+            document.text = result.text
+            // 外の内容は取り込んだ（印の中にでも入っている）ので、
+            // 次の合流の基準はディスクの側。
+            lastSyncedText = theirs
+            // **変更の数え上げは戻さない。** 合流の結果はまだ保存されていない。
+            // 外で書き換えられたという判定だけ外して、⌘S でそのまま保存できるようにする。
+            Task { @MainActor in DocumentBridge.syncModificationDate(at: fileURL) }
+        }
+    }
+
+    /// 書類を開くときと同じ読み方をする。ここだけ別の解釈にすると化ける。
+    private func readFromDisk(_ url: URL) -> String? {
+        guard let data = try? Data(contentsOf: url) else { return nil }
+        return String(data: data, encoding: .utf8) ?? String(data: data, encoding: .isoLatin1)
     }
 
     // MARK: - 検索

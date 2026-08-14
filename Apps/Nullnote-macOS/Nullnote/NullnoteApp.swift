@@ -30,6 +30,7 @@ struct NullnoteApp: App {
         DocumentGroup(newDocument: MarkdownDocument()) { file in
             DocumentView(
                 document: file.$document,
+                fileURL: file.fileURL,
                 fontSize: fontSize,
                 appearance: appearance,
                 showsLineNumbers: showsLineNumbers
