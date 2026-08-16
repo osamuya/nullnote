@@ -53,6 +53,8 @@ struct NullnoteApp: App {
             CommandGroup(after: .pasteboard) {
                 Divider()
                 FindButtons()
+                Divider()
+                SelectionButtons()
             }
             CommandGroup(after: .textEditing) {
                 Divider()
@@ -117,6 +119,22 @@ private struct FindButtons: View {
         Button("前を検索") { commands?.previous() }
             .keyboardShortcut("g", modifiers: [.command, .shift])
             .disabled(commands?.hasMatches != true)
+    }
+}
+
+/// 同じ語を選ぶ。置換の代わりに使う。
+private struct SelectionButtons: View {
+
+    @FocusedValue(\.selectionCommands) private var commands
+
+    var body: some View {
+        Button("同じ語を選ぶ") { commands?.selectNext() }
+            .keyboardShortcut("d", modifiers: .command)
+            .disabled(commands == nil)
+
+        Button("同じ語を全部選ぶ") { commands?.selectAll() }
+            .keyboardShortcut("g", modifiers: [.control, .command])
+            .disabled(commands == nil)
     }
 }
 

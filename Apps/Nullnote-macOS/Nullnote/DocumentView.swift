@@ -38,6 +38,8 @@ struct DocumentView: View {
     @State private var searchFocusGeneration = 0
     /// 検索欄を閉じたとき、編集画面へ焦点を返すための依頼。
     @State private var editorFocusRequest: EditorFocusRequest?
+    /// 「同じ語を選んで」の依頼。メニューから来る。
+    @State private var editorCommandRequest: EditorCommandRequest?
 
     /// エディタとプレビューの幅の比率。開いたときは半々。
     /// 中央の線を動かせばその比率を保つ（ウインドウを広げても割合は変わらない）。
@@ -52,19 +54,18 @@ struct DocumentView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            Group {
+            // **目次の有無で `mainArea` の居場所を変えないこと。**
+            // 入れ替えると SwiftUI が別のビューとみなし、`NSTextView` を作り直す
+            // （プレビューで踏んだのと同じ。`SidePane` に書いた）。
+            SidePane(width: $outlineWidth, showsSide: showsOutline, theme: theme) {
+                // 閉じているあいだは中身を作らない。見出しを拾い直し続けても意味が無い。
                 if showsOutline {
-                    HSplitView {
-                        OutlineView(source: document.text, theme: theme) { line in
-                            scrollRequest = EditorScrollRequest(line: line)
-                        }
-                        .frame(minWidth: 160, idealWidth: outlineWidth, maxWidth: 400)
-
-                        mainArea
+                    OutlineView(source: document.text, theme: theme) { line in
+                        scrollRequest = EditorScrollRequest(line: line)
                     }
-                } else {
-                    mainArea
                 }
+            } content: {
+                mainArea
             }
             // 目次もプレビューも含めた窓の一番下に置く。
             MarkdownStatusBar(source: document.text, theme: theme)
@@ -114,6 +115,10 @@ struct DocumentView: View {
         // メニューやキーボードショートカットから切り替えられるようにする。
         .focusedSceneValue(\.previewVisibility, $showsPreview)
         .focusedSceneValue(\.outlineVisibility, $showsOutline)
+        .focusedSceneValue(\.selectionCommands, SelectionCommands(
+            selectNext: { editorCommandRequest = EditorCommandRequest(.selectNextOccurrence) },
+            selectAll: { editorCommandRequest = EditorCommandRequest(.selectAllOccurrences) }
+        ))
         .focusedSceneValue(\.searchCommands, SearchCommands(
             open: openSearch,
             next: { move { $0.moveToNext() } },
@@ -294,6 +299,7 @@ struct DocumentView: View {
             selectionRequest: selectionRequest,
             searchHighlight: showsSearch ? search.highlight : nil,
             focusRequest: editorFocusRequest,
+            commandRequest: editorCommandRequest,
             showsLineNumbers: showsLineNumbers
         )
     }
@@ -325,6 +331,16 @@ private struct SearchCommandsKey: FocusedValueKey {
     typealias Value = SearchCommands
 }
 
+/// 前面の書類ウインドウで、同じ語を選ぶ操作。
+struct SelectionCommands {
+    let selectNext: () -> Void
+    let selectAll: () -> Void
+}
+
+private struct SelectionCommandsKey: FocusedValueKey {
+    typealias Value = SelectionCommands
+}
+
 extension FocusedValues {
     /// 前面の書類ウインドウのプレビュー表示状態。
     var previewVisibility: Binding<Bool>? {
@@ -342,5 +358,11 @@ extension FocusedValues {
     var searchCommands: SearchCommands? {
         get { self[SearchCommandsKey.self] }
         set { self[SearchCommandsKey.self] = newValue }
+    }
+
+    /// 前面の書類ウインドウで、同じ語を選ぶ操作。
+    var selectionCommands: SelectionCommands? {
+        get { self[SelectionCommandsKey.self] }
+        set { self[SelectionCommandsKey.self] = newValue }
     }
 }

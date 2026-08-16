@@ -21,6 +21,7 @@ macOS 版と iOS 版が共有する SwiftUI レイヤ。トークンや AST を�
 | `DocumentOutline.swift` | 見出しを拾って目次の木を作る |
 | `OutlineView.swift` | 目次の表示と開閉 |
 | `DocumentSearch.swift` | 文書内検索。ヒットの求め方と、いま何番目かの持ち方 |
+| `MultiSelection.swift` | ⌘D の複数選択。語の切り出し・消す範囲・一括書き換えの計算 |
 | `SearchField.swift` | ヘッダーに置く検索欄。入力欄・件数・前後への送り |
 | `SplitPane.swift` | 編集とプレビューを左右に並べる。比率を保つ |
 | `StatusBar.swift` | 窓の下端の帯。テーマ・文字サイズ・行数・大きさ |
@@ -200,6 +201,30 @@ MarkdownPreview(source: text, theme: theme, anchorLine: line)
 
 `SearchSession.refresh(in:)` は、いま見ていた位置以降の最初のヒットを選び直す。
 検索語を1文字足すたびに文書の先頭へ戻されないようにするため。
+
+## 同じ語をまとめて選ぶ（⌘D）
+
+計算は `MultiSelection` に集めてある。**副作用を持たない。**
+テキストビューにも書類にも触らず、「どこを選ぶか」「打ったらどうなるか」だけを持つ。
+
+```
+カーソル ─→ wordRange(at:in:)        文字種の変わり目で切った語
+選んだ語 ─→ nextOccurrence(…)        次の1つ（末尾まで行ったら先頭へ回る）
+         ─→ allOccurrences(of:in:)   全部（⌃⌘G）
+選択    ─→ moving / extending        矢印キーでの移動と選び直し
+         ─→ deletions(for:forward:)  消す範囲
+         ─→ carets(after:replacedWith:)  打ち込んだあとの行き先
+```
+
+画面側（`FocusReportingTextView`）が持つのは**打ち込み先の記憶と描画**だけ。
+
+`NSTextView` は複数選択を**見せてくれるだけ**で、打っても削っても最初の1つにしか効かない。
+長さ0の選択はいくつ渡しても1つにまとめられるので、消したあとの行き先は自前で持つ。
+余分なカーソルも自分で描く。
+
+**変換中（日本語入力）は本文に手を出さない。** 触ると入力が壊れる。
+変換中の文字列は上から描いて見せ、確定した時点で全箇所に広げる。
+なぜ書けないのかは [`docs/02-decision-log.md`](../../docs/02-decision-log.md) の D-28。
 
 ## インラインコードは編集とプレビューで見た目を分ける
 

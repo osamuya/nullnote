@@ -47,6 +47,26 @@ public struct EditorFocusRequest: Equatable, Sendable {
     public init() {}
 }
 
+/// 「同じ語を選んで」という依頼。
+///
+/// メニューから来る。同じ操作を続けて出しても効くよう `id` を持つ。
+public struct EditorCommandRequest: Equatable, Sendable {
+
+    public enum Command: Sendable {
+        /// カーソルのある語、または次に出てくる同じ語を選びに行く。
+        case selectNextOccurrence
+        /// 文書中の同じ語を一度に全部選ぶ。
+        case selectAllOccurrences
+    }
+
+    public let command: Command
+    private let id = UUID()
+
+    public init(_ command: Command) {
+        self.command = command
+    }
+}
+
 @MainActor
 public struct MarkdownEditorView {
 
@@ -62,6 +82,8 @@ public struct MarkdownEditorView {
     var searchHighlight: SearchHighlight?
     /// 「入力の焦点を戻して」という依頼。検索欄を閉じたときに来る。
     var focusRequest: EditorFocusRequest?
+    /// 「同じ語を選んで」という依頼。メニューから来る。
+    var commandRequest: EditorCommandRequest?
     /// 左端に行番号を出すか。
     var showsLineNumbers: Bool
     /// システムの外観が変わったときに再評価させるためだけに読む。
@@ -76,6 +98,7 @@ public struct MarkdownEditorView {
         selectionRequest: EditorSelectionRequest? = nil,
         searchHighlight: SearchHighlight? = nil,
         focusRequest: EditorFocusRequest? = nil,
+        commandRequest: EditorCommandRequest? = nil,
         showsLineNumbers: Bool = false
     ) {
         self._text = text
@@ -85,6 +108,7 @@ public struct MarkdownEditorView {
         self.selectionRequest = selectionRequest
         self.searchHighlight = searchHighlight
         self.focusRequest = focusRequest
+        self.commandRequest = commandRequest
         self.showsLineNumbers = showsLineNumbers
     }
 
@@ -120,6 +144,8 @@ public struct MarkdownEditorView {
         var appliedSelectionRequest: EditorSelectionRequest?
         /// 最後に処理した焦点の依頼。同上。
         var appliedFocusRequest: EditorFocusRequest?
+        /// 最後に処理した「同じ語を選んで」の依頼。同上。
+        var appliedCommandRequest: EditorCommandRequest?
         /// いま塗ってある検索のヒット。ハイライトのたびに上へ重ねる。
         var searchHighlight: SearchHighlight?
         /// 直前の打鍵で書き換わった範囲。差分ハイライトの起点にする。
@@ -337,6 +363,47 @@ public struct MarkdownEditorView {
             #endif
         }
 
+        /// 「同じ語を選んで」を実行する。
+        func run(_ command: EditorCommandRequest.Command) {
+            guard let textView else { return }
+            let text = appliedText
+            #if canImport(AppKit)
+            let selected = textView.selectedRanges.map(\.rangeValue)
+            #else
+            let selected = [textView.selectedRange]
+            #endif
+            guard let primary = selected.first else { return }
+
+            // まだ語を選んでいなければ、カーソルのある語から始める。
+            guard primary.length > 0 else {
+                guard let word = MultiSelection.wordRange(at: primary.location, in: text) else { return }
+                select([word])
+                return
+            }
+
+            let word = (text as NSString).substring(with: primary)
+            switch command {
+            case .selectAllOccurrences:
+                let all = MultiSelection.allOccurrences(of: word, in: text)
+                if !all.isEmpty { select(all) }
+
+            case .selectNextOccurrence:
+                guard let next = MultiSelection.nextOccurrence(of: word, after: selected, in: text)
+                else { return }
+                select(selected + [next])
+            }
+        }
+
+        private func select(_ ranges: [NSRange]) {
+            guard let textView, let last = ranges.last else { return }
+            #if canImport(AppKit)
+            textView.selectedRanges = ranges.map { NSValue(range: $0) }
+            textView.scrollRangeToVisible(last)
+            #else
+            textView.selectedRange = last
+            #endif
+        }
+
         /// 入力の焦点を編集画面に戻す。
         func takeFocus() {
             guard let textView else { return }
@@ -394,12 +461,393 @@ final class FocusReportingTextView: NSTextView {
         didSet { needsDisplay = true }
     }
 
+    // MARK: - 同じ語をまとめて書き換える
+
+    /// 打ち込み先。複数選ばれているあいだだけ入る。
+    ///
+    /// **`selectedRanges` に頼れない。** AppKit は長さ0の選択をいくつ渡しても
+    /// 1つのカーソルにまとめてしまう（実測）。消したあとの行き先はどれも長さ0なので、
+    /// 選択に預けたままだと消えてしまい、続けて打った文字が先頭にしか入らない。
+    /// だから自分で覚える。
+    private var targets: [NSRange]?
+
+    /// 自分で行き先を置き直している最中。選択が変わっても `targets` を捨てない。
+    private var isRetargeting = false
+
+    /// 変換中に凍らせた行き先。
+    ///
+    /// **未確定の文字列を AppKit は1か所にしか置けない。** 変換中は先頭だけが動き、
+    /// 確定した時点で同じ文字列が残りへ広がる。
+    ///
+    /// ## 変換中に本文を書き換えてはいけない
+    ///
+    /// 打っているそばから全部を動かそうと、変換中に残りの行き先へ写してみたが、
+    /// **入力が壊れた**（実測）。AppKit は入力プログラムの知らないところで本文が
+    /// 変わったと見て変換を捨てる。1文字ごとに変換がやり直しになり、
+    /// 「な」を打とうとすると `n` が確定して `nな` になる。
+    ///
+    /// `didChangeText()` を呼ばない、置く場所を明示するなど、何を削っても直らなかった。
+    /// 記憶域を触った時点で崩れる。**変換が終わるまで本文には手を出さない。**
+    ///
+    /// 打っている様子は `drawComposing` が上から**描いて**見せる。
+    /// 書かずに描くので、後ろの文字を押しのけられない代わりに入力が壊れない。
+    private struct Composition {
+        /// 変換が始まる前の打ち込み先。前から順に並ぶ。
+        let frozen: [NSRange]
+        /// 未確定の文字列を置く場所。`frozen` の添字。
+        let primary: Int
+    }
+
+    private var composition: Composition?
+
+    /// いま打ち込む先。選択が生きていればそちら、消したあとなら覚えていた行き先。
+    private var currentTargets: [NSRange]? {
+        let ranges = selectedRanges.map(\.rangeValue)
+        if ranges.count > 1 { return ranges }
+        if let targets, targets.count > 1 { return targets }
+        return nil
+    }
+
+    /// カーソルが動いたら複数選択は終わり。
+    ///
+    /// クリックでも矢印キーでもここを通る。`setSelectedRange` も最後はここに来る。
+    override func setSelectedRanges(
+        _ ranges: [NSValue], affinity: NSSelectionAffinity, stillSelecting: Bool
+    ) {
+        if !isRetargeting, composition == nil, targets != nil {
+            targets = nil
+            needsDisplay = true
+        }
+        super.setSelectedRanges(ranges, affinity: affinity, stillSelecting: stillSelecting)
+    }
+
+    override func insertText(_ string: Any, replacementRange: NSRange) {
+        let replacement = (string as? NSAttributedString)?.string ?? (string as? String) ?? ""
+
+        // 変換の確定。決まった文字列を残りの行き先へ広げる。
+        if let state = composition {
+            composition = nil
+            super.insertText(string, replacementRange: replacementRange)
+            spread(replacement, of: state)
+            return
+        }
+        guard let ranges = currentTargets else {
+            return super.insertText(string, replacementRange: replacementRange)
+        }
+        apply(replacement, to: ranges)
+    }
+
+    /// 変換が始まった。行き先を凍らせて、確定を待つ。
+    ///
+    /// **本文には手を出さない。** 触ると変換が壊れる（`Composition` に詳しく書いた）。
+    override func setMarkedText(
+        _ string: Any, selectedRange: NSRange, replacementRange: NSRange
+    ) {
+        // 場所を指定されている変換（再変換）は預からない。狙いが違う。
+        if composition == nil, replacementRange.location == NSNotFound,
+           let ranges = currentTargets {
+            let frozen = ranges.sorted { $0.location < $1.location }
+            let caret = self.selectedRange().location
+            composition = Composition(
+                frozen: frozen, primary: frozen.firstIndex { $0.location == caret } ?? 0
+            )
+        }
+        super.setMarkedText(
+            string, selectedRange: selectedRange, replacementRange: replacementRange
+        )
+        // 変換中の文字を全部消した。広げるものは無い。
+        if markedRange().location == NSNotFound { composition = nil }
+
+        // 写しは描いているだけなので、本文が変わったことにならない。自分で描き直させる。
+        setNeedsDisplay(visibleRect)
+    }
+
+    override func unmarkText() {
+        super.unmarkText()
+        // 変換を切り上げられた（焦点が外れたときなど）。確定は `insertText` が先に片付ける。
+        composition = nil
+        setNeedsDisplay(visibleRect)
+    }
+
+    override func deleteBackward(_ sender: Any?) {
+        guard composition == nil, let ranges = currentTargets else {
+            return super.deleteBackward(sender)
+        }
+        delete(ranges, forward: false)
+    }
+
+    override func deleteForward(_ sender: Any?) {
+        guard composition == nil, let ranges = currentTargets else {
+            return super.deleteForward(sender)
+        }
+        delete(ranges, forward: true)
+    }
+
+    /// 打ち込み先すべてで消す。
+    ///
+    /// 選んであるところはその範囲ごと、カーソルだけのところは隣の1文字。
+    /// 消すものがどこにも無ければ何もしない。**先頭だけ消してしまわないこと。**
+    private func delete(_ ranges: [NSRange], forward: Bool) {
+        let deletions = MultiSelection.deletions(for: ranges, forward: forward, in: string)
+        guard !deletions.isEmpty else { return }
+        apply("", to: deletions)
+    }
+
+    /// 選んである範囲すべてを置き換える。
+    ///
+    /// 1回の取り消し（⌘Z）で元に戻るよう、まとめて1つの編集として当てる。
+    private func apply(_ replacement: String, to ranges: [NSRange]) {
+        guard let storage = textStorage else { return }
+        let sorted = ranges.sorted { $0.location < $1.location }
+        guard shouldChangeText(
+            inRanges: sorted.map { NSValue(range: $0) },
+            replacementStrings: sorted.map { _ in replacement }
+        ) else { return }
+
+        storage.beginEditing()
+        // 後ろから当てる。前から当てると2つ目以降の位置がずれる。
+        for range in sorted.reversed() {
+            guard range.location >= 0, range.location + range.length <= storage.length else { continue }
+            storage.replaceCharacters(in: range, with: replacement)
+        }
+        storage.endEditing()
+        didChangeText()
+
+        retarget(to: MultiSelection.carets(after: sorted, replacedWith: replacement))
+    }
+
+    /// 確定した文字列を、先頭以外の行き先にも当てる。
+    ///
+    /// 変換中は本文を触っていないので、凍らせた位置がそのまま使える。
+    private func spread(_ replacement: String, of state: Composition) {
+        // 先頭が確定したぶんだけ、後ろにある行き先がずれている。
+        let primary = state.frozen[state.primary]
+        let delta = (replacement as NSString).length - primary.length
+        let end = primary.location + primary.length
+        var others: [NSRange] = []
+        for (index, range) in state.frozen.enumerated() where index != state.primary {
+            others.append(
+                range.location >= end
+                    ? NSRange(location: range.location + delta, length: range.length) : range
+            )
+        }
+
+        if !others.isEmpty { apply(replacement, to: others) }
+        // 行き先は全部から数え直す。先頭を外したままだと1つ抜ける。
+        retarget(to: MultiSelection.carets(after: state.frozen, replacedWith: replacement))
+    }
+
+    // MARK: - 選び直す
+
+    /// → で、すべてのカーソルを同じだけ動かす。**複数選択は続く。**
+    ///
+    /// 消したあとの位置から、隣の語へ狙いを移すために要る。
+    /// 「改行だけ選んだ状態から ← を2回、⇧→ で全部の `。` を選ぶ」といった動き方。
+    override func moveRight(_ sender: Any?) {
+        guard composition == nil, let ranges = currentTargets else {
+            return super.moveRight(sender)
+        }
+        move(ranges, forward: true)
+    }
+
+    override func moveLeft(_ sender: Any?) {
+        guard composition == nil, let ranges = currentTargets else {
+            return super.moveLeft(sender)
+        }
+        move(ranges, forward: false)
+    }
+
+    override func moveForward(_ sender: Any?) {
+        guard composition == nil, let ranges = currentTargets else {
+            return super.moveForward(sender)
+        }
+        move(ranges, forward: true)
+    }
+
+    override func moveBackward(_ sender: Any?) {
+        guard composition == nil, let ranges = currentTargets else {
+            return super.moveBackward(sender)
+        }
+        move(ranges, forward: false)
+    }
+
+    private func move(_ ranges: [NSRange], forward: Bool) {
+        retarget(to: MultiSelection.moving(ranges, forward: forward, in: string))
+    }
+
+    /// ⇧→ で、すべての行き先の選択を1文字ぶん伸ばす。
+    ///
+    /// 打ち間違えたときに選び直せる道が要る。`⌘D` で選び直そうにも、
+    /// 消したあとはカーソルしか無く、選ぶ語が残っていない。
+    override func moveRightAndModifySelection(_ sender: Any?) {
+        guard composition == nil, let ranges = currentTargets else {
+            return super.moveRightAndModifySelection(sender)
+        }
+        extend(ranges, forward: true)
+    }
+
+    /// ⇧← で、伸ばした選択を1文字ぶん縮める。**始点は動かさない。**
+    override func moveLeftAndModifySelection(_ sender: Any?) {
+        guard composition == nil, let ranges = currentTargets else {
+            return super.moveLeftAndModifySelection(sender)
+        }
+        extend(ranges, forward: false)
+    }
+
+    override func moveForwardAndModifySelection(_ sender: Any?) {
+        guard composition == nil, let ranges = currentTargets else {
+            return super.moveForwardAndModifySelection(sender)
+        }
+        extend(ranges, forward: true)
+    }
+
+    override func moveBackwardAndModifySelection(_ sender: Any?) {
+        guard composition == nil, let ranges = currentTargets else {
+            return super.moveBackwardAndModifySelection(sender)
+        }
+        extend(ranges, forward: false)
+    }
+
+    private func extend(_ ranges: [NSRange], forward: Bool) {
+        let extended = MultiSelection.extending(ranges, forward: forward, in: string)
+        guard extended != ranges else { return }
+        retarget(to: extended)
+    }
+
+    /// 次に打ち込む先を置き直す。
+    private func retarget(to carets: [NSRange]) {
+        targets = carets.count > 1 ? carets : nil
+        isRetargeting = true
+        selectedRanges = carets.map { NSValue(range: $0) }
+        isRetargeting = false
+        needsDisplay = true
+    }
+
     /// 本文より先に呼ばれる。ここで左余白へ行番号を描く。
     override func drawBackground(in rect: NSRect) {
         super.drawBackground(in: rect)
         guard let lineNumbers else { return }
         let active = isFocused ? lineNumbers.lineIndex.line(atUTF16Offset: selectedRange().location) : nil
         lineNumbers.draw(in: rect, of: self, activeLine: active)
+    }
+
+    /// 本文の上に、余分なカーソルと変換中の写しを描く。
+    override func draw(_ dirtyRect: NSRect) {
+        super.draw(dirtyRect)
+        if let composition {
+            drawComposing(composition, in: dirtyRect)
+        } else {
+            drawExtraCarets(in: dirtyRect)
+        }
+    }
+
+    /// 余分なカーソルを描く。
+    ///
+    /// AppKit は長さ0の選択を1つにまとめてしまうので、消したあとの行き先は
+    /// 1本しか見えない。どこに打ち込まれるのか分からないままになるので自分で描く。
+    /// **点滅はしない。** 本物と拍を合わせるには消えた瞬間に描き直す必要があり、
+    /// 見せたいのは「ここにも入る」だけなので、出しっぱなしで足りる。
+    private func drawExtraCarets(in dirtyRect: NSRect) {
+        guard let targets, targets.count > 1 else { return }
+
+        insertionPointColor.setFill()
+        let primary = selectedRange().location
+        for target in targets where target.location != primary {
+            guard let rect = caretRect(at: target.location) else { continue }
+            guard rect.intersects(dirtyRect) else { continue }
+            rect.fill()
+        }
+    }
+
+    /// 変換中の文字列を、先頭以外の行き先にも描く。
+    ///
+    /// **本文には書かない。** 変換中に記憶域を触ると入力が壊れる
+    /// （`Composition` に書いた）。書けないので、上から描く。
+    ///
+    /// 描くだけなので後ろの文字を押しのけられない。**下に敷いてある文字は隠す。**
+    /// 確定すれば本文に入り、そこで初めて行が組み直される。
+    private func drawComposing(_ state: Composition, in dirtyRect: NSRect) {
+        let marked = markedRange()
+        guard marked.location != NSNotFound, marked.length > 0, let layoutManager,
+              let container = textContainer
+        else { return }
+
+        let text = (string as NSString).substring(with: marked)
+
+        // 先頭に未確定のぶんが入ったので、その後ろにある行き先はずれている。
+        let primary = state.frozen[state.primary]
+        let delta = marked.length - primary.length
+        let end = primary.location + primary.length
+
+        for (index, range) in state.frozen.enumerated() where index != state.primary {
+            let location = range.location >= end ? range.location + delta : range.location
+            guard let caret = caretRect(at: location) else { continue }
+            let composing = composingText(text, goingTo: location)
+            let width = composing.size().width
+
+            // 元からあった語も隠す。半分だけ残ると別の語に読めてしまう。
+            let covered = layoutManager.boundingRect(
+                forGlyphRange: layoutManager.glyphRange(
+                    forCharacterRange: NSRange(location: location, length: range.length),
+                    actualCharacterRange: nil
+                ),
+                in: container
+            )
+            let box = NSRect(
+                x: caret.minX, y: caret.minY,
+                width: max(width, covered.width), height: caret.height
+            )
+            guard box.intersects(dirtyRect) else { continue }
+
+            backgroundColor.setFill()
+            box.fill()
+            composing.draw(at: box.origin)
+        }
+    }
+
+    /// 変換中の文字列を、打ち込む先の見た目で組む。
+    ///
+    /// **書体は打ち込む先から借りる。** 確定すればその場所の属性を継ぐので、
+    /// 借りておけば確定の前後で見た目が飛ばない。見出しの中なら見出しの大きさになる。
+    private func composingText(_ text: String, goingTo location: Int) -> NSAttributedString {
+        var attributes: [NSAttributedString.Key: Any] = [
+            .font: font ?? NSFont.systemFont(ofSize: NSFont.systemFontSize),
+            .foregroundColor: textColor ?? NSColor.textColor,
+            .underlineStyle: NSUnderlineStyle.single.rawValue,
+        ]
+        if let storage = textStorage, storage.length > 0 {
+            let index = min(max(location, 0), storage.length - 1)
+            if let font = storage.attribute(.font, at: index, effectiveRange: nil) as? NSFont {
+                attributes[.font] = font
+            }
+        }
+        return NSAttributedString(string: text, attributes: attributes)
+    }
+
+    /// その文字位置に立つカーソルの矩形。
+    private func caretRect(at location: Int) -> NSRect? {
+        guard let layoutManager, let storage = textStorage,
+              location >= 0, location <= storage.length
+        else { return nil }
+
+        let line: NSRect
+        let offset: CGFloat
+        if location < storage.length {
+            let glyph = layoutManager.glyphIndexForCharacter(at: location)
+            line = layoutManager.lineFragmentRect(forGlyphAt: glyph, effectiveRange: nil)
+            offset = layoutManager.location(forGlyphAt: glyph).x
+        } else {
+            // 本文の末尾。最後の行の外にあるので、専用の矩形を使う。
+            line = layoutManager.extraLineFragmentRect
+            offset = 0
+            guard line.height > 0 else { return nil }
+        }
+
+        return NSRect(
+            x: line.minX + offset + textContainerInset.width,
+            y: line.minY + textContainerInset.height,
+            width: 1, height: line.height
+        )
     }
 
     /// 見えているところだけ描き直す。カーソルが動くたびに全体を捨てない。
@@ -419,6 +867,11 @@ final class FocusReportingTextView: NSTextView {
 
     override func resignFirstResponder() -> Bool {
         let resigned = super.resignFirstResponder()
+        if resigned {
+            // 焦点が離れたら複数選択は終わり。戻ってきたときに古い行き先へ打ち込ませない。
+            targets = nil
+            composition = nil
+        }
         if resigned, isFocused {
             isFocused = false
             onFocusChange?()
@@ -563,6 +1016,10 @@ extension MarkdownEditorView: NSViewRepresentable {
         if let request = focusRequest, request != coordinator.appliedFocusRequest {
             coordinator.appliedFocusRequest = request
             coordinator.takeFocus()
+        }
+        if let request = commandRequest, request != coordinator.appliedCommandRequest {
+            coordinator.appliedCommandRequest = request
+            coordinator.run(request.command)
         }
         updateGutter(on: scrollView, textView: textView, coordinator: coordinator)
     }
@@ -711,6 +1168,10 @@ extension MarkdownEditorView: UIViewRepresentable {
         if let request = focusRequest, request != coordinator.appliedFocusRequest {
             coordinator.appliedFocusRequest = request
             coordinator.takeFocus()
+        }
+        if let request = commandRequest, request != coordinator.appliedCommandRequest {
+            coordinator.appliedCommandRequest = request
+            coordinator.run(request.command)
         }
     }
 

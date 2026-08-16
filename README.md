@@ -59,7 +59,9 @@ cd Apps/Nullnote-macOS && xcodebuild -scheme Nullnote build
   → 実装済み。⌘F で検索の帯を出し、ヒットを塗って件数を出す。∧ ∨ と ⌘G / ⇧⌘G で前後へ送る
   （[docs/02-decision-log.md](docs/02-decision-log.md) の D-21）
 -  [Command + D]のヒットした単語の同時選択
-  → 未着手。置換はこちらの役目にする（同 D-21）
+  → 実装済み。⌘D で同じ語を1つずつ足し、⌃⌘G で全部選ぶ。打ち込み・削除が全箇所に効く。
+  矢印キーでカーソルをそろえて動かせる（⇧←→ で選び直し）。置換はこちらの役目
+  （[docs/02-decision-log.md](docs/02-decision-log.md) の D-28）
 
 | 項目 | 設定値 |
 | --- | --- |
@@ -96,6 +98,7 @@ MarkdownEditor/
 │     │  ├─ ThreeWayMerge.swift       # 3つの版の突き合わせ
 │     │  ├─ ImageSource.swift         # 画像の場所の解釈
 │     │  ├─ DocumentSearch.swift      # 文書内検索のヒットと現在位置
+│     │  ├─ MultiSelection.swift      # ⌘D の語の切り出しと一括書き換え
 │     │  └─ SearchField.swift         # ヘッダーの検索欄
 │     └─ Tests/NullnoteUITests/
 ├─ Apps/

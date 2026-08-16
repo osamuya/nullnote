@@ -42,7 +42,13 @@ public struct MarkdownPreview: View {
             ScrollView {
                 // 間隔はブロックの組で決める（`PreviewSpacing`）。
                 // `VStack(spacing:)` の一律の値だと、見出しの前も段落どうしも同じになる。
-                VStack(alignment: .leading, spacing: 0) {
+                //
+                // **見えているところだけ組む。** ブロックはどれも `NSTextView` を持ち、
+                // 表はマスの数だけ持つ。全部を先に組むと、表20個の文書で 1341 枚になり、
+                // 開くのに 1290 ms かかっていた（release 実測）。
+                // 画面ぶんだけなら 135 枚・218 ms。費用が「開くとき」から
+                // 「スクロールするとき」へ移り、どちらも待てる長さに収まる。
+                LazyVStack(alignment: .leading, spacing: 0) {
                     ForEach(Array(blocks.enumerated()), id: \.element.id) { index, block in
                         PreviewBlockView(block: block, theme: theme, documentURL: documentURL).erased
                             .padding(.top, PreviewSpacing.gap(

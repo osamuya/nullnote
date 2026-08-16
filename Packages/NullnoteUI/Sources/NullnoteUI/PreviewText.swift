@@ -258,12 +258,27 @@ private struct PreviewTextRepresentable: NSViewRepresentable {
             measuringLayout.addTextContainer(measuringContainer)
         }
 
+        /// 測った結果。**同じ幅で何度も組み直さない。**
+        /// `Grid` は列幅を決めるのに各マスへ何度も大きさを尋ねる。
+        /// そのたびに TextKit で組み直すと、マスの数×問い合わせの回数だけ組版が走る。
+        private var heights: [CGFloat: CGFloat] = [:]
+        private var natural: CGFloat?
+
+        /// 本文が変わったら測り直す。
+        func invalidateMeasurements() {
+            heights.removeAll(keepingCapacity: true)
+            natural = nil
+        }
+
         /// 与えられた幅で組んだときの高さ。
         func height(fitting width: CGFloat) -> CGFloat {
+            if let known = heights[width] { return known }
             measuringContainer.containerSize =
                 NSSize(width: width, height: CGFloat.greatestFiniteMagnitude)
             measuringLayout.ensureLayout(for: measuringContainer)
-            return ceil(measuringLayout.usedRect(for: measuringContainer).height)
+            let height = ceil(measuringLayout.usedRect(for: measuringContainer).height)
+            heights[width] = height
+            return height
         }
 
         /// 折り返さずに1行で並べたときの幅。
@@ -273,10 +288,13 @@ private struct PreviewTextRepresentable: NSViewRepresentable {
         /// 字送りが数えられず、表の列が1文字ぶん足りなくなった）。
         /// 高さと同じレイアウトで測れば、必ず表示と一致する。
         var naturalWidth: CGFloat {
+            if let natural { return natural }
             measuringContainer.containerSize =
                 NSSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
             measuringLayout.ensureLayout(for: measuringContainer)
-            return ceil(measuringLayout.usedRect(for: measuringContainer).width)
+            let width = ceil(measuringLayout.usedRect(for: measuringContainer).width)
+            natural = width
+            return width
         }
     }
 
@@ -332,6 +350,7 @@ private struct PreviewTextRepresentable: NSViewRepresentable {
         apply(theme, to: textView)
         textView.textStorage?.setAttributedString(attributed)
         context.coordinator.measuringStorage.setAttributedString(measuring)
+        context.coordinator.invalidateMeasurements()
         remember(in: context.coordinator)
         return textView
     }
@@ -343,6 +362,7 @@ private struct PreviewTextRepresentable: NSViewRepresentable {
         apply(theme, to: textView)
         textView.textStorage?.setAttributedString(attributed)
         context.coordinator.measuringStorage.setAttributedString(measuring)
+        context.coordinator.invalidateMeasurements()
         remember(in: context.coordinator)
     }
 

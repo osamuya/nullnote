@@ -14,16 +14,22 @@ public enum DocumentSearch {
     ///
     /// `aa` で `aaa` を探すと 1 件（0..<2）。見つかった範囲の直後から続きを探すため。
     /// 重なりまで数えると、ヒット件数が直感と合わなくなる。
-    public static func matches(of query: String, in source: String) -> [NSRange] {
+    /// - Parameter caseSensitive: 大文字小文字を区別するか。
+    ///   検索欄は区別しない。同じ語を選ぶ（⌘D）ときだけ区別する。
+    ///   `Foo` を選んだつもりで `foo` まで書き換わると事故になる。
+    public static func matches(
+        of query: String, in source: String, caseSensitive: Bool = false
+    ) -> [NSRange] {
         guard !query.isEmpty, !source.isEmpty else { return [] }
 
+        let options: NSString.CompareOptions = caseSensitive ? [] : [.caseInsensitive]
         let text = source as NSString
         var result: [NSRange] = []
         var start = 0
 
         while start < text.length {
             let remaining = NSRange(location: start, length: text.length - start)
-            let found = text.range(of: query, options: [.caseInsensitive], range: remaining)
+            let found = text.range(of: query, options: options, range: remaining)
             guard found.location != NSNotFound else { break }
             result.append(found)
             // 長さ 0 の一致は起きない想定だが、起きたら進まず無限に回る。念のため 1 進める。

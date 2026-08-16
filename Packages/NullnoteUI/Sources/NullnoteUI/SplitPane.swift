@@ -21,6 +21,10 @@ public struct SplitPane<Leading: View, Trailing: View>: View {
 
     /// ドラッグ中の一時的な比率。離した時点で `ratio` に反映する。
     @State private var dragging: Double?
+    /// 掴んだ時点の幅。**動かすたびに測り直さないこと。**
+    /// `DragGesture` のずれは掴んだ場所からの通算なので、
+    /// いまの幅に足していくと1回動かすたびに二重に効いて飛んでいく。
+    @State private var dragBase: CGFloat?
 
     public init(
         ratio: Binding<Double>,
@@ -38,9 +42,8 @@ public struct SplitPane<Leading: View, Trailing: View>: View {
         self.trailing = trailing()
     }
 
-    private static var dividerWidth: CGFloat { 1 }
-    /// 掴める幅。線そのものは細いので、当たり判定だけ広げる。
-    private static var grabWidth: CGFloat { 10 }
+    private static var dividerWidth: CGFloat { PaneDivider.lineWidth }
+    private static var grabWidth: CGFloat { PaneDivider.grabWidth }
 
     public var body: some View {
         GeometryReader { geometry in
@@ -74,9 +77,39 @@ public struct SplitPane<Leading: View, Trailing: View>: View {
     }
 
     private func divider(available: CGFloat) -> some View {
+        PaneDivider(theme: theme) { translation in
+            guard available > 0 else { return }
+            let base = dragBase ?? width(in: available)
+            dragBase = base
+            dragging = Double((base + translation) / available)
+        } onEnded: {
+            guard available > 0 else { return }
+            ratio = Double(width(in: available) / available)
+            dragging = nil
+            dragBase = nil
+        }
+    }
+}
+
+/// 2つの領域を分ける、掴んで動かせる線。
+///
+/// 線そのものは細い。**当たり判定だけ外側の幅いっぱいに広げる**ので、
+/// 置く側が `.frame(width:)` で掴める幅を決める。
+struct PaneDivider: View {
+
+    let theme: MarkdownTheme
+    /// 掴んで動かしているあいだ、始点からのずれを渡す。
+    let onChanged: (CGFloat) -> Void
+    let onEnded: () -> Void
+
+    static var lineWidth: CGFloat { 1 }
+    /// 掴める幅。
+    static var grabWidth: CGFloat { 10 }
+
+    var body: some View {
         Rectangle()
             .fill(Color(platform: theme.marker).opacity(0.35))
-            .frame(width: Self.dividerWidth)
+            .frame(width: Self.lineWidth)
             .frame(maxWidth: .infinity)            // 当たり判定は外側の幅いっぱい
             .contentShape(Rectangle())
             .onHover { inside in
@@ -86,16 +119,8 @@ public struct SplitPane<Leading: View, Trailing: View>: View {
             }
             .gesture(
                 DragGesture(minimumDistance: 1)
-                    .onChanged { value in
-                        guard available > 0 else { return }
-                        let base = width(in: available)
-                        dragging = Double((base + value.translation.width) / available)
-                    }
-                    .onEnded { _ in
-                        guard available > 0 else { return }
-                        ratio = Double(width(in: available) / available)
-                        dragging = nil
-                    }
+                    .onChanged { onChanged($0.translation.width) }
+                    .onEnded { _ in onEnded() }
             )
     }
 }
