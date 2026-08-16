@@ -26,7 +26,64 @@ struct PreviewBlock: Identifiable {
         case list(PreviewList)
         case codeBlock(code: String, language: String?)
         case table(PreviewTable)
+        /// 画像だけで出来た段落。**文中に混ざった画像は含めない**（そちらは代替テキストのまま）。
+        ///
+        /// 1枚とは限らない。空行を挟まずに続けて書かれた画像は、
+        /// Markdown では1つの段落になる。
+        case images([PreviewImageRef])
         case thematicBreak
+    }
+}
+
+/// 絵として置く画像1枚ぶん。
+struct PreviewImageRef: Identifiable {
+    let id: Int
+    /// `![]()` に書かれた場所。解釈は描く側（`ImageSourceResolver`）に任せる。
+    let source: String
+    let alt: String
+    let layout: PreviewImageLayout
+}
+
+/// 画像の置き方。`![]()` の直後の `{.…}` で指定する。
+///
+/// **Markdown の標準ではない。** 他のツールでは `{.center}` の文字がそのまま見える。
+/// 見た目の指定を本文に持ち込む以上、この割り切りは避けられない。
+enum PreviewImageLayout: String {
+    /// 指定なし。元の大きさまでで、左に置く。
+    case normal
+    /// 幅いっぱいに広げて中央に置く。
+    case center
+    /// 小さな正方形に切って並べる。押すと大きく開く。
+    case thumbnail
+    /// 与えられた場所に収まるだけ広げる。**拡大表示の中だけで使う。**
+    /// `{.fitted}` と書いても効かない（`init(marker:)` が返さない）。
+    case fitted
+
+    /// `{.center}` のような書き方から読む。知らない名前は指定なし扱い。
+    init(marker: String) {
+        switch marker {
+        case "center": self = .center
+        case "thumbnail": self = .thumbnail
+        // 知らない名前は指定なし扱い。あとで種類を増やしても古い文書が壊れない。
+        default: self = .normal
+        }
+    }
+}
+
+extension Array where Element == PreviewBlock {
+    /// 文書に出てくる画像を、書かれている順に集める。
+    ///
+    /// 拡大表示の前後送りは**段落をまたぐ**ので、段落ごとではなく文書全体で持つ。
+    /// 引用やリストの中に入っているものも拾う。
+    var allImages: [PreviewImageRef] {
+        flatMap { block -> [PreviewImageRef] in
+            switch block.content {
+            case .images(let images): images
+            case .quote(let blocks): blocks.allImages
+            case .list(let list): list.items.flatMap { $0.blocks.allImages }
+            default: []
+            }
+        }
     }
 }
 
@@ -99,12 +156,78 @@ struct PreviewBuilder {
         return PreviewBlock(id: counter, sourceLine: line, content: content)
     }
 
+    /// その段落が画像だけで出来ているか。出来ていれば、その画像を順に返す。
+    ///
+    /// 空白や改行は無視する。**文字が混ざっていたら空を返す**（段落として扱う）。
+    /// 文中の画像を絵にすると、行の流れが切れて読みにくくなる。
+    ///
+    /// 空行を挟まずに画像を並べると1つの段落になるので、**複数を受け取る**。
+    private mutating func imagesOnly(in paragraph: Paragraph) -> [PreviewImageRef] {
+        var found: [PreviewImageRef] = []
+        for child in paragraph.children {
+            switch child {
+            case let image as Markdown.Image:
+                counter += 1
+                found.append(
+                    PreviewImageRef(
+                        id: counter, source: image.source ?? "", alt: image.plainText, layout: .normal
+                    )
+                )
+            case let text as Markdown.Text:
+                // 画像の直後の `{.center}` などは、置き方の指定として読む。
+                // 読み終えた残りに文字があれば、絵にはしない。
+                let rest = Self.applyLayoutMarkers(from: text.string, to: &found)
+                guard rest.trimmingCharacters(in: .whitespaces).isEmpty else { return [] }
+            case is SoftBreak, is LineBreak:
+                continue
+            default:
+                return []
+            }
+        }
+        return found
+    }
+
+    /// 文字列の先頭にある `{.…}` を読み、直前の画像の置き方にする。
+    ///
+    /// - Returns: 読み残した文字。ここに中身があれば、その段落は絵ではなく本文。
+    static func applyLayoutMarkers(from text: String, to images: inout [PreviewImageRef]) -> String {
+        var rest = Substring(text)
+        while true {
+            let trimmed = rest.drop(while: \.isWhitespace)
+            guard trimmed.hasPrefix("{"), let close = trimmed.firstIndex(of: "}"),
+                  trimmed.dropFirst().drop(while: \.isWhitespace).hasPrefix(".")
+            else {
+                return String(rest)
+            }
+            // `{.center}` `{. center}` `{ .center }` のどれでも読む。
+            // 空白ひとつで効かなくなると、なぜ効かないのか分からない。
+            let inside = trimmed[trimmed.index(after: trimmed.startIndex)..<close]
+            let name = inside
+                .trimmingCharacters(in: .whitespaces)
+                .drop(while: { $0 == "." })
+                .trimmingCharacters(in: .whitespaces)
+                .lowercased()
+            // 直前の画像に効かせる。画像が無いところに書かれていたら、ただの文字。
+            guard let last = images.indices.last else { return String(rest) }
+            images[last] = PreviewImageRef(
+                id: images[last].id,
+                source: images[last].source,
+                alt: images[last].alt,
+                layout: PreviewImageLayout(marker: name)
+            )
+            rest = trimmed[trimmed.index(after: close)...]
+        }
+    }
+
     private mutating func content(from markup: Markup) -> PreviewBlock.Content? {
         switch markup {
         case let heading as Heading:
             return .heading(level: heading.level, text: inlineText(heading))
 
         case let paragraph as Paragraph:
+            // 画像だけで出来た段落は、絵として置く。
+            let images = imagesOnly(in: paragraph)
+            if !images.isEmpty { return .images(images) }
             return .paragraph(inlineText(paragraph))
 
         case let quote as BlockQuote:

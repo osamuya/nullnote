@@ -15,7 +15,9 @@ Apps/Nullnote-macOS/
 ├─ Nullnote/                  ← ファイル同期グループ。ここに .swift を置けば自動で入る
 │  ├─ NullnoteApp.swift       # App 本体、DocumentGroup、メニュー
 │  ├─ MarkdownDocument.swift  # FileDocument、UTType
-│  ├─ DocumentView.swift      # エディタ／プレビューの切り替え
+│  ├─ DocumentView.swift      # エディタ／プレビューの切り替え、外の変更の取り込み
+│  ├─ DocumentBridge.swift    # SwiftUI の下の NSDocument に触る唯一の窓口
+│  ├─ FolderAccess.swift      # フォルダを読む許可。ブックマークで覚える
 │  ├─ SettingsView.swift      # 設定（文字サイズのみ）
 │  └─ AppSettings.swift       # UserDefaults のキー
 ├─ Supporting/
@@ -108,3 +110,15 @@ macOS 標準の書類まわりは AppKit が用意する。**間違えやすい�
 いまはローカル実行用のアドホック署名。配布するときは Developer ID か
 App Store の証明書に差し替える（`CODE_SIGN_IDENTITY` と `DEVELOPMENT_TEAM`）。
 サンドボックスとハードンドランタイムは最初から有効にしてある。
+
+## サンドボックスと権限
+
+| 権限 | 何のため |
+|---|---|
+| `app-sandbox` | App Store 配布の必須要件（D-9） |
+| `files.user-selected.read-write` | 利用者が開いた書類の読み書き |
+| `network.client` | 本文に書かれた `https://` の画像を読む（D-26） |
+
+**書類を開いても、その隣のファイルは読めない。** 画像を表示するには
+フォルダを読む許可を別にもらう必要がある（`FolderAccess`）。
+一度もらえばブックマークとして保存し、次の起動時に開き直す。

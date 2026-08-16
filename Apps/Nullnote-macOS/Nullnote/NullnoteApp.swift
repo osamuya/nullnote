@@ -16,6 +16,8 @@ struct NullnoteApp: App {
 
     init() {
         AppSettings.registerDefaults()
+        // 前に許可をもらったフォルダを、また読めるようにする。
+        MainActor.assumeIsolated { FolderAccess.restoreAll() }
     }
 
     /// ボタンやトグルの色。
@@ -36,6 +38,10 @@ struct NullnoteApp: App {
                 showsLineNumbers: showsLineNumbers
             )
             .tint(control)
+            // 画像が読めなかったときに、フォルダの閲覧を頼めるようにする。
+            .imageAccessRequester(ImageAccessRequester { folder in
+                await FolderAccess.request(for: folder)
+            })
         }
         .commands {
             CommandGroup(after: .sidebar) {

@@ -21,7 +21,7 @@ cd Apps/Nullnote-macOS && xcodebuild -scheme Nullnote build
 | レイヤ | 状態 |
 |---|---|
 | `Packages/MarkdownCore` | ✅ 完成（72 テスト） |
-| `Packages/NullnoteUI` | ✅ 完成（197 テスト） |
+| `Packages/NullnoteUI` | ✅ 完成（242 テスト） |
 | `Apps/Nullnote-macOS` | ✅ 動作（起動・ファイル読み込み確認済み） |
 | `Apps/Nullnote-iOS` | ⬜ 未着手（パッケージは iOS ビルド通過済み） |
 
@@ -92,6 +92,9 @@ MarkdownEditor/
 │     │  ├─ MarkdownEditorView.swift  # NSTextView / UITextView
 │     │  ├─ PreviewModel.swift        # AST → 中間表現
 │     │  ├─ MarkdownPreview.swift     # 中間表現 → SwiftUI
+│     │  ├─ FileWatcher.swift         # 外の変更を知る
+│     │  ├─ ThreeWayMerge.swift       # 3つの版の突き合わせ
+│     │  ├─ ImageSource.swift         # 画像の場所の解釈
 │     │  ├─ DocumentSearch.swift      # 文書内検索のヒットと現在位置
 │     │  └─ SearchField.swift         # ヘッダーの検索欄
 │     └─ Tests/NullnoteUITests/
@@ -140,7 +143,7 @@ AST は打鍵ごとに回すには重い（5万文字で 1フレームの3倍）
 
 ```sh
 swift test --package-path Packages/MarkdownCore      # 72 tests
-swift test --package-path Packages/NullnoteUI        # 197 tests
+swift test --package-path Packages/NullnoteUI        # 242 tests
 
 # iOS ビルド（UI 依存が混入していないことの確認）
 cd Packages/MarkdownCore && xcodebuild -scheme MarkdownCore -destination 'generic/platform=iOS' build

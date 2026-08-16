@@ -14,13 +14,21 @@ public struct MarkdownPreview: View {
     private let theme: MarkdownTheme
     /// エディタで一番上に見えている行。ここに対応するブロックへ追従する。
     private let anchorLine: Int?
+    /// 文書のファイル。画像の相対パスの基準にする。
+    private let documentURL: URL?
 
     @State private var blocks: [PreviewBlock] = []
 
-    public init(source: String, theme: MarkdownTheme, anchorLine: Int? = nil) {
+    public init(
+        source: String,
+        theme: MarkdownTheme,
+        anchorLine: Int? = nil,
+        documentURL: URL? = nil
+    ) {
         self.source = source
         self.theme = theme
         self.anchorLine = anchorLine
+        self.documentURL = documentURL
     }
 
     private static let horizontalPadding: CGFloat = 20
@@ -36,7 +44,7 @@ public struct MarkdownPreview: View {
                 // `VStack(spacing:)` の一律の値だと、見出しの前も段落どうしも同じになる。
                 VStack(alignment: .leading, spacing: 0) {
                     ForEach(Array(blocks.enumerated()), id: \.element.id) { index, block in
-                        PreviewBlockView(block: block, theme: theme).erased
+                        PreviewBlockView(block: block, theme: theme, documentURL: documentURL).erased
                             .padding(.top, PreviewSpacing.gap(
                                 before: block,
                                 after: index > 0 ? blocks[index - 1] : nil,
@@ -51,6 +59,8 @@ public struct MarkdownPreview: View {
                 .padding(.horizontal, Self.horizontalPadding)
                 .padding(.vertical, 18)
                 .textSelection(.enabled)
+                // 拡大表示は段落をまたいで送れる。文書ぜんぶの画像を配る。
+                .environment(\.previewImageList, blocks.allImages)
             }
             .onChange(of: anchorLine) { _, line in
                 scroll(to: line, using: proxy)
@@ -138,7 +148,7 @@ enum PreviewSpacing {
         case .paragraph:
             Margin(top: 0.85, bottom: 0.85)         // 11.9pt
 
-        case .codeBlock, .table, .list, .quote, .thematicBreak:
+        case .codeBlock, .table, .list, .quote, .images, .thematicBreak:
             // 地の色や罫線を持つ塊。本文と同じ間隔だと貼り付いて見える。
             //
             // **差を付けすぎるくらいでちょうどよい。** 行そのものが持つ行間が
@@ -162,6 +172,8 @@ private struct PreviewBlockView: View {
 
     let block: PreviewBlock
     let theme: MarkdownTheme
+    /// 画像の相対パスの基準。
+    var documentURL: URL?
     /// 引用の中など、本文と違う色で描きたいときに引き継ぐ。
     /// AppKit のテキストビューは SwiftUI の `foregroundStyle` を受け取らないため、
     /// 色は明示的に渡す必要がある。
@@ -186,7 +198,9 @@ private struct PreviewBlockView: View {
                     .frame(width: 3)
                 VStack(alignment: .leading, spacing: theme.fontSize * 0.5) {
                     ForEach(blocks) {
-                        PreviewBlockView(block: $0, theme: theme, textColor: theme.quote).erased
+                        PreviewBlockView(
+                            block: $0, theme: theme, documentURL: documentURL, textColor: theme.quote
+                        ).erased
                     }
                 }
                 .foregroundStyle(Color(platform: theme.quote))
@@ -194,13 +208,16 @@ private struct PreviewBlockView: View {
             }
 
         case .list(let list):
-            PreviewListView(list: list, theme: theme, textColor: textColor)
+            PreviewListView(list: list, theme: theme, documentURL: documentURL, textColor: textColor)
 
         case .codeBlock(let code, let language):
             PreviewCodeBlockView(code: code, language: language, theme: theme)
 
         case .table(let table):
             PreviewTableView(table: table, theme: theme)
+
+        case .images(let images):
+            PreviewImagesView(images: images, theme: theme, documentURL: documentURL)
 
         case .thematicBreak:
             Divider().overlay(Color(platform: theme.marker))
@@ -217,6 +234,7 @@ private struct PreviewListView: View {
 
     let list: PreviewList
     let theme: MarkdownTheme
+    var documentURL: URL?
     var textColor: PlatformColor?
 
     var body: some View {

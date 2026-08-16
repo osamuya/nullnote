@@ -273,7 +273,12 @@ struct DocumentView: View {
             // 閉じているあいだは中身を作らない。作ると解析と NSTextView の
             // 組み立てが動き続ける（表の多い文書ではマスの数だけ増える）。
             if showsPreview {
-                MarkdownPreview(source: document.text, theme: theme, anchorLine: topVisibleLine)
+                MarkdownPreview(
+                    source: document.text,
+                    theme: theme,
+                    anchorLine: topVisibleLine,
+                    documentURL: fileURL
+                )
             }
         }
     }
