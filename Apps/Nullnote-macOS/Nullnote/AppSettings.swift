@@ -5,6 +5,7 @@ enum AppSettings {
     static let fontSizeKey = "editorFontSize"
     static let appearanceKey = "editorAppearance"
     static let lineNumbersKey = "editorShowsLineNumbers"
+    static let titleSyncKey = "syncsTitleWithFileName"
 
     /// 起動時に一度だけ呼ぶ。
     ///
@@ -14,6 +15,10 @@ enum AppSettings {
         UserDefaults.standard.register(defaults: [
             // 行番号は最初から出す。要らない人は設定画面で消せる。
             lineNumbersKey: true,
+
+            // ファイル名と見出しの同期は**切ってある**。
+            // 本文を黙って書き換える動きなので、選んだ人にだけ効かせる。
+            titleSyncKey: false,
 
             // 保存パネルは既定で折りたたまれ、保存先が「場所」ポップアップだけになる。
             // 書類アプリでは保存先を選びたい場面が多いので、最初から

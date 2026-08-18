@@ -15,10 +15,10 @@ Apps/Nullnote-macOS/
 ├─ Nullnote/                  ← ファイル同期グループ。ここに .swift を置けば自動で入る
 │  ├─ NullnoteApp.swift       # App 本体、DocumentGroup、メニュー
 │  ├─ MarkdownDocument.swift  # FileDocument、UTType
-│  ├─ DocumentView.swift      # エディタ／プレビューの切り替え、外の変更の取り込み
+│  ├─ DocumentView.swift      # エディタ／プレビューの切り替え、外の変更の取り込み、改名の検出
 │  ├─ DocumentBridge.swift    # SwiftUI の下の NSDocument に触る唯一の窓口
 │  ├─ FolderAccess.swift      # フォルダを読む許可。ブックマークで覚える
-│  ├─ SettingsView.swift      # 設定（文字サイズのみ）
+│  ├─ SettingsView.swift      # 設定（テーマ・行番号・ファイル名の同期・文字サイズ）
 │  └─ AppSettings.swift       # UserDefaults のキー
 ├─ Supporting/
 │  ├─ Info.plist              # UTType 宣言、日本語ロケール
@@ -70,11 +70,13 @@ Markdown には Apple 定義の UTType が無い。`Supporting/Info.plist` で
 
 ## 設定
 
-2つだけ。`UserDefaults`（サンドボックスのコンテナ内）に保存される。
+4つだけ。`UserDefaults`（サンドボックスのコンテナ内）に保存される。
 
 | 項目 | キー | 値 |
 |---|---|---|
 | テーマ | `editorAppearance` | `system` / `light` / `dark` |
+| 行番号を表示 | `editorShowsLineNumbers` | 既定 `true` |
+| ファイル名と先頭の見出しを同期 | `syncsTitleWithFileName` | 既定 `false` |
 | 文字サイズ | `editorFontSize` | 10〜28 |
 
 ```sh

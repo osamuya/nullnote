@@ -6,6 +6,7 @@ struct SettingsView: View {
     @Binding var fontSize: Double
     @Binding var appearance: MarkdownAppearance
     @Binding var showsLineNumbers: Bool
+    @Binding var syncsTitleWithFileName: Bool
 
     var body: some View {
         Form {
@@ -23,6 +24,21 @@ struct SettingsView: View {
             LabeledContent("編集画面") {
                 Toggle("行番号を表示", isOn: $showsLineNumbers)
                     .frame(width: 240, alignment: .leading)
+            }
+
+            LabeledContent("ファイル名") {
+                VStack(alignment: .leading, spacing: 4) {
+                    Toggle("先頭の見出しと同期", isOn: $syncsTitleWithFileName)
+                    Text("ファイル名を変えたとき、本文の先頭の見出しも同じ名前にします。見出しが無ければ足します。")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                        // `LabeledContent` の中は右揃えが受け継がれる。
+                        // 折り返す説明文はそのままだと右に寄るので、明示的に左へ戻す。
+                        .multilineTextAlignment(.leading)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .frame(width: 240, alignment: .leading)
             }
 
             LabeledContent("文字サイズ") {

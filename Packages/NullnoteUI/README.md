@@ -30,6 +30,7 @@ macOS 版と iOS 版が共有する SwiftUI レイヤ。トークンや AST を�
 | `FileWatcher.swift` | ファイルが外で書き換わったことを知らせる。ポーリングしない |
 | `ExternalChange.swift` | 外の変更を取り込むか、合流するかの判断 |
 | `ThreeWayMerge.swift` | 3つの版の突き合わせ。git と同じ形の印を入れる |
+| `TitleSync.swift` | ファイル名に合わせて先頭の見出しを直す。差し替えたあとの本文を返すだけ |
 | `ImageSource.swift` | `![]()` の場所の解釈。相対 / `~/` / 絶対 / URL |
 | `PreviewImage.swift` | プレビューの画像1枚。読めない理由も出す |
 | `ImageAccess.swift` | 読む許可を頼む受け口。頼み方はアプリ側が持つ |

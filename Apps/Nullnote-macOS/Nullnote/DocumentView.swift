@@ -12,6 +12,8 @@ struct DocumentView: View {
     let fontSize: Double
     let appearance: MarkdownAppearance
     let showsLineNumbers: Bool
+    /// ファイル名を変えたとき、本文の先頭の見出しも合わせるか。
+    let syncsTitleWithFileName: Bool
 
     @State private var showsOutline = false
     /// 目次が開け閉めの最中か。ツールバーの輪を回すために持つ。
@@ -36,6 +38,8 @@ struct DocumentView: View {
     @State private var externalChangeCount = 0
     /// 最後に、画面とディスクが一致していた内容。合流の基準にする。
     @State private var lastSyncedText: String?
+    /// いま見ているファイル。改名に気づくために、前の値を覚えておく。
+    @State private var knownURL: URL?
     /// 検索欄に「焦点を取れ」と伝えるための合図。⌘F のたびに増やす。
     @State private var searchFocusGeneration = 0
     /// 検索欄を閉じたとき、編集画面へ焦点を返すための依頼。
@@ -159,7 +163,17 @@ struct DocumentView: View {
             if shown { searchFocused = true }
         }
         // 外でファイルが書き換わったら取り込む。
-        .task(id: fileURL) { startWatching() }
+        // 別のファイルになったとき（改名・別名で保存）も、ここを通る。
+        .task(id: fileURL) {
+            // **見張りを張り直すのが先。** ここで `lastSyncedText` が
+            // ディスクと同じ内容になる。見出しを直すのはそのあと。
+            // 逆にすると、直した本文が「ディスクと一致していた内容」として
+            // 記録され、次に外の変更が来たときに合流で消される。
+            startWatching()
+            syncTitleIfRenamed()
+            // 次の改名は、いまの名前との差で判断する。
+            knownURL = fileURL
+        }
         .onChange(of: externalChangeCount) { _, _ in takeInExternalChange() }
     }
 
@@ -175,6 +189,25 @@ struct DocumentView: View {
         // いま開いた内容は、ディスクと一致しているはず。ここを基準にする。
         lastSyncedText = document.text
         watcher = FileWatcher(url: fileURL) { externalChangeCount += 1 }
+    }
+
+    // MARK: - ファイル名と見出しを揃える
+
+    /// ファイル名が変わっていたら、本文の先頭の見出しも合わせる。
+    ///
+    /// **開いた直後は何もしない。** 前の名前を知っているときだけ動く。
+    /// 新規書類をはじめて保存した場合（`nil` → ファイル）もここには入らない。
+    /// 名前を「変えた」のではなく「付けた」場面なので、本文は触らない。
+    ///
+    /// 直した結果は**保存しない**。未保存の編集として残るので、
+    /// 気に入らなければ ⌘Z で戻せて、よければ ⌘S で確定できる。
+    private func syncTitleIfRenamed() {
+        guard syncsTitleWithFileName else { return }
+        guard let previous = knownURL, let fileURL, previous != fileURL else { return }
+        guard let updated = TitleSync.applying(
+            fileName: fileURL.lastPathComponent, to: document.text
+        ) else { return }
+        document.text = updated
     }
 
     /// ディスクの内容を見て、取り込めるなら取り込む。

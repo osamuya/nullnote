@@ -14,6 +14,9 @@ struct NullnoteApp: App {
     @AppStorage(AppSettings.lineNumbersKey)
     private var showsLineNumbers = false
 
+    @AppStorage(AppSettings.titleSyncKey)
+    private var syncsTitleWithFileName = false
+
     init() {
         AppSettings.registerDefaults()
         // 前に許可をもらったフォルダを、また読めるようにする。
@@ -35,7 +38,8 @@ struct NullnoteApp: App {
                 fileURL: file.fileURL,
                 fontSize: fontSize,
                 appearance: appearance,
-                showsLineNumbers: showsLineNumbers
+                showsLineNumbers: showsLineNumbers,
+                syncsTitleWithFileName: syncsTitleWithFileName
             )
             .tint(control)
             // 画像が読めなかったときに、フォルダの閲覧を頼めるようにする。
@@ -79,7 +83,8 @@ struct NullnoteApp: App {
             SettingsView(
                 fontSize: $fontSize,
                 appearance: $appearance,
-                showsLineNumbers: $showsLineNumbers
+                showsLineNumbers: $showsLineNumbers,
+                syncsTitleWithFileName: $syncsTitleWithFileName
             )
             .tint(control)
         }
