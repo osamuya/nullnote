@@ -50,8 +50,13 @@ public struct SidePane<Side: View, Content: View>: View {
     public var body: some View {
         // **並びは変えない。** 閉じるときも側と線を置いたまま幅を 0 にする。
         HStack(spacing: 0) {
+            // **中身はいつも開いたときの幅で組む。**
+            // 外側の幅だけを動かして切り抜く。中身の幅まで動かすと、
+            // 開け閉めのあいだ毎フレーム組み直すことになり、
+            // 項目が多いほど重くなる（目次で実際に緩慢になった）。
             side
-                .frame(width: showsSide ? currentWidth : 0)
+                .frame(width: currentWidth)
+                .frame(width: showsSide ? currentWidth : 0, alignment: .trailing)
                 .clipped()
             divider
                 .frame(width: showsSide ? PaneDivider.grabWidth : 0)

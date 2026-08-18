@@ -14,6 +14,8 @@ struct DocumentView: View {
     let showsLineNumbers: Bool
 
     @State private var showsOutline = false
+    /// 目次が開け閉めの最中か。ツールバーの輪を回すために持つ。
+    @State private var outlineIsBusy = false
     @State private var showsPreview = false
     /// エディタで一番上に見えている行。プレビューを追従させるために使う。
     @State private var topVisibleLine = 1
@@ -48,6 +50,12 @@ struct DocumentView: View {
     /// 側に置く一覧はウインドウを広げても広がらない方が自然。
     @State private var outlineWidth: CGFloat = 220
 
+    /// 領域を開け閉めするときの動きの長さ。
+    ///
+    /// **短くしてある。** 動いているあいだ、エディタは毎フレーム本文を折り返し直す。
+    /// 長いほど折り返しの回数が増え、そのぶん引っかかる。
+    private static let paneAnimation = 0.1
+
     private var theme: MarkdownTheme {
         .standard(fontSize: CGFloat(fontSize), appearance: appearance)
     }
@@ -78,8 +86,17 @@ struct DocumentView: View {
         .straightHeader()
         .toolbar {
             ToolbarItem(placement: .navigation) {
-                Toggle(isOn: $showsOutline.animation(.easeInOut(duration: 0.15))) {
+                Toggle(isOn: outlineVisibility) {
+                    // 押したことが伝わるよう、開け閉めのあいだは輪を回す。
+                    // **中身は入れ替えない。** 重ねて、不透明度だけ入れ替える
+                    // （ツールバーの項目は、中身が変わると取り違えが起きる。下に書いた）。
                     Label("目次", systemImage: "sidebar.left")
+                        .opacity(outlineIsBusy ? 0 : 1)
+                        .overlay {
+                            ProgressView()
+                                .controlSize(.small)
+                                .opacity(outlineIsBusy ? 1 : 0)
+                        }
                 }
                 .help(showsOutline ? "目次を隠す" : "見出しの目次を表示")
             }
@@ -106,7 +123,7 @@ struct DocumentView: View {
                 .help(showsSearch ? "検索を閉じる" : "文書内を検索（⌘F）")
             }
             ToolbarItem(placement: .primaryAction) {
-                Toggle(isOn: $showsPreview.animation(.easeInOut(duration: 0.15))) {
+                Toggle(isOn: $showsPreview.animation(.easeInOut(duration: Self.paneAnimation))) {
                     Label("プレビュー", systemImage: "sidebar.squares.right")
                 }
                 .help(showsPreview ? "プレビューを隠す" : "プレビューを左右に並べる")
@@ -221,6 +238,26 @@ struct DocumentView: View {
     ///
     /// `$showsSearch` を直に渡さない。出すときは入力欄へ焦点を移し、
     /// 閉じるときはハイライトも消す必要があり、素の代入では足りないため。
+    /// 目次の開け閉め。押したことがすぐ伝わるよう、輪を回してから動かす。
+    ///
+    /// 幅が変わるあいだ、エディタは本文を折り返し直す。大きな文書ほど時間がかかり、
+    /// **押したのに何も起きていないように見えていた。**
+    private var outlineVisibility: Binding<Bool> {
+        Binding(
+            get: { showsOutline },
+            set: { wanted in
+                outlineIsBusy = true
+                withAnimation(.easeInOut(duration: Self.paneAnimation)) { showsOutline = wanted }
+                Task {
+                    // 動き終わるまで出しておく。少し長めに取って、
+                    // 折り返し直しが尾を引いても輪が先に消えないようにする。
+                    try? await Task.sleep(for: .milliseconds(320))
+                    outlineIsBusy = false
+                }
+            }
+        )
+    }
+
     private var searchVisibility: Binding<Bool> {
         Binding(
             get: { showsSearch },
