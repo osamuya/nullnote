@@ -40,6 +40,8 @@ struct DocumentView: View {
     @State private var lastSyncedText: String?
     /// いま見ているファイル。改名に気づくために、前の値を覚えておく。
     @State private var knownURL: URL?
+    /// フォルダに書く許可を、この書類でもう頼んだか。
+    @State private var askedForFolderAccess = false
     /// 検索欄に「焦点を取れ」と伝えるための合図。⌘F のたびに増やす。
     @State private var searchFocusGeneration = 0
     /// 検索欄を閉じたとき、編集画面へ焦点を返すための依頼。
@@ -210,6 +212,45 @@ struct DocumentView: View {
         document.text = updated
     }
 
+    /// 見出しに合わせてファイル名を付け直す。
+    ///
+    /// **保存が済んだときだけ呼ぶ。** 打鍵のたびに改名すると、
+    /// 書きかけの名前（「企」「企画」…）でファイルが動き、Finder も git も荒れる。
+    ///
+    /// **同じ名前のファイルがあるときは何もしない。** 上書きは絶対にしない。
+    /// 改名したあとは `fileURL` が変わるので、逆向きの同期（`syncTitleIfRenamed`）が
+    /// 走るが、見出しはもう名前と一致しているので何も書き換わらない。
+    private func renameFileIfTitleChanged(at fileURL: URL) {
+        guard syncsTitleWithFileName else { return }
+        guard let name = TitleSync.fileName(
+            for: document.text, currentName: fileURL.lastPathComponent
+        ) else { return }
+
+        let folder = fileURL.deletingLastPathComponent()
+        let destination = folder.appendingPathComponent(name)
+        guard !FileManager.default.fileExists(atPath: destination.path) else { return }
+        // 書類を開いただけでは、その**フォルダ**に書く許可までは付いてこない。
+        // 許可が無いまま改名を頼むと、黙って何も起きない（実測: NSCocoaError 513）。
+        guard FileManager.default.isWritableFile(atPath: folder.path) else {
+            askForFolderAccess(to: folder)
+            return
+        }
+        DocumentBridge.rename(at: fileURL, to: destination)
+    }
+
+    /// フォルダに書く許可を頼む。**1つの書類につき一度だけ。**
+    ///
+    /// 断られたあとも聞き続けると、保存のたびにパネルが出る。
+    /// 許可が下りたら、その場で付け直しをやり直す。
+    private func askForFolderAccess(to folder: URL) {
+        guard !askedForFolderAccess else { return }
+        askedForFolderAccess = true
+        Task { @MainActor in
+            guard await FolderAccess.requestWriting(for: folder), let fileURL else { return }
+            renameFileIfTitleChanged(at: fileURL)
+        }
+    }
+
     /// ディスクの内容を見て、取り込めるなら取り込む。
     ///
     /// **編集中のものがあるときは触らない。** そちらは合流の話になる。
@@ -225,6 +266,9 @@ struct DocumentView: View {
         case .ignore:
             // 画面とディスクが一致した。ここが次の合流の基準になる。
             lastSyncedText = disk
+            // 一致しているということは、いま保存が済んだところ。
+            // 見出しに合わせてファイル名を付け直すのは、この瞬間だけ。
+            renameFileIfTitleChanged(at: fileURL)
 
         case .reload(let text):
             document.text = text

@@ -38,7 +38,7 @@ public enum DocumentOutline {
 
         for (offset, line) in MarkdownTokenizer().tokenizeLines(source).enumerated() {
             guard let heading = headingToken(in: line) else { continue }
-            let title = plainText(of: heading.range, in: source, tokens: line.tokens)
+            let title = MarkdownPlainText.text(of: heading.range, in: source, tokens: line.tokens)
             guard !title.isEmpty else { continue }
             flat.append((level: heading.level, title: title, line: offset + 1))
         }
@@ -56,40 +56,6 @@ public enum DocumentOutline {
             }
         }
         return nil
-    }
-
-    /// 見出しの範囲から、記法文字を取り除いた文字列を作る。
-    ///
-    /// 例: `# **設計** の話` → `設計 の話`
-    private static func plainText(
-        of range: Range<String.Index>,
-        in source: String,
-        tokens: [MarkdownToken]
-    ) -> String {
-        // 目次に出したくない範囲を集める。
-        // 記法文字（`**` `[` `]` など）に加え、リンク先の URL も落とす。
-        // `[参考](https://example.com)` は「参考」だけ残す。
-        let markers = tokens.filter { token in
-            let isNoise: Bool
-            switch token.kind {
-            case .marker, .linkURL: isNoise = true
-            default: isNoise = false
-            }
-            guard isNoise else { return false }
-            return token.range.lowerBound >= range.lowerBound && token.range.upperBound <= range.upperBound
-        }
-
-        var result = ""
-        var index = range.lowerBound
-        for marker in markers.sorted(by: { $0.range.lowerBound < $1.range.lowerBound }) {
-            guard marker.range.lowerBound >= index else { continue }
-            result += source[index..<marker.range.lowerBound]
-            index = marker.range.upperBound
-        }
-        if index < range.upperBound {
-            result += source[index..<range.upperBound]
-        }
-        return result.trimmingCharacters(in: .whitespaces)
     }
 
     // MARK: - 階層化

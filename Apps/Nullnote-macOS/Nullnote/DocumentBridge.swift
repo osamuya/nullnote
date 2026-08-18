@@ -50,6 +50,18 @@ enum DocumentBridge {
         document.fileModificationDate = modificationDate(of: url)
     }
 
+    /// 書類のファイル名を変える。
+    ///
+    /// **`FileManager` で動かさない。** 書類は自分の `fileURL` を握っていて、
+    /// 黙って動かすと以後の保存が消えた場所に書きに行く。`NSDocument` に頼めば、
+    /// ファイルの移動と `fileURL` の更新が一組で行われる。
+    ///
+    /// 失敗しても何もしない（名前が変わらないだけ）。上書きの恐れがある場面は、
+    /// 呼ぶ側で先に弾いている。
+    static func rename(at url: URL, to destination: URL) {
+        document(for: url)?.move(to: destination)
+    }
+
     private static func modificationDate(of url: URL) -> Date? {
         try? FileManager.default.attributesOfItem(atPath: url.path)[.modificationDate] as? Date
     }

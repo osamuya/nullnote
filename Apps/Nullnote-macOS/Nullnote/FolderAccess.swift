@@ -39,15 +39,41 @@ enum FolderAccess {
         }
     }
 
-    /// フォルダの閲覧を頼む。
+    /// フォルダの閲覧を頼む。画像を読むため。
     ///
     /// - Returns: 許可されたら `true`。
     static func request(for folder: URL) async -> Bool {
-        // すでに読めるなら聞かない。
-        if FileManager.default.isReadableFile(atPath: folder.path) { return true }
+        await request(
+            for: folder,
+            message: "「\(folder.lastPathComponent)」の中の画像を表示するために、このフォルダの閲覧を許可してください。",
+            isSatisfied: { FileManager.default.isReadableFile(atPath: $0.path) }
+        )
+    }
+
+    /// フォルダに書き込む許可を頼む。ファイル名を付け直すため。
+    ///
+    /// **読めるだけでは足りない。** 改名はフォルダの項目を書き換える操作なので、
+    /// 書類そのものへの許可（開いたときにもらえる）では通らない。実測で確かめた。
+    ///
+    /// - Returns: 許可されたら `true`。
+    static func requestWriting(for folder: URL) async -> Bool {
+        await request(
+            for: folder,
+            message: "見出しに合わせてファイル名を付け直すために、「\(folder.lastPathComponent)」への書き込みを許可してください。",
+            isSatisfied: { FileManager.default.isWritableFile(atPath: $0.path) }
+        )
+    }
+
+    private static func request(
+        for folder: URL,
+        message: String,
+        isSatisfied: (URL) -> Bool
+    ) async -> Bool {
+        // すでに足りているなら聞かない。
+        if isSatisfied(folder) { return true }
 
         let panel = NSOpenPanel()
-        panel.message = "「\(folder.lastPathComponent)」の中の画像を表示するために、このフォルダの閲覧を許可してください。"
+        panel.message = message
         panel.prompt = "許可"
         panel.canChooseFiles = false
         panel.canChooseDirectories = true
@@ -62,7 +88,7 @@ enum FolderAccess {
         if let data = bookmark(for: granted) {
             save(data, for: granted.path)
         }
-        return FileManager.default.isReadableFile(atPath: folder.path)
+        return isSatisfied(folder)
     }
 
     // MARK: - 覚えておく

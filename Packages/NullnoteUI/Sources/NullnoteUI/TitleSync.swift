@@ -3,9 +3,16 @@ import MarkdownCore
 
 /// ファイル名と、本文の先頭の見出しを揃える。
 ///
-/// **副作用を持たない。** ファイルも書類も触らない。差し替えたあとの本文を返すだけで、
-/// それを本文に入れるかどうかは呼ぶ側（`DocumentView`）が決める。
-/// `ExternalChangeResolver` と同じ作りにして、判断だけをテストで縛る。
+/// 向きは2つある。どちらも**判断するだけ**で、実行は呼ぶ側（`DocumentView`）。
+///
+/// | 向き | 関数 | いつ |
+/// |---|---|---|
+/// | ファイル名 → 本文 | `applying(fileName:to:)` | 改名に気づいたとき |
+/// | 本文 → ファイル名 | `fileName(for:currentName:)` | 保存したとき |
+///
+/// **副作用を持たない。** ファイルも書類も触らない。差し替えたあとの本文や、
+/// 付け直すべき名前を返すだけ。`ExternalChangeResolver` と同じ作りにして、
+/// 判断だけをテストで縛る。
 ///
 /// ## 「先頭の見出し」は1行目だけを見る
 ///
@@ -53,13 +60,48 @@ public enum TitleSync {
 
         var result = source
         if let text = headingText(in: tokens) {
-            guard source[text] != title else { return nil }
+            // 比べるのは**記法を落とした見出し**。`# **企画**` を `企画.md` に
+            // 合わせるとき、太字を剥がすためだけに書き換えない。
+            guard MarkdownPlainText.text(of: text, in: source, tokens: tokens.tokens) != title else {
+                return nil
+            }
             result.replaceSubrange(text, with: title)
         } else {
             // `#` だけ、`# ` だけの行。記法文字のうしろを丸ごと書き直す。
             result.replaceSubrange(marker.upperBound..<line.upperBound, with: " " + title)
         }
         return result
+    }
+
+    // MARK: - 本文 → ファイル名
+
+    /// 先頭の見出しに合わせたファイル名を返す。**変える必要が無ければ nil。**
+    ///
+    /// 拡張子は元のまま残す。`# 企画` ＋ `旧題.md` → `企画.md`。
+    ///
+    /// **返さない（＝改名しない）場面をはっきりさせておく。**
+    /// 改名はディスクを触る操作なので、迷ったら何もしない側に倒す。
+    ///
+    /// - 先頭が `#` の見出しでない … 合わせる元が無い
+    /// - 見出しが空、または空白だけ
+    /// - ファイル名に使えない文字（`/` `:`）が入っている … 置き換えると別の名前になる
+    /// - `.` で始まる名前になる … 隠しファイルにしてしまう
+    /// - 255 バイトを超える … ファイルシステムが受け付けない
+    public static func fileName(for source: String, currentName: String) -> String? {
+        guard let line = firstContentLine(in: source) else { return nil }
+        let tokens = MarkdownTokenizer().tokenizeLine(source, range: line, stateBefore: .blank)
+        guard titleMarker(in: tokens, source: source, line: line) != nil,
+              let text = headingText(in: tokens)
+        else { return nil }
+
+        let base = MarkdownPlainText.text(of: text, in: source, tokens: tokens.tokens)
+        guard !base.isEmpty, !base.hasPrefix("."), base.allSatisfy({ $0 != "/" && $0 != ":" })
+        else { return nil }
+
+        let ext = (currentName as NSString).pathExtension
+        let candidate = ext.isEmpty ? base : "\(base).\(ext)"
+        guard candidate != currentName, candidate.utf8.count <= 255 else { return nil }
+        return candidate
     }
 
     // MARK: - 走査
