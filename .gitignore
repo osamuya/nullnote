@@ -7,6 +7,10 @@
 # アプリ側（Nullnote.xcodeproj/.../swiftpm/Package.resolved）は再現性のため追跡する。
 Packages/*/Package.resolved
 
+# 配布物のビルド結果。アーカイブ・書き出し・DMG はすべてここに出る。
+# 作り直せるものなので追跡しない（release-dmg.sh で再生成できる）。
+Apps/Nullnote-macOS/build/
+
 # Xcode
 DerivedData/
 *.xcuserstate

@@ -2,26 +2,65 @@
 
 Markdown エディタ。macOS 版が動いている。同じロジックで iOS 版へ展開する。
 
-```bash
-install.sh
+## 3つのスクリプト
+
+`Apps/Nullnote-macOS/` に3つある。**「誰のためのビルドか」で分かれている。**
+
+| | `run.sh` | `install.sh` | `release-dmg.sh` |
+|---|---|---|---|
+| 目的 | **直した所を今すぐ確かめる** | **自分の Mac で常用する** | **他人に配る** |
+| 構成 | Debug | Release | Release |
+| 署名 | Apple Development | Apple Development | **Developer ID ＋ 公証** |
+| 出来上がり | DerivedData の中 | `/Applications/Nullnote.app` | `build/Nullnote-<版>.dmg` |
+| かかる時間 | 短い | 中くらい | **長い**（公証待ちで数分） |
+| 他人の Mac で動くか | ❌ | ❌ | ✅ |
+
+```sh
+cd Apps/Nullnote-macOS
+
+./run.sh                  # 新規書類で起動
+./run.sh ~/Desktop/a.md   # ファイルを開いて起動
+./install.sh              # /Applications に反映
+./release-dmg.sh          # 配布用 DMG を作る
 ```
 
-```bash
-% cd Apps/Nullnote-macOS && ./run.sh
-（または）
-% ./Apps/Nullnote-macOS/run.sh
+**`install.sh` と `release-dmg.sh` は独立している。**
+DMG を作っても `/Applications` は更新されないし、逆も同じ。
+両方に反映したいならそれぞれ実行する。
+
+### ふだんの流れ
+
 ```
+コードを直す
+    ↓
+swift test                 速い。ここで落ちたら先に進まない
+    ↓
+./run.sh                   触って確認
+    ↓
+（良ければ）./install.sh    自分の常用アプリに反映
+    ↓
+（配る段になったら）
+バージョンを上げる → ./release-dmg.sh → DMG をサイトに置く
+```
+
+ビルドだけしたいときは、スクリプトを介さず直接叩けばよい。
 
 ```sh
 cd Apps/Nullnote-macOS && xcodebuild -scheme Nullnote build
 ```
+
+### バージョンを上げる
+
+`Apps/Nullnote-macOS/Nullnote.xcodeproj/project.pbxproj` の
+`MARKETING_VERSION` と `CURRENT_PROJECT_VERSION` を書き換える（**Debug / Release の2か所ずつ**）。
+DMG のファイル名は `MARKETING_VERSION` から自動で付く。
 
 ## 現在地
 
 | レイヤ | 状態 |
 |---|---|
 | `Packages/MarkdownCore` | ✅ 完成（72 テスト） |
-| `Packages/NullnoteUI` | ✅ 完成（242 テスト） |
+| `Packages/NullnoteUI` | ✅ 完成（315 テスト） |
 | `Apps/Nullnote-macOS` | ✅ 動作（起動・ファイル読み込み確認済み） |
 | `Apps/Nullnote-iOS` | ⬜ 未着手（パッケージは iOS ビルド通過済み） |
 
@@ -34,6 +73,7 @@ cd Apps/Nullnote-macOS && xcodebuild -scheme Nullnote build
 | [docs/01-native-app-anatomy.md](docs/01-native-app-anatomy.md) | macOS アプリの構造。ソースが `.app` になるまで、リンク、DerivedData、署名 |
 | [docs/02-decision-log.md](docs/02-decision-log.md) | なぜこの作りにしたか。捨てた案、実測値、見つけた不具合 |
 | [docs/04-development-flow.md](docs/04-development-flow.md) | 開発の手順。ビルド・起動・テスト・インストール |
+| [docs/03-release-plan.md](docs/03-release-plan.md) | 配布の段取りと作業ログ。署名・公証でつまずいた点 |
 | [Packages/MarkdownCore/README.md](Packages/MarkdownCore/README.md) | パースの設計と既知の制限 |
 | [Packages/NullnoteUI/README.md](Packages/NullnoteUI/README.md) | ハイライトとプレビューの実装 |
 | [Apps/Nullnote-macOS/README.md](Apps/Nullnote-macOS/README.md) | ターゲット設定、UTType、操作方法 |

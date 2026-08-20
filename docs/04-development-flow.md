@@ -11,8 +11,14 @@ swift test          速い。ここで落ちたら先に進まない
     ↓
 （詰まったら Xcode で ⌘R）  ブレークポイントを置ける
     ↓
-./install.sh        /Applications に反映
+./install.sh        /Applications に反映（自分の Mac 用）
+    ↓
+./release-dmg.sh    配布用 DMG を作る（他人に配るとき）
 ```
+
+3つのスクリプトの違いは [`../README.md`](../README.md) の「3つのスクリプト」にまとめてある。
+**`install.sh` と `release-dmg.sh` は独立している。**
+DMG を作っても `/Applications` は更新されない。
 
 ## どこを直すか
 
@@ -95,6 +101,22 @@ cd Apps/Nullnote-macOS
 ```
 
 Release ビルド → 起動中なら終了 → `/Applications/Nullnote.app` へコピー。
+
+**この Mac でしか動かない。** 開発用証明書で署名しているため、
+他人に渡すなら次の「配る」を使う。
+
+## 配る
+
+```sh
+cd Apps/Nullnote-macOS
+./release-dmg.sh        # build/Nullnote-<バージョン>.dmg ができる
+```
+
+署名 → 公証 → ステープル → 判定確認まで通す。**公証待ちで数分かかる。**
+事前に必要なもの（Developer ID 証明書と公証の認証情報）はスクリプト冒頭に書いてある。
+つまずいた点は `docs/03-release-plan.md` の作業ログ。
+
+**`/Applications` には触らない。** 両方に反映したいなら `install.sh` も実行する。
 
 ## 「直したのに変わらない」とき
 

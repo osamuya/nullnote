@@ -11,6 +11,8 @@ open Nullnote.xcodeproj      # Xcode で開く場合
 
 ```text
 Apps/Nullnote-macOS/
+├─ make-icons.py              ← 元絵1枚からアイコン7枚を作り直す
+├─ release-dmg.sh             ← 配布用 DMG を作る（署名・公証・ステープル込み）
 ├─ Nullnote.xcodeproj/
 ├─ Nullnote/                  ← ファイル同期グループ。ここに .swift を置けば自動で入る
 │  ├─ NullnoteApp.swift       # App 本体、DocumentGroup、メニュー
@@ -67,6 +69,29 @@ Markdown には Apple 定義の UTType が無い。`Supporting/Info.plist` で
 | 文字を大きく／小さく | ⌘+ / ⌘− |
 | 文字サイズを戻す | ⌘0 |
 | 設定 | ⌘, |
+
+## 配布
+
+```sh
+./release-dmg.sh        # build/Nullnote-<バージョン>.dmg ができる
+```
+
+署名 → 公証 → ステープル → 判定確認まで通す。
+事前に必要なもの（Developer ID 証明書と公証の認証情報）はスクリプト冒頭に書いてある。
+経緯と落とし穴は `docs/03-release-plan.md` の作業ログ。
+
+## アイコン
+
+元絵は `sabanote_site/design/nullnote/nullnote_icon_dark1_sq.png`（1024×1024、角の立った正方形）。
+差し替えるときは元絵を渡すだけでよい。
+
+```sh
+./make-icons.py <元絵.png>   # 角丸を当てて7サイズを生成し、アセットカタログに置く
+./install.sh
+```
+
+**角丸はスクリプト側で当てる。** 1024 の画布に 824 の角丸四角（半径 22.4%）を焼き込む。
+理由は `docs/02-decision-log.md` の D-31。
 
 ## 設定
 

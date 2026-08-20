@@ -15,7 +15,7 @@
 | `DEVELOPMENT_TEAM` | 未設定 | Developer Program 登録後に設定 |
 | ハードンドランタイム | 有効 | そのままでよい |
 | サンドボックス | 有効 | そのままでよい |
-| アプリアイコン | **無し** | 要作成 |
+| アプリアイコン | あり（2026-08-20 に正式版へ差し替え） | 元絵は `sabanote_site/design/nullnote/` |
 
 アプリの実体は DerivedData の中にあり、Clean Build Folder で消える。
 
@@ -23,14 +23,22 @@
 
 ## 第1段階: ローカルで常用できるようにする
 
-### T1-1. アプリアイコンを用意する 〔要: 元絵〕
+### T1-1. アプリアイコンを用意する 〔済み〕
 
-- 1024×1024 の元絵を用意する（PNG、余白込みの macOS 標準の角丸で描く）
-- 各サイズを生成してアセットカタログに入れる
-- 元絵さえあれば、サイズ生成と組み込みは自動化できる
+2026-08-20 に正式版へ差し替えた。元絵は
+`/Users/osamu-yamakami/Develop/sabanote/sabanote_site/design/nullnote/nullnote_icon_dark1_sq.png`
+（1024×1024、角の立った正方形）。
 
-**いま無いと何が起きるか**: Dock と Finder で汎用の書類アイコンになる。
-App Store 申請では**必須**なので、どのみち第2段階までに要る。
+差し替えるときは元絵を渡すだけでよい。
+
+```sh
+cd Apps/Nullnote-macOS
+./make-icons.py <元絵.png>   # 角丸を当てて7サイズを生成
+./install.sh
+```
+
+**角丸はスクリプト側で当てる。** 1024 の画布に 824 の角丸四角（半径 22.4%）。
+元絵に焼き込んでもらう必要は無い。
 
 ### T1-2. バージョン番号を決める
 
@@ -66,11 +74,21 @@ cp -R "$(xcodebuild -scheme Nullnote -configuration Release -showBuildSettings 2
 
 ### 先に着手すべきもの（待ち時間がある）
 
-#### T2-1. Apple Developer Program に登録する 〔あなたのみ〕
+#### T2-1. Apple Developer Program に登録する 〔あなたのみ〕〔いまここ〕
 
-- 年額 99 USD
-- **審査に数日〜1週間かかる**ので、第1段階と並行して先に出しておく
-- 登録後に Team ID が分かる → `DEVELOPMENT_TEAM` に設定する
+**Individual（個人）として新規登録する。** 同じ Apple ID のままでよい。
+
+- [developer.apple.com/programs/enroll/](https://developer.apple.com/programs/enroll/)
+- 年額 99 USD。Apple ID に**二要素認証**が要る
+- 本人確認は `Apple Developer` アプリ（Mac App Store で無料）から身分証を送る形になることが多い
+- 有効化まで **24〜48時間**程度
+- 登録後に Team ID（10桁）が分かる → `DEVELOPMENT_TEAM` に設定する
+
+**法人（Organization）で登録しない。** D-U-N-S 番号が要り、数日〜数週間かかる。
+
+**Individual の販売者名は法的な氏名になる。** 屋号（`roughlang`）を
+App Store の販売者欄に出したい場合は種別から検討が要る。
+`NSHumanReadableCopyright` は自由文なので、そちらは屋号でも書ける。
 
 #### T2-2. 名称・商標・ドメインを確認する 〔あなたのみ〕
 
@@ -89,13 +107,25 @@ cp -R "$(xcodebuild -scheme Nullnote -configuration Release -showBuildSettings 2
 
 `com.roughlang.Nullnote` を Identifiers に登録。App Sandbox を capability として有効にする。
 
-#### T2-4. 署名設定を切り替える 〔私〕
+#### T2-4. 署名設定を切り替える 〔私〕〔済み〕
 
 ```
-CODE_SIGN_IDENTITY = "Apple Distribution"   ← "-" から変更
-DEVELOPMENT_TEAM = <Team ID>                ← 新規設定
-CODE_SIGN_STYLE = Automatic
+CODE_SIGN_IDENTITY = "Apple Development"    ← "-" から変更
+DEVELOPMENT_TEAM = 542DBL2NGA               ← 新規設定
+CODE_SIGN_STYLE = Automatic                 ← 変更なし
 ```
+
+**`Apple Distribution` を直接書かない。** 自動署名では、ふだんのビルドは
+`Apple Development` で行い、**配布用の証明書はアーカイブを書き出すときに選ぶ**
+（`ExportOptions.plist` の `method`）。設定に焼き込むと、開発ビルドまで
+配布用証明書を要求するようになる。
+
+**同名のチームが2つ並んでいても、`DEVELOPMENT_TEAM` に ID を書けば取り違えない。**
+Xcode は名前ではなく ID で選ぶ。
+
+**`xcodebuild` は自分で証明書を作らない。** `-allowProvisioningUpdates` を
+付けたときだけ作る。付けずに走らせると
+`No "Mac Development" signing certificate matching team ID ... was found` で止まる。
 
 **確認すること**: 配布ビルドに `com.apple.security.get-task-allow` が
 残っていないこと（デバッガ接続用の権限。残っていると審査で弾かれる）。
@@ -106,9 +136,9 @@ codesign -d --entitlements :- /path/to/Nullnote.app
 
 ### 素材の準備
 
-#### T2-5. アプリアイコンを仕上げる 〔元絵をいただければ私〕
+#### T2-5. アプリアイコンを仕上げる 〔済み〕
 
-T1-1 と同じもの。1024×1024 が申請用のマスターになる。
+T1-1 で差し替え済み。`icon_1024.png` が申請用のマスターになる。
 
 #### T2-6. スクリーンショットを用意する 〔私〕
 
@@ -139,12 +169,16 @@ macOS 版の規定サイズ（いずれか）:
 
 **このアプリはデータを一切収集しない。**
 
-- ネットワーク通信なし
 - 解析・トラッキングなし
-- 保存するのは書類ファイルと設定2つ（`editorAppearance` / `editorFontSize`）のみで、
-  すべてローカル
+- サーバーへの送信なし。**アカウントも無い**
+- 保存するのは書類ファイルと設定4つ（`editorAppearance` / `editorFontSize` /
+  `editorShowsLineNumbers` / `syncsTitleWithFileName`）と、
+  フォルダを読む許可のブックマークのみ。すべてローカル
+- ネットワークは **`network.client` が有効**。ただし通信するのは、
+  利用者が本文に自分で書いた `https://` の画像を読むときだけ（D-26）
 
-→ App Store Connect では「データを収集しない」を選ぶだけで済む。
+→ App Store Connect では「データを収集しない」を選ぶ。
+画像の読み込みは利用者が書いた URL を開くだけで、こちらは何も集めない。
 
 #### T2-9. Export Compliance に答える 〔あなた〕
 
@@ -171,6 +205,70 @@ xcrun altool --validate-app -f build/export/Nullnote.pkg -t macos ...
 
 ---
 
+## 作業ログ
+
+実際に何が起きたかを、日付つきで残す。来年の更新や、2台目の Mac で
+証明書を作り直すときに効く。
+
+| 日付 | やったこと | 結果・つまずき |
+|---|---|---|
+| 2026-08-08 | 署名まわりの棚卸し | 証明書0件、プロファイル無し、Xcode にアカウント未登録 |
+| 2026-08-20 | アイコンを正式版に差し替え | T1-1 完了。作り直しは `make-icons.py`（D-31） |
+| 2026-08-20 | Developer アカウントの状態を確認 | **自分名義のメンバーシップは無かった。** Apple ID は ROYAL COSMETICS CO., LTD. のチームに所属しているが、Nullnote とは無関係の別チーム。会社チームからは個人の配布はできない |
+| 2026-08-20 | 署名の材料を再確認 | 期限切れの証明書すら1枚も無い。まっさらな状態 |
+| 2026-08-20 | Apple ID 側の準備 | 氏名（`Osamu` / `Yamakami`）・2ファクタ認証とも確認済み。使う Apple ID は iCloud と同じもの |
+| 2026-08-20 | Apple Developer アプリから登録を試行 | **失敗。**「現在、このアイテムはお住まいの国／地域で利用できません」。価格表示が **¥12,800 → $98.99** とドル建てに変わっており、**App Store アカウントの国／地域が日本でない**疑いが濃い（アプリ経由の購入は App Store のサブスクとして処理されるため） |
+| 2026-08-20 | Web から登録を試行 | **失敗。**「リクエストを処理できません。不明なエラーが発生しました」。アプリ側で発行された登録ID が処理中で競合している可能性 |
+| 2026-08-20 | Web の登録画面をリロード | **同じ登録IDで再開できた。** 入力済みの情報はサーバー側に残っていた。料金表示も **¥12,980（円建て）** に戻り、国／地域の問題は起きなかった |
+| 2026-08-20 | 決済完了 | Individual として登録。有効化待ち（確認メールは24時間以内） |
+| 2026-08-20 | 申請用の設定を整備 | `MARKETING_VERSION` を `1.0` に。`NSHumanReadableCopyright` と `ITSAppUsesNonExemptEncryption = NO` を追加 |
+| 2026-08-20 | メンバーシップ有効化 | Team ID `542DBL2NGA`（Individual）|
+| 2026-08-20 | 署名設定を切り替え（T2-4） | `CODE_SIGN_IDENTITY` を `-` から `Apple Development` に。`DEVELOPMENT_TEAM = 542DBL2NGA` を追加。Debug / Release とも `TeamIdentifier=542DBL2NGA` で署名されることを確認 |
+| 2026-08-20 | 開発用証明書を作成 | `Apple Development: Osamu Yamakami (GAYKK44Y47)`。`xcodebuild` に `-allowProvisioningUpdates` を付けると自動で作られた |
+| 2026-08-20 | 公証の認証情報を用意 | アプリ用パスワードを作り、`notarytool store-credentials` でキーチェーンに `nullnote-notary` として保存 |
+| 2026-08-20 | Developer ID 版を書き出し | `Developer ID Application: Osamu Yamakami (542DBL2NGA)` で署名。**`get-task-allow` は書き出しで自動的に外れた** |
+| 2026-08-20 | アプリを公証・ステープル | Accepted。`spctl` が `source=Notarized Developer ID` を返す |
+| 2026-08-20 | DMG を作成（1回目） | **判定 `rejected（no usable signature）`。** 公証は通るが、**DMG 自体が未署名**だと Gatekeeper が受け付けない |
+| 2026-08-20 | Developer ID 証明書をローカルに作成 | Xcode → Manage Certificates… → 「+ ⌄」→ Developer ID Application。書き出し時のクラウド署名では `codesign` から使えないため |
+| 2026-08-20 | DMG を署名して公証・ステープル | **判定 `accepted`。配布可能な `Nullnote-1.0.dmg`（2.1 MB）ができた** |
+| 2026-08-20 | 手順をスクリプト化 | `Apps/Nullnote-macOS/release-dmg.sh`。事前確認から判定まで一気に通す |
+
+**次にやること**: DMG の配布先（サイト）を用意する。
+そのあと App Store 版（Apple Distribution 証明書、App Store Connect でのアプリ登録、
+掲載文、スクリーンショット、審査）と iOS 版へ。
+
+### 分かったこと
+
+**1つの Apple ID は複数のチームに所属できる。**
+会社チームのメンバーであることと、自分名義のメンバーシップを持っていることは別物。
+アカウントページ右上のチーム切り替えメニューに自分の名前が出なければ、
+個人メンバーシップは無い。
+
+**DMG は、中のアプリだけ署名・公証しても配れない。**
+**DMG 自体にも署名と公証が要る。** 未署名の DMG は公証には通るが、
+`spctl` が `rejected（no usable signature）` を返す。実測で確かめた。
+
+**署名し直すとステープルは無効になる。**
+DMG は「作り直す → 署名 → 公証 → ステープル」の順に固定する。
+
+**書き出し時のクラウド署名では、`codesign` から証明書を使えない。**
+Xcode は Developer ID 証明書をクラウドで管理して書き出しに使うが、
+キーチェーンには残らない（`security find-identity` に出てこない）。
+DMG に自分で署名するには、**Manage Certificates… から明示的に作る**必要がある。
+
+**Apple Developer アプリからの購入は、App Store のサブスクとして処理される。**
+そのため **App Store アカウントの国／地域**に引きずられる。価格がドル建てで出たら、
+国／地域が日本になっていない合図。**Web からの登録はクレジットカードで直接決済する**ので、
+この影響を受けない。日本で登録するなら Web 経由のほうが確実。
+
+**登録の途中でエラーが出ても、入力は消えていないことがある。**
+「リクエストを処理できません」のあとリロードしたら、同じ登録IDで続きから再開できた。
+**「登録をキャンセルする」を押す前に、まずリロードして確かめる。**
+
+**Apple のアカウントページは左メニューではなくなった。**
+上部のアイコン列（プログラムのリソース／プロフィール／**メンバーシップの詳細**／…）が
+いまのナビゲーション。古い手順書の「左メニューの Membership」は読み替える。
+
 ## 分担の整理
 
 | 私ができること | あなたにしかできないこと |
@@ -188,17 +286,20 @@ xcrun altool --validate-app -f build/export/Nullnote.pkg -t macos ...
 
 ### 分かっていること（2026-08-08 時点で実機を調べた結果）
 
-Apple Developer Program のアカウントは**所持済み**。
-ただしこの Mac には署名の材料が何も無い。
+**2026-08-20 に見直した。** 「アカウント所持済み」と書いていたが、
+**自分名義のメンバーシップは無かった**（下の作業ログを参照）。
+
+この Mac には署名の材料が何も無い。
 
 ```sh
 security find-identity -v -p codesigning   # → 0 valid identities found
-ls ~/Library/Developer/Xcode/UserData/Provisioning\ Profiles/   # → 空
+security find-identity -v                  # → 0（期限切れの証明書すら無い）
+ls ~/Library/Developer/Xcode/UserData/Provisioning\ Profiles/   # → ディレクトリ自体が無い
 defaults read com.apple.dt.Xcode DVTDeveloperAccountManagerAppleIDLists  # → 未設定
 ```
 
-証明書は Mac ごとに作るものなので、これは異常ではない。Xcode にアカウントを
-追加すれば作られる。
+証明書は Mac ごとに作るものなので、これ自体は異常ではない。
+ただし**作るには先に有料メンバーシップが要る**。
 
 ### アプリ側の棚卸し
 
@@ -208,11 +309,11 @@ defaults read com.apple.dt.Xcode DVTDeveloperAccountManagerAppleIDLists  # → �
 | `LSApplicationCategoryType = public.app-category.productivity` | ✅ |
 | `LSMinimumSystemVersion = 14.0` | ✅ |
 | アプリアイコン（16〜1024） | ✅ |
-| `MARKETING_VERSION = 0.1` / `CURRENT_PROJECT_VERSION = 1` | ⚠️ 公開前に決め直す（`1.0` / `1` を提案） |
-| `NSHumanReadableCopyright` | ❌ 空 |
-| `ITSAppUsesNonExemptEncryption` | ❌ 未設定。入れておくと申請ごとの質問を省ける |
-| 署名 | ❌ `Signature=adhoc` / `TeamIdentifier=not set` |
-| `com.apple.security.get-task-allow` | ⚠️ **入っている。Release からは必ず外す**（審査で弾かれる） |
+| `MARKETING_VERSION = 1.0` / `CURRENT_PROJECT_VERSION = 1` | ✅ |
+| `NSHumanReadableCopyright = © 2026 Osamu Yamakami` | ✅ |
+| `ITSAppUsesNonExemptEncryption = NO` | ✅ |
+| 署名 | ✅ `TeamIdentifier=542DBL2NGA`（開発用証明書） |
+| `com.apple.security.get-task-allow` | ⚠️ 開発用署名なので入っている。**配布用に書き出すと外れる。書き出し後に必ず確認する** |
 
 確認に使ったコマンド:
 
