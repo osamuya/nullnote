@@ -74,6 +74,13 @@
 	</array>
 
 	<key>NSHumanReadableCopyright</key>
-	<string></string>
+	<string>© 2026 Osamu Yamakami</string>
+
+	<!--
+	暗号化を使っていないことの申告。入れておくと、申請のたびに
+	Export Compliance の質問に答えずに済む（T2-9）。
+	-->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 </dict>
 </plist>
