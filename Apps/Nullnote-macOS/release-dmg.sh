@@ -109,6 +109,17 @@ echo "==> 判定"
 spctl -a -t open --context context:primary-signature -v "$DMG"
 spctl -a -t exec -v "$STAGING/Nullnote.app"
 
+# 落としたファイルが壊れていないかを、利用者が確かめられるようにする。
+# 配布ページに併記する。ファイルと一緒に置くのではなく、**ページ側に書く**こと。
+# 同じ場所に置くと、両方すり替えられたときに意味を成さない。
+SHA=$(shasum -a 256 "$DMG" | cut -d' ' -f1)
+echo "$SHA" > "$DMG.sha256"
+
 echo
 echo "    ✅ $DMG"
 echo "       $(du -h "$DMG" | cut -f1)"
+echo "       SHA-256: $SHA"
+echo
+echo "    サーバーへ置く:"
+echo "      rsync -av -e \"ssh -p 2222\" $DMG \\"
+echo "        <配布先>"

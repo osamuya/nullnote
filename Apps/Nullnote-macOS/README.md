@@ -80,6 +80,14 @@ Markdown には Apple 定義の UTType が無い。`Supporting/Info.plist` で
 事前に必要なもの（Developer ID 証明書と公証の認証情報）はスクリプト冒頭に書いてある。
 経緯と落とし穴は `docs/03-release-plan.md` の作業ログ。
 
+最後に SHA-256 と、サーバーへ置く `rsync` のコマンドを表示する。
+置き場は `sabanote_site` の `public/macapps/nullnote/`。
+**`.dmg` は git に入れず SFTP で直接置く**（サイト側の `.gitignore` でそう決めてある）。
+
+配布ページのボタンは `/macapps/nullnote/latest` を指しており、
+サイト側の `public/macapps/.htaccess` の `Redirect` 行で最新版へ転送している。
+**新しい DMG を置いてから、その行を書き換える**（逆にすると転送先が無い状態になる）。
+
 ## アイコン
 
 元絵は `sabanote_site/design/nullnote/nullnote_icon_dark1_sq.png`（1024×1024、角の立った正方形）。
