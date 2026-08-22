@@ -1514,6 +1514,66 @@ NSTextView.characterIndexForInsertion(at:)     PreviewBlock.sourceLine
 
 ---
 
+### B-16. 保存パネルが、いつまでも折りたたみ表示で開く
+
+**症状**
+⌘S の保存シートが「名前 / タグ / 場所」だけの折りたたみ表示。
+「場所」ポップアップに並ぶのは階層ではなく**ショートカット集**（よく使う項目・
+最近使ったフォルダ）なので、「書類」を選んでもその下は開けない。
+任意のフォルダに保存できない。
+
+B-4 で対処したつもりだった。**効いていなかった。**
+
+**原因**
+`AppSettings.registerDefaults()` で `NSNavPanelExpandedStateForSaveMode` を
+`register(defaults:)` していたが、**登録ドメインはプロセスのメモリ上にしか無く、
+ディスクには書かれない**。
+
+一方、サンドボックスアプリの保存パネルは別プロセス
+（`com.apple.appkit.xpc.openAndSavePanelService`）で動いている（B-4 で判明済み）。
+別プロセスから見えるのは**永続化された設定だけ**。登録ドメインは届かない。
+
+**証拠の取り方**
+アプリの設定ファイルを直接読んだ。
+
+```
+~/Library/Containers/com.roughlang.Nullnote/Data/Library/Preferences/com.roughlang.Nullnote.plist
+```
+
+| 見つかったもの | 意味 |
+|---|---|
+| `NSNavPanelExpandedSizeForOpenMode = "{964, 448}"` | パネルはこのファイルを**読み書きしている** |
+| `NSNavPanelExpandedStateForSaveMode` が**無い** | `register` した値はディスクに届いていない |
+
+そのうえで、アプリを終了させてからキーを直に書き込み、再起動して ⌘S を押してもらった。
+→ **ファイルブラウザで開いた。** キーは macOS 26 でも生きている。原因の確定。
+
+**入れた対処**
+`register` をやめ、**初回起動のときだけ実際の値を書く**（`seedSavePanelExpansion()`）。
+書いたかどうかは `seededSavePanelExpansion` という自前のキーで覚える。
+
+**毎回書かない理由**
+パネルは閉じるときに自分でこのキーを上書きする。毎回書くと
+「折りたたんだままでいい」という利用者の選択を、起動のたびに踏み潰すことになる。
+
+**確かめたこと**（設定ファイルを読んで確認）
+
+| やったこと | 結果 |
+|---|---|
+| 3つのキーを消して起動（初回を再現） | アプリが `...ForSaveMode = 1` と `seeded... = 1` を書いた |
+| `...ForSaveMode` を `false` にして再起動 | `false` のまま。上書きしない |
+
+**ついでに分かったこと**
+展開表示にすれば「前回保存したフォルダから開く」は AppKit が勝手にやる
+（`NSNavLastRootDirectory` を OS が覚えている）。自前で保存先を覚える必要は無かった。
+
+**教訓**
+`register(defaults:)` は**同じプロセスの中でしか効かない**。
+OS の部品が別プロセスで動いている場合（保存パネル、共有シート、ウィジェット）、
+既定値を渡すには実際に書き込むしかない。
+
+---
+
 ### B-15. ⌘F を押しても検索欄に焦点が移らない
 
 **症状**
@@ -1997,7 +2057,9 @@ SF Symbol のままにした。文字とのベースライン合わせや、文�
 原因とは別に、保存パネルを既定で展開表示にした（`AppSettings.registerDefaults()` で
 `NSNavPanelExpandedStateForSaveMode` を登録）。折りたたみ状態だと保存先が
 「場所」ポップアップだけになるので、最初からファイルブラウザが開くようにした。
-`register` なので、ユーザーが自分で畳めばその選択が優先される。
+
+**この対処は効いていなかった。** `register(defaults:)` はディスクに書かないため、
+別プロセスで動く保存パネルには届かない。**B-16 で直した。**
 
 **⇧⌘S を「別名で保存」に付け替えなかった理由**
 SwiftUI で付け替えるには `CommandGroup(replacing: .saveItem)` で
