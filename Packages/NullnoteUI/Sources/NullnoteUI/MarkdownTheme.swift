@@ -183,6 +183,12 @@ public struct MarkdownTheme {
     /// 表の罫線。
     public var tableBorder: PlatformColor { marker.withAlphaComponent(0.45) }
 
+    /// 空行に見えて空でない行に敷く色。
+    ///
+    /// **目立たせすぎない。** 常時出るものではないが、
+    /// 本文を読む邪魔になっては本末転倒。探しているときに見つかれば足りる。
+    public var invisibleWhitespace: PlatformColor { marker.withAlphaComponent(0.30) }
+
     /// ボタンやトグルが「オン」のときの色。
     ///
     /// **OS のアクセントカラーに従わせない。** 利用者の設定しだいで

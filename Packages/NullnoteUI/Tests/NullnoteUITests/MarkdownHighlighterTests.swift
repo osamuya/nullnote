@@ -31,7 +31,26 @@ struct MarkdownHighlighterTests {
         attributes(of: substring, in: source)[.foregroundColor] as? PlatformColor
     }
 
+    func background(of substring: String, in source: String) -> PlatformColor? {
+        attributes(of: substring, in: source)[.backgroundColor] as? PlatformColor
+    }
+
     // MARK: - 色
+
+    @Test("空行に見えて空でない行には地の色が付く")
+    func invisibleWhitespaceIsPainted() {
+        // 全角スペースは目で見つけられない。ここが見えないと、直後の -----  が
+        // 水平線ではなく見出しの下線になっていることに気づけない（B-18）。
+        // `theme.invisibleWhitespace` は計算プロパティなので、毎回別のインスタンスになる。
+        // 同一性（`===`）ではなく値で比べる。
+        #expect(background(of: "　", in: "本文\n　\n-----\n") == theme.invisibleWhitespace)
+    }
+
+    @Test("段落の頭の字下げには地の色を付けない")
+    func paragraphIndentIsNotPainted() {
+        // 日本語の字下げはこの形で書く。ここに色を出すと本文が読みづらい。
+        #expect(background(of: "　", in: "　本文です。") == nil)
+    }
 
     @Test("記法文字は薄い色になる")
     func markersAreDimmed() {

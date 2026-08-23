@@ -79,6 +79,16 @@ public struct MarkdownToken: Hashable, Sendable {
         case autolink
         /// バックスラッシュでエスケープされた1文字。
         case escapedCharacter
+        /// **空行に見えるのに、空行にならない行。**
+        ///
+        /// CommonMark の「空行」は半角スペースとタブだけの行を指す。
+        /// 全角スペース（U+3000）やノーブレークスペースが1つでも混じると、
+        /// 見た目は空でも段落が途切れない。直後に `-----` があれば、
+        /// それは水平線ではなく**見出しの下線**として働き、
+        /// 本文が丸ごと見出しに化ける（B-18）。
+        ///
+        /// 目で見つけられないので、印を付けるためだけに持つ。
+        case invisibleWhitespace
     }
 
     public let kind: Kind

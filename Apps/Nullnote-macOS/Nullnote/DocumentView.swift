@@ -177,6 +177,16 @@ struct DocumentView: View {
             knownURL = fileURL
         }
         .onChange(of: externalChangeCount) { _, _ in takeInExternalChange() }
+        // アプリが前面に戻ったら、その場で見比べる。
+        //
+        // **見張りだけでは取りこぼす。** サンドボックスでは親ディレクトリを
+        // 見張れないことが多く（B-17）、置き換えの隙間で記述子を失うこともある。
+        // 別のソフトで直してから戻ってくる、という使い方をふさがないための保険。
+        .onReceive(NotificationCenter.default.publisher(
+            for: NSApplication.didBecomeActiveNotification
+        )) { _ in
+            watcher?.checkNow()
+        }
     }
 
     // MARK: - 外の変更を取り込む
@@ -190,6 +200,7 @@ struct DocumentView: View {
         }
         // いま開いた内容は、ディスクと一致しているはず。ここを基準にする。
         lastSyncedText = document.text
+        Trace.log("startWatching: \(fileURL.path) 基準=\(document.text.count)文字")
         watcher = FileWatcher(url: fileURL) { externalChangeCount += 1 }
     }
 
@@ -255,14 +266,24 @@ struct DocumentView: View {
     ///
     /// **編集中のものがあるときは触らない。** そちらは合流の話になる。
     private func takeInExternalChange() {
-        guard let fileURL, let disk = readFromDisk(fileURL) else { return }
+        guard let fileURL, let disk = readFromDisk(fileURL) else {
+            Trace.log("takeIn: 読めない")
+            return
+        }
 
-        switch ExternalChangeResolver.resolve(
+        let hasLocalEdits = DocumentBridge.hasUnsavedChanges(at: fileURL)
+        let decision = ExternalChangeResolver.resolve(
             disk: disk,
             editor: document.text,
-            hasLocalEdits: DocumentBridge.hasUnsavedChanges(at: fileURL),
+            hasLocalEdits: hasLocalEdits,
             lastSynced: lastSyncedText
-        ) {
+        )
+        Trace.log(
+            "takeIn: 未保存=\(hasLocalEdits) disk=\(disk.count) editor=\(document.text.count) "
+                + "base=\(lastSyncedText?.count.description ?? "nil") -> \(label(for: decision))"
+        )
+
+        switch decision {
         case .ignore:
             // 画面とディスクが一致した。ここが次の合流の基準になる。
             lastSyncedText = disk
@@ -286,6 +307,29 @@ struct DocumentView: View {
             // **変更の数え上げは戻さない。** 合流の結果はまだ保存されていない。
             // 外で書き換えられたという判定だけ外して、⌘S でそのまま保存できるようにする。
             Task { @MainActor in DocumentBridge.syncModificationDate(at: fileURL) }
+        }
+
+        traceDocumentState(at: fileURL)
+    }
+
+    /// 取り込みの後始末が済んだころに、書類の状態を足あとに残す。
+    ///
+    /// 本文の差し替えも日時の合わせ直しも次の周回に回っているので、
+    /// 同じ周回で読んでも古い値しか見えない。少し待ってから読む。
+    private func traceDocumentState(at fileURL: URL) {
+        guard Trace.isEnabled else { return }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+            MainActor.assumeIsolated {
+                Trace.log("takeIn後: \(DocumentBridge.stateDescription(at: fileURL))")
+            }
+        }
+    }
+
+    private func label(for change: ExternalChange) -> String {
+        switch change {
+        case .ignore: "ignore"
+        case .reload: "reload"
+        case .merge: "merge"
         }
     }
 

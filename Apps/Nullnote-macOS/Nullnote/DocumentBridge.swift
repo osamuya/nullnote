@@ -62,6 +62,18 @@ enum DocumentBridge {
         document(for: url)?.move(to: destination)
     }
 
+    /// 競合ダイアログが出る条件を、画面を見ずに確かめるための足あと。
+    ///
+    /// `NSDocument` は「最後に読み書きしたときのファイルの更新日時」を覚えていて、
+    /// 保存時にディスクの値と突き合わせる。**ここがずれていると警告が出る。**
+    /// 取り込み・合流のあとにこれが揃っているかどうかが、そのまま合否になる。
+    static func stateDescription(at url: URL) -> String {
+        guard let document = document(for: url) else { return "書類が見つからない" }
+        let recorded = document.fileModificationDate
+        let disk = modificationDate(of: url)
+        return "編集済み=\(document.isDocumentEdited) 日時一致=\(recorded == disk)"
+    }
+
     private static func modificationDate(of url: URL) -> Date? {
         try? FileManager.default.attributesOfItem(atPath: url.path)[.modificationDate] as? Date
     }

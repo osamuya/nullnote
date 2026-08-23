@@ -109,6 +109,13 @@ public struct MarkdownTokenizer: Sendable {
             return .blank
         }
 
+        // 空行に見えるのに、空行にならない行。**印だけ付けて、解釈は変えない。**
+        // ここで段落を切ってしまうと、エディタの表示とプレビューがずれる。
+        // 見えていないものを見えるようにするだけで、意味には触らない。
+        if let invisible = BlockScanner.invisibleBlankLine(text, range) {
+            tokens.append(MarkdownToken(kind: .invisibleWhitespace, range: invisible))
+        }
+
         let body = contentStart..<range.upperBound
 
         if indent >= 4 {

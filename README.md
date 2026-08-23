@@ -2,6 +2,12 @@
 
 Markdown エディタ。macOS 版が動いている。同じロジックで iOS 版へ展開する。
 
+```bash
+% ./Apps/Nullnote-macOS/run.sh
+% ./Apps/Nullnote-macOS/install.sh
+% ./Apps/Nullnote-macOS/release-dmg.sh
+```
+
 ## 3つのスクリプト
 
 `Apps/Nullnote-macOS/` に3つある。**「誰のためのビルドか」で分かれている。**

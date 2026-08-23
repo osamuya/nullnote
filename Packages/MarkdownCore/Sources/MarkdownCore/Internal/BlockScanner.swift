@@ -26,6 +26,23 @@ enum BlockScanner {
         return (width, range.upperBound)
     }
 
+    /// **空行に見えるのに、空行にならない行**なら、その範囲。
+    ///
+    /// 中身がすべて空白でありながら、半角スペースとタブ以外の空白
+    /// （全角スペース、ノーブレークスペースなど）を含む行がこれにあたる。
+    /// CommonMark はこれを空行とみなさないので、段落が途切れない。
+    ///
+    /// 半角スペースとタブだけの行は**本当に空行になる**ので、対象にしない。
+    static func invisibleBlankLine(_ text: String, _ range: Range<String.Index>) -> Range<String.Index>? {
+        guard range.lowerBound < range.upperBound else { return nil }
+        var hasInvisible = false
+        for character in text[range] {
+            guard character.isWhitespace else { return nil }
+            if character != " " && character != "\t" { hasInvisible = true }
+        }
+        return hasInvisible ? range : nil
+    }
+
     /// 前後の空白を取り除いた範囲。
     static func trimmed(_ text: String, _ range: Range<String.Index>) -> Range<String.Index> {
         var lower = range.lowerBound

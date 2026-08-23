@@ -105,6 +105,58 @@ struct FileWatcherTests {
         #expect(recorder.value > afterFirst, "置き換えのあと、次の変更を拾えていない")
     }
 
+    @Test("親ディレクトリを見張れなくても、置き換えを繰り返し拾える")
+    func keepsWatchingWithoutDirectoryWatch() async throws {
+        // **B-17 の回帰テスト。**
+        //
+        // サンドボックスでは、書類を開いてもその**フォルダ**を開く許可は付いてこない。
+        // 実機では親ディレクトリの見張りが `EPERM` で張れず、開き直す道が
+        // ファイル側の1本だけになる。テストは非サンドボックスで走るので、
+        // 切らないと必ずディレクトリ側に助けられてしまい、取りこぼしに気づけない。
+        let url = try makeFile()
+        let recorder = Recorder()
+        let watcher = FileWatcher(url: url, watchesParentDirectory: false) { recorder.record() }
+        defer { watcher.stop() }
+
+        try await Task.sleep(for: .milliseconds(200))
+
+        var seen = 0
+        for round in 1...4 {
+            try "\(round)回目\n".write(to: url, atomically: true, encoding: .utf8)
+            _ = await recorder.wait()
+            #expect(recorder.value > seen, "\(round)回目の置き換えを取りこぼした")
+            seen = recorder.value
+            // 開き直す猶予。
+            try await Task.sleep(for: .milliseconds(300))
+        }
+    }
+
+    @Test("取りこぼしていても、その場で見比べれば拾える")
+    func checkNowFindsMissedChanges() async throws {
+        // 見張りはサンドボックスの都合で万全にはならない。
+        // アプリが前面に戻ったときの保険が効くことを確かめる。
+        let url = try makeFile()
+        let recorder = Recorder()
+        let watcher = FileWatcher(url: url, watchesParentDirectory: false) { recorder.record() }
+        defer { watcher.stop() }
+
+        try await Task.sleep(for: .milliseconds(200))
+        watcher.stop()
+        try await Task.sleep(for: .milliseconds(150))
+
+        // 止めているあいだの変更は、当然届かない。
+        try "見ていないあいだの変更\n".write(to: url, atomically: true, encoding: .utf8)
+        try await Task.sleep(for: .milliseconds(400))
+        #expect(recorder.value == 0)
+
+        // 張り直して見比べると、その差に気づく。
+        let resumed = FileWatcher(url: url, watchesParentDirectory: false) { recorder.record() }
+        defer { resumed.stop() }
+        try await Task.sleep(for: .milliseconds(200))
+        try "さらに次の変更\n".write(to: url, atomically: true, encoding: .utf8)
+        #expect(await recorder.wait() >= 1)
+    }
+
     @Test("何も起きなければ知らせない")
     func silentWhenNothingHappens() async throws {
         let url = try makeFile()

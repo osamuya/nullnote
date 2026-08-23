@@ -300,6 +300,12 @@ public struct MarkdownHighlighter {
 
         case .tableCell:
             break
+
+        case .invisibleWhitespace:
+            // 文字そのものは描けないので、地を塗って場所を示す。
+            storage.addAttribute(
+                .backgroundColor, value: theme.invisibleWhitespace, range: range
+            )
         }
     }
 
