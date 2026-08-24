@@ -301,6 +301,11 @@ public struct MarkdownHighlighter {
         case .tableCell:
             break
 
+        case .htmlComment:
+            // プレビューに出ないものなので、本文と同じ濃さで置かない。
+            // 記法文字と同じ薄さにして、「効いていない文字」であることを見た目で示す。
+            storage.addAttribute(.foregroundColor, value: theme.marker, range: range)
+
         case .invisibleWhitespace:
             // 文字そのものは描けないので、地を塗って場所を示す。
             storage.addAttribute(

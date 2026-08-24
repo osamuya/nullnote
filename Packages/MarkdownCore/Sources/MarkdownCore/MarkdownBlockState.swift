@@ -24,4 +24,14 @@ public enum MarkdownBlockState: Hashable, Sendable {
     case tableDelimiterExpected(columnCount: Int)
     /// 表の本体。空行か別のブロックの開始で終わる。
     case tableBody(columnCount: Int)
+    /// 閉じていない HTML コメント（`<!--`）の中。
+    ///
+    /// `insideParagraph` は、コメントが**段落の途中から**始まったか。
+    /// 行頭から始まったものは CommonMark の HTML ブロック（type 2）で、
+    /// `-->` のある行が**まるごと**コメントになる。
+    /// 段落の途中から始まったものはインラインの生 HTML で、
+    /// `-->` の**あとは本文が続く**。閉じ方が違うので区別して持つ。
+    ///
+    /// どちらも**空行では終わらない**。終わるのは `-->` か文書の終わり。
+    case htmlComment(insideParagraph: Bool)
 }

@@ -26,6 +26,32 @@ enum BlockScanner {
         return (width, range.upperBound)
     }
 
+    // MARK: - HTML コメント
+
+    /// `<!--` で始まる行が、同じ行で閉じているか。
+    enum HTMLCommentStart {
+        /// 同じ行に `-->` があった。この行で終わり。
+        case closedOnSameLine
+        /// 閉じていない。次の行へ持ち越す。
+        case staysOpen
+    }
+
+    /// この行が `<!--` で始まるなら、その閉じ方。始まらなければ `nil`。
+    ///
+    /// 字下げが4以上の行は呼ぶ側でコードブロックとして処理済みなので、ここでは見ない。
+    static func htmlCommentOpen(_ text: String, _ range: Range<String.Index>) -> HTMLCommentStart? {
+        guard text[range].hasPrefix("<!--") else { return nil }
+        let afterOpening = text.index(range.lowerBound, offsetBy: 4, limitedBy: range.upperBound)
+            ?? range.upperBound
+        return htmlCommentClose(text, afterOpening..<range.upperBound) == nil
+            ? .staysOpen : .closedOnSameLine
+    }
+
+    /// この行の中の `-->` の範囲。無ければ `nil`。
+    static func htmlCommentClose(_ text: String, _ range: Range<String.Index>) -> Range<String.Index>? {
+        text.range(of: "-->", range: range)
+    }
+
     /// **空行に見えるのに、空行にならない行**なら、その範囲。
     ///
     /// 中身がすべて空白でありながら、半角スペースとタブ以外の空白

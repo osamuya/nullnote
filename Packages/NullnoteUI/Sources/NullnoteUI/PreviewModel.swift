@@ -228,7 +228,11 @@ struct PreviewBuilder {
             // 画像だけで出来た段落は、絵として置く。
             let images = imagesOnly(in: paragraph)
             if !images.isEmpty { return .images(images) }
-            return .paragraph(inlineText(paragraph))
+            let text = inlineText(paragraph)
+            // コメントを取り除いた結果、何も残らなかった段落は置かない。
+            // 空の段落を置くと、そこだけ行間が空いて見える。
+            if text.characters.allSatisfy(\.isWhitespace) { return nil }
+            return .paragraph(text)
 
         case let quote as BlockQuote:
             return .quote(blocks(in: quote))
@@ -253,7 +257,10 @@ struct PreviewBuilder {
             return .thematicBreak
 
         case let html as HTMLBlock:
-            // HTML は解釈せず、そのまま見せる。
+            // コメントは**出さない**。下書きのメモや、いったん外した節を
+            // 文書に残しておくための書き方なので、見えては意味が無い。
+            if isHTMLComment(html.rawHTML) { return nil }
+            // それ以外の HTML は解釈せず、そのまま見せる。
             return .codeBlock(code: html.rawHTML.trimmingCharacters(in: .newlines), language: "html")
 
         default:
@@ -298,6 +305,16 @@ struct PreviewBuilder {
     // MARK: インライン
 
     /// ブロック1つ分のインライン要素を、表示用の `AttributedString` にする。
+    /// `<!-- … -->` そのものか。
+    ///
+    /// **前後に何か付いているものは対象外にする。** CommonMark の HTML ブロックは、
+    /// `-->` のあとに書いた文字も同じブロックに含める。そこまで消すと、
+    /// 消したつもりのない本文まで見えなくなる。
+    private func isHTMLComment(_ rawHTML: String) -> Bool {
+        let trimmed = rawHTML.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.hasPrefix("<!--") && trimmed.hasSuffix("-->")
+    }
+
     private func inlineText(_ markup: Markup) -> AttributedString {
         var result = inline(markup)
         linkifyBareURLs(in: &result)
@@ -376,6 +393,8 @@ struct PreviewBuilder {
             return styled("\n")
 
         case let html as InlineHTML:
+            // 本文の途中に挟んだコメントも出さない。
+            if isHTMLComment(html.rawHTML) { return AttributedString() }
             return styled(html.rawHTML, adding: .code)
 
         default:

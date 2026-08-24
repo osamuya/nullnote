@@ -87,6 +87,31 @@ public struct MarkdownTokenizer: Sendable {
             return state
         }
 
+        // HTML コメントが開いたまま。`-->` が来るまで、何が書いてあってもコメント。
+        // **空行では終わらない。** ここで終わらせると、コメントの中に空行を置けなくなる。
+        if case .htmlComment(let insideParagraph) = state {
+            guard let closing = BlockScanner.htmlCommentClose(text, range) else {
+                if !range.isEmpty {
+                    tokens.append(MarkdownToken(kind: .htmlComment, range: range))
+                }
+                return state
+            }
+
+            // 行頭から始まったコメント（HTML ブロック）は、閉じた行がまるごとコメント。
+            guard insideParagraph else {
+                tokens.append(MarkdownToken(kind: .htmlComment, range: range))
+                return .blank
+            }
+
+            // 段落の途中から始まったコメントは、`-->` のあとに本文が続く。
+            tokens.append(
+                MarkdownToken(kind: .htmlComment, range: range.lowerBound..<closing.upperBound)
+            )
+            let rest = closing.upperBound..<range.upperBound
+            let stillOpen = InlineScanner.appendTokens(text, rest, into: &tokens)
+            return stillOpen ? .htmlComment(insideParagraph: true) : .paragraph
+        }
+
         // 表の区切り行。ヘッダ行を読んだ時点で先読み済みなので、ここでは必ず成立する。
         if case .tableDelimiterExpected(let columnCount) = state,
            let row = TableScanner.row(text, range), TableScanner.isDelimiterRow(text, row) {
@@ -125,8 +150,8 @@ public struct MarkdownTokenizer: Sendable {
                 return .indentedCode
             }
             // 段落の途中なら遅延継続行。ブロック記法は開始しない。
-            InlineScanner.appendTokens(text, body, into: &tokens)
-            return .paragraph
+            let stillOpen = InlineScanner.appendTokens(text, body, into: &tokens)
+            return stillOpen ? .htmlComment(insideParagraph: true) : .paragraph
         }
 
         // 引用。`>` を剥がして、残りを同じ規則で解析する。
@@ -144,6 +169,13 @@ public struct MarkdownTokenizer: Sendable {
             return appendBlock(
                 text, inner, state: .blank, nextLine: nil, depth: depth + 1, into: &tokens
             )
+        }
+
+        // HTML コメントの始まり。**見出しやリストより先に見る。**
+        // コメントの中身は Markdown として解釈しない。
+        if let comment = BlockScanner.htmlCommentOpen(text, body) {
+            tokens.append(MarkdownToken(kind: .htmlComment, range: range))
+            return comment == .closedOnSameLine ? .blank : .htmlComment(insideParagraph: false)
         }
 
         // 開始フェンス。
@@ -182,8 +214,8 @@ public struct MarkdownTokenizer: Sendable {
                 tokens.append(MarkdownToken(kind: .taskMarker(isChecked: task.isChecked), range: task.range))
                 content = task.contentRange
             }
-            InlineScanner.appendTokens(text, content, into: &tokens)
-            return .paragraph
+            let stillOpen = InlineScanner.appendTokens(text, content, into: &tokens)
+            return stillOpen ? .htmlComment(insideParagraph: true) : .paragraph
         }
 
         // 表のヘッダ行。次の行が列数の一致する区切り行のときだけ成立する。
@@ -193,8 +225,8 @@ public struct MarkdownTokenizer: Sendable {
         }
 
         // 通常の段落。
-        InlineScanner.appendTokens(text, body, into: &tokens)
-        return .paragraph
+        let stillOpen = InlineScanner.appendTokens(text, body, into: &tokens)
+        return stillOpen ? .htmlComment(insideParagraph: true) : .paragraph
     }
 
     // MARK: - 表（GFM）

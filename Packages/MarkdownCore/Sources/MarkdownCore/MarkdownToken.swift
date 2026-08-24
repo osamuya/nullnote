@@ -79,6 +79,11 @@ public struct MarkdownToken: Hashable, Sendable {
         case autolink
         /// バックスラッシュでエスケープされた1文字。
         case escapedCharacter
+        /// HTML コメント `<!-- … -->`。
+        ///
+        /// **プレビューには出ない。** 下書きのメモや、いったん外した節を
+        /// 文書に残しておくために使う。エディタでは薄く表示する。
+        case htmlComment
         /// **空行に見えるのに、空行にならない行。**
         ///
         /// CommonMark の「空行」は半角スペースとタブだけの行を指す。

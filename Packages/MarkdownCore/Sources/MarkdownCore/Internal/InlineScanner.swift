@@ -7,17 +7,35 @@ import Foundation
 /// 未対応の挙動は `README.md` の「既知の制限」に列挙してある。
 enum InlineScanner {
 
+    /// `<!--` から始まる HTML コメント。
+    ///
+    /// 同じ行に `-->` があればそこまで。無ければ**行末まで**を返し、
+    /// `isOpen` で「まだ閉じていない」ことを伝える。次の行へ持ち越すのは呼ぶ側の仕事。
+    static func htmlComment(
+        _ text: String, at index: String.Index, limit: String.Index
+    ) -> (range: Range<String.Index>, isOpen: Bool)? {
+        guard text[index..<limit].hasPrefix("<!--") else { return nil }
+        let afterOpening = text.index(index, offsetBy: 4, limitedBy: limit) ?? limit
+        guard let closing = text.range(of: "-->", range: afterOpening..<limit) else {
+            return (index..<limit, true)
+        }
+        return (index..<closing.upperBound, false)
+    }
+
     /// リンクや強調の入れ子をたどる深さの上限。
     /// 壊れた入力（`[[[[[...`）で再帰が深くなるのを防ぐ。
     static let maximumNestingDepth = 8
 
+    /// - Returns: 行末の時点で **HTML コメントが開いたまま**なら `true`。
+    ///   コメントだけは行をまたぐので、呼ぶ側がブロック状態に持ち越す。
+    @discardableResult
     static func appendTokens(
         _ text: String,
         _ range: Range<String.Index>,
         depth: Int = 0,
         into tokens: inout [MarkdownToken]
-    ) {
-        guard depth < maximumNestingDepth else { return }
+    ) -> Bool {
+        guard depth < maximumNestingDepth else { return false }
 
         var index = range.lowerBound
         while index < range.upperBound {
@@ -33,6 +51,13 @@ enum InlineScanner {
                     continue
                 }
             case "<":
+                // コメントを先に見る。`<!--` はオートリンクにはなり得ない。
+                if let comment = htmlComment(text, at: index, limit: range.upperBound) {
+                    tokens.append(MarkdownToken(kind: .htmlComment, range: comment.range))
+                    if comment.isOpen { return true }
+                    index = comment.range.upperBound
+                    continue
+                }
                 if let next = appendAutolink(text, at: index, limit: range.upperBound, into: &tokens) {
                     index = next
                     continue
@@ -78,6 +103,7 @@ enum InlineScanner {
             }
             index = text.index(after: index)
         }
+        return false
     }
 
     // MARK: - エスケープ
