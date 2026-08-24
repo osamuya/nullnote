@@ -7,6 +7,7 @@ struct SettingsView: View {
     @Binding var appearance: MarkdownAppearance
     @Binding var showsLineNumbers: Bool
     @Binding var syncsTitleWithFileName: Bool
+    @Binding var breaksOnNewline: Bool
 
     var body: some View {
         Form {
@@ -24,6 +25,20 @@ struct SettingsView: View {
             LabeledContent("編集画面") {
                 Toggle("行番号を表示", isOn: $showsLineNumbers)
                     .frame(width: 240, alignment: .leading)
+            }
+
+            LabeledContent("プレビュー") {
+                VStack(alignment: .leading, spacing: 4) {
+                    Toggle("普通の改行でも改行する", isOn: $breaksOnNewline)
+                    Text("Markdown は行末に半角スペース2つを置いたときだけ改行します。入れておくと、そのままの改行もプレビューで改行になります。本文は書き換えません。")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                        // `LabeledContent` の中は右揃えが受け継がれる。
+                        .multilineTextAlignment(.leading)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .frame(width: 240, alignment: .leading)
             }
 
             LabeledContent("ファイル名") {

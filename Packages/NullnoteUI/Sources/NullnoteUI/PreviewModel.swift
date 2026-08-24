@@ -131,12 +131,19 @@ extension Array where Element == PreviewBlock {
 struct PreviewBuilder {
 
     private let theme: MarkdownTheme
+    /// 普通の改行（行末に半角スペース2つが無いもの）を、改行として描くか。
+    /// 既定は false ＝ CommonMark どおり、ひと続きの行として畳む。
+    private let breaksOnNewline: Bool
     private var counter = 0
     /// 行番号を持たないノードに与える値。直前に分かっている行を引き継ぐ。
     private var lastKnownLine = 1
 
-    static func build(_ source: String, theme: MarkdownTheme) -> [PreviewBlock] {
-        var builder = PreviewBuilder(theme: theme)
+    static func build(
+        _ source: String,
+        theme: MarkdownTheme,
+        breaksOnNewline: Bool = false
+    ) -> [PreviewBlock] {
+        var builder = PreviewBuilder(theme: theme, breaksOnNewline: breaksOnNewline)
         return builder.blocks(in: Document(parsing: source))
     }
 
@@ -387,7 +394,9 @@ struct PreviewBuilder {
             return styled("🖼 \(alt)", adding: .emphasized)
 
         case is SoftBreak:
-            return styled(" ")
+            // 単なる改行。CommonMark では前後がつながって1行になる。
+            // 設定を入れている人にだけ、書いたとおりの位置で折る（D-33）。
+            return styled(breaksOnNewline ? "\n" : " ")
 
         case is LineBreak:
             return styled("\n")

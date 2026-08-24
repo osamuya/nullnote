@@ -171,8 +171,8 @@ macOS 版の規定サイズ（いずれか）:
 
 - 解析・トラッキングなし
 - サーバーへの送信なし。**アカウントも無い**
-- 保存するのは書類ファイルと設定4つ（`editorAppearance` / `editorFontSize` /
-  `editorShowsLineNumbers` / `syncsTitleWithFileName`）と、
+- 保存するのは書類ファイルと設定5つ（`editorAppearance` / `editorFontSize` /
+  `editorShowsLineNumbers` / `previewBreaksOnNewline` / `syncsTitleWithFileName`）と、
   フォルダを読む許可のブックマークのみ。すべてローカル
 - ネットワークは **`network.client` が有効**。ただし通信するのは、
   利用者が本文に自分で書いた `https://` の画像を読むときだけ（D-26）

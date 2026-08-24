@@ -1,5 +1,5 @@
 import Testing
-@testable import NullnoteUI
+@testable import MarkdownCore
 
 /// 3つの版の突き合わせ。
 ///
@@ -33,6 +33,66 @@ struct ThreeWayMergeTests {
         )
         #expect(result.text == "1行目を直した\n2行目\n3行目\n4行目\n5行目を直した\n")
         #expect(result.hasConflicts == false)
+    }
+
+    /// **隣り合う行でも競合させない。**
+    ///
+    /// 以前は「3つの版が揃う行」で区間を切っていたため、触った行が隣り合うと
+    /// あいだに目印が無く、まとめて1つの競合になっていた。
+    /// いまは基準に対する**編集の範囲が重なるか**で見る（D-34）。
+    @Test("隣り合う行を別々に直しても、競合にしない")
+    func adjacentLinesChanged() {
+        let result = merge("あ\nい\nう\n", ours: "あ\nい\nう2\n", theirs: "あ\nい2\nう\n")
+        #expect(result.text == "あ\nい2\nう2\n")
+        #expect(!result.hasConflicts)
+    }
+
+    /// 箇条書きでいちばん起きる形。相手が直した行の**真下**に足す。
+    @Test("相手が直した行の真下に足しても、競合にしない")
+    func insertBelowChangedLine() {
+        let result = merge(
+            "- A\n- B\n",
+            ours: "- A\n- 足した\n- B\n",
+            theirs: "- A を直した\n- B\n"
+        )
+        #expect(result.text == "- A を直した\n- 足した\n- B\n")
+        #expect(!result.hasConflicts)
+    }
+
+    /// **同じ行に二人が書き足したら、どちらを先に置くか決められない。**
+    /// ここは印を出す。合流の緩さは、ここまで。
+    @Test("同じ行に二人が書き足したら印を付ける")
+    func sameLineAppended() {
+        let result = merge("- A\n", ours: "- A こちら\n", theirs: "- A むこう\n")
+        #expect(result.conflictCount == 1)
+        #expect(result.text.contains("- A こちら"))
+        #expect(result.text.contains("- A むこう"))
+    }
+
+    /// **相手がこちらの直しを読んでから書いた場合。**
+    ///
+    /// 外から書く道具は、書く直前にファイルを読む（`Tools/mdmerge`）。
+    /// その版にはこちらの直しがそのまま入っているので、印を出す理由が無い。
+    @Test("相手の版にこちらの直しが入っていれば、競合にしない")
+    func theirsAlreadyContainsOurs() {
+        let result = merge(
+            "- A\n- B\n",
+            ours: "- A 直した\n- B\n",
+            theirs: "- A 直した\n- B 相手が足した\n"
+        )
+        #expect(result.text == "- A 直した\n- B 相手が足した\n")
+        #expect(!result.hasConflicts)
+    }
+
+    @Test("こちらの版に相手の直しが入っていれば、競合にしない")
+    func oursAlreadyContainsTheirs() {
+        let result = merge(
+            "- A\n- B\n",
+            ours: "- A 直した\n- B こちらが足した\n",
+            theirs: "- A 直した\n- B\n"
+        )
+        #expect(result.text == "- A 直した\n- B こちらが足した\n")
+        #expect(!result.hasConflicts)
     }
 
     @Test("同じ直し方をしていれば競合にしない")
@@ -79,6 +139,35 @@ struct ThreeWayMergeTests {
         う
 
         """)
+    }
+
+    /// **印は食い違っているところだけを囲む。**
+    ///
+    /// 二人が同じ行を同じように直していると、古い基準から見れば
+    /// どちらも「変えた」ことになり、同じ塊に入る。
+    /// そのまま囲むと、同じ行が印の上下に並んで読めない（実機で確認。D-35）。
+    @Test("両側で一致している行は、印の外に出す")
+    func conflictIsTrimmedToTheDifference() {
+        let result = merge(
+            "A\nB\nC\n",
+            ours:   "A\nB こちら\nC 二人とも同じ\n",
+            theirs: "A\nB むこう\nC 二人とも同じ\n"
+        )
+        #expect(result.conflictCount == 1)
+        let lines = result.text.components(separatedBy: "\n")
+        // 一致している C 行は、印の外に1回だけ。
+        #expect(lines.filter { $0 == "C 二人とも同じ" }.count == 1)
+        #expect(lines.last(where: { !$0.isEmpty }) == "C 二人とも同じ")
+        // 食い違う B 行だけが印の中。
+        guard let ourMark = lines.firstIndex(of: ThreeWayMerge.ourMarker),
+              let separator = lines.firstIndex(of: ThreeWayMerge.separator),
+              let theirMark = lines.firstIndex(of: ThreeWayMerge.theirMarker)
+        else {
+            Issue.record("印が見つからない")
+            return
+        }
+        #expect(Array(lines[(ourMark + 1)..<separator]) == ["B こちら"])
+        #expect(Array(lines[(separator + 1)..<theirMark]) == ["B むこう"])
     }
 
     @Test("印を付けても、どちらの内容も消さない")

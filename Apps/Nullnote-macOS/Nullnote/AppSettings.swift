@@ -6,6 +6,7 @@ enum AppSettings {
     static let appearanceKey = "editorAppearance"
     static let lineNumbersKey = "editorShowsLineNumbers"
     static let titleSyncKey = "syncsTitleWithFileName"
+    static let breaksOnNewlineKey = "previewBreaksOnNewline"
 
     /// 保存パネルを最初から詳細表示（ファイルブラウザ）で開かせる AppKit のキー。
     ///
@@ -31,6 +32,10 @@ enum AppSettings {
             // ファイル名と見出しの同期は**切ってある**。
             // 本文を黙って書き換える動きなので、選んだ人にだけ効かせる。
             titleSyncKey: false,
+
+            // 普通の改行をプレビューでも改行にするのは**切ってある**。
+            // Markdown の決まりから外れる見え方なので、選んだ人にだけ効かせる。
+            breaksOnNewlineKey: false,
         ])
 
         seedSavePanelExpansion()

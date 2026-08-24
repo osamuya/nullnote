@@ -17,6 +17,9 @@ struct NullnoteApp: App {
     @AppStorage(AppSettings.titleSyncKey)
     private var syncsTitleWithFileName = false
 
+    @AppStorage(AppSettings.breaksOnNewlineKey)
+    private var breaksOnNewline = false
+
     init() {
         AppSettings.registerDefaults()
         // 前に許可をもらったフォルダを、また読めるようにする。
@@ -39,7 +42,8 @@ struct NullnoteApp: App {
                 fontSize: fontSize,
                 appearance: appearance,
                 showsLineNumbers: showsLineNumbers,
-                syncsTitleWithFileName: syncsTitleWithFileName
+                syncsTitleWithFileName: syncsTitleWithFileName,
+                breaksOnNewline: breaksOnNewline
             )
             .tint(control)
             // 画像が読めなかったときに、フォルダの閲覧を頼めるようにする。
@@ -84,7 +88,8 @@ struct NullnoteApp: App {
                 fontSize: $fontSize,
                 appearance: $appearance,
                 showsLineNumbers: $showsLineNumbers,
-                syncsTitleWithFileName: $syncsTitleWithFileName
+                syncsTitleWithFileName: $syncsTitleWithFileName,
+                breaksOnNewline: $breaksOnNewline
             )
             .tint(control)
         }

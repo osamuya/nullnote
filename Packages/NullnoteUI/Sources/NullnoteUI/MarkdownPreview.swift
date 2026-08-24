@@ -16,6 +16,8 @@ public struct MarkdownPreview: View {
     private let anchorLine: Int?
     /// 文書のファイル。画像の相対パスの基準にする。
     private let documentURL: URL?
+    /// 普通の改行を、そのまま改行として描くか（設定で切り替える。D-33）。
+    private let breaksOnNewline: Bool
 
     @State private var blocks: [PreviewBlock] = []
 
@@ -23,12 +25,14 @@ public struct MarkdownPreview: View {
         source: String,
         theme: MarkdownTheme,
         anchorLine: Int? = nil,
-        documentURL: URL? = nil
+        documentURL: URL? = nil,
+        breaksOnNewline: Bool = false
     ) {
         self.source = source
         self.theme = theme
         self.anchorLine = anchorLine
         self.documentURL = documentURL
+        self.breaksOnNewline = breaksOnNewline
     }
 
     private static let horizontalPadding: CGFloat = 20
@@ -81,7 +85,9 @@ public struct MarkdownPreview: View {
         .markdownColorScheme(theme.appearance)
         // インラインコードのフォントと色は解析時に焼き込まれるので、
         // 文字サイズや外観が変わったときも組み直す。
-        .task(id: ReloadKey(theme: theme, source: source)) { await reload() }
+        .task(id: ReloadKey(theme: theme, source: source, breaksOnNewline: breaksOnNewline)) {
+            await reload()
+        }
     }
 
     /// 指定した行を含むブロックを画面上端に合わせる。
@@ -102,11 +108,14 @@ public struct MarkdownPreview: View {
         let source: String
         let fontSize: CGFloat
         let appearance: MarkdownAppearance
+        /// 改行の扱いも解析時に畳み込むので、切り替えたら組み直す。
+        let breaksOnNewline: Bool
 
-        init(theme: MarkdownTheme, source: String) {
+        init(theme: MarkdownTheme, source: String, breaksOnNewline: Bool) {
             self.source = source
             self.fontSize = theme.fontSize
             self.appearance = theme.appearance
+            self.breaksOnNewline = breaksOnNewline
         }
     }
 
@@ -122,7 +131,7 @@ public struct MarkdownPreview: View {
             try? await Task.sleep(for: .milliseconds(150))
             guard !Task.isCancelled else { return }
         }
-        blocks = PreviewBuilder.build(source, theme: theme)
+        blocks = PreviewBuilder.build(source, theme: theme, breaksOnNewline: breaksOnNewline)
     }
 }
 

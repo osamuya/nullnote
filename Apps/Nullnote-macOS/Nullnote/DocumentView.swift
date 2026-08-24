@@ -14,6 +14,8 @@ struct DocumentView: View {
     let showsLineNumbers: Bool
     /// ファイル名を変えたとき、本文の先頭の見出しも合わせるか。
     let syncsTitleWithFileName: Bool
+    /// 普通の改行を、プレビューでも改行として見せるか。
+    let breaksOnNewline: Bool
 
     @State private var showsOutline = false
     /// 目次が開け閉めの最中か。ツールバーの輪を回すために持つ。
@@ -36,8 +38,12 @@ struct DocumentView: View {
     @State private var watcher: FileWatcher?
     /// 見張りからの知らせ。値が変わるたびに1回、取り込みを検討する。
     @State private var externalChangeCount = 0
-    /// 最後に、画面とディスクが一致していた内容。合流の基準にする。
-    @State private var lastSyncedText: String?
+    /// **外の世界が最後に見たはずの内容。** 合流の基準にする。
+    ///
+    /// 開いた時と、外の変更を取り込んだ時にだけ進める。
+    /// **自分で保存しても進めない。** 進めてしまうと、外から書く道具が
+    /// 古い内容を基準に書いてきたときに、こちらの直しが黙って消える（D-35）。
+    @State private var lastExternalText: String?
     /// いま見ているファイル。改名に気づくために、前の値を覚えておく。
     @State private var knownURL: URL?
     /// フォルダに書く許可を、この書類でもう頼んだか。
@@ -167,7 +173,7 @@ struct DocumentView: View {
         // 外でファイルが書き換わったら取り込む。
         // 別のファイルになったとき（改名・別名で保存）も、ここを通る。
         .task(id: fileURL) {
-            // **見張りを張り直すのが先。** ここで `lastSyncedText` が
+            // **見張りを張り直すのが先。** ここで `lastExternalText` が
             // ディスクと同じ内容になる。見出しを直すのはそのあと。
             // 逆にすると、直した本文が「ディスクと一致していた内容」として
             // 記録され、次に外の変更が来たときに合流で消される。
@@ -199,7 +205,7 @@ struct DocumentView: View {
             return
         }
         // いま開いた内容は、ディスクと一致しているはず。ここを基準にする。
-        lastSyncedText = document.text
+        lastExternalText = document.text
         Trace.log("startWatching: \(fileURL.path) 基準=\(document.text.count)文字")
         watcher = FileWatcher(url: fileURL) { externalChangeCount += 1 }
     }
@@ -264,36 +270,36 @@ struct DocumentView: View {
 
     /// ディスクの内容を見て、取り込めるなら取り込む。
     ///
-    /// **編集中のものがあるときは触らない。** そちらは合流の話になる。
+    /// **保存したかどうかでは決めない。** 基準（`lastExternalText`）から
+    /// こちらが動いていれば、保存済みでも突き合わせに回す（D-35）。
     private func takeInExternalChange() {
         guard let fileURL, let disk = readFromDisk(fileURL) else {
             Trace.log("takeIn: 読めない")
             return
         }
 
-        let hasLocalEdits = DocumentBridge.hasUnsavedChanges(at: fileURL)
         let decision = ExternalChangeResolver.resolve(
             disk: disk,
             editor: document.text,
-            hasLocalEdits: hasLocalEdits,
-            lastSynced: lastSyncedText
+            lastExternal: lastExternalText
         )
         Trace.log(
-            "takeIn: 未保存=\(hasLocalEdits) disk=\(disk.count) editor=\(document.text.count) "
-                + "base=\(lastSyncedText?.count.description ?? "nil") -> \(label(for: decision))"
+            "takeIn: 未保存=\(DocumentBridge.hasUnsavedChanges(at: fileURL)) "
+                + "disk=\(disk.count) editor=\(document.text.count) "
+                + "base=\(lastExternalText?.count.description ?? "nil") -> \(label(for: decision))"
         )
 
         switch decision {
         case .ignore:
-            // 画面とディスクが一致した。ここが次の合流の基準になる。
-            lastSyncedText = disk
+            // 画面とディスクが一致した。**基準は進めない。**
+            // 自分で保存しただけかもしれず、外がこの版を見たとは限らない（D-35）。
             // 一致しているということは、いま保存が済んだところ。
             // 見出しに合わせてファイル名を付け直すのは、この瞬間だけ。
             renameFileIfTitleChanged(at: fileURL)
 
         case .reload(let text):
             document.text = text
-            lastSyncedText = text
+            lastExternalText = text
             // 本文の差し替えは SwiftUI 側の仕事で、書類の状態が追いつくのは次の周回。
             // 同じ周回で片付けようとすると、こちらの後始末が上書きされる。
             Task { @MainActor in DocumentBridge.acceptExternalContents(at: fileURL) }
@@ -303,7 +309,7 @@ struct DocumentView: View {
             document.text = result.text
             // 外の内容は取り込んだ（印の中にでも入っている）ので、
             // 次の合流の基準はディスクの側。
-            lastSyncedText = theirs
+            lastExternalText = theirs
             // **変更の数え上げは戻さない。** 合流の結果はまだ保存されていない。
             // 外で書き換えられたという判定だけ外して、⌘S でそのまま保存できるようにする。
             Task { @MainActor in DocumentBridge.syncModificationDate(at: fileURL) }
@@ -440,7 +446,8 @@ struct DocumentView: View {
                     source: document.text,
                     theme: theme,
                     anchorLine: topVisibleLine,
-                    documentURL: fileURL
+                    documentURL: fileURL,
+                    breaksOnNewline: breaksOnNewline
                 )
             }
         }
