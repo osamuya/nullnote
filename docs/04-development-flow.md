@@ -34,7 +34,7 @@ DMG を作っても `/Applications` は更新されない。
 ## テスト
 
 ```sh
-cd /Users/osamu-yamakami/Develop/macapp/MacApp/MarkdownEditor
+cd <クローンした場所>/MarkdownEditor
 
 swift test --package-path Packages/MarkdownCore    # 72件
 swift test --package-path Packages/NullnoteUI      # 242件

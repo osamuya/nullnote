@@ -6,7 +6,7 @@ Git repository: [nullnote](https://github.com/roughlang/nullnote)
 ## 起動方法
 
 ```bash
-% cd /Users/osamu-yamakami/Develop/macapp/MacApp/MarkdownEditor
+% cd <クローンした場所>/MarkdownEditor
 % ./Apps/Nullnote-macOS/run.sh 
 ```
 

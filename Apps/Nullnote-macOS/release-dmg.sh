@@ -14,7 +14,14 @@
 #
 # 2. 公証用の認証情報（アプリ用パスワードをキーチェーンに保存）
 #    xcrun notarytool store-credentials nullnote-notary \
-#      --apple-id <あなたの Apple ID> --team-id 542DBL2NGA
+#      --apple-id <あなたの Apple ID> --team-id <あなたの Team ID>
+#
+# ## 設定は環境変数で渡す
+#
+#   TEAM_ID=XXXXXXXXXX ./release-dmg.sh
+#
+# 署名者の名前まで指定したいときは SIGNING_IDENTITY も渡す。
+# **リポジトリに書かない。** 手元の設定を、他人のクローンに持ち込ませないため。
 #
 # ## 押さえておくこと
 #
@@ -27,9 +34,14 @@ set -eu
 
 cd "$(dirname "$0")"
 
-TEAM_ID=542DBL2NGA
-SIGNING_IDENTITY="Developer ID Application: Osamu Yamakami ($TEAM_ID)"
-NOTARY_PROFILE=nullnote-notary
+TEAM_ID="${TEAM_ID:-}"
+SIGNING_IDENTITY="${SIGNING_IDENTITY:-Developer ID Application}"
+NOTARY_PROFILE="${NOTARY_PROFILE:-nullnote-notary}"
+
+[ -n "$TEAM_ID" ] || {
+    echo "TEAM_ID が要ります。例: TEAM_ID=XXXXXXXXXX ./release-dmg.sh" >&2
+    exit 1
+}
 BUILD=build
 ARCHIVE="$BUILD/Nullnote.xcarchive"
 EXPORT="$BUILD/export"
@@ -120,6 +132,4 @@ echo "    ✅ $DMG"
 echo "       $(du -h "$DMG" | cut -f1)"
 echo "       SHA-256: $SHA"
 echo
-echo "    サーバーへ置く:"
-echo "      rsync -av -e \"ssh -p 2222\" $DMG \\"
-echo "        <配布先>"
+echo "    あとは配布先へ置くだけ。SHA-256 を告知に添えること。"

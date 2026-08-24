@@ -26,7 +26,7 @@
 ### T1-1. アプリアイコンを用意する 〔済み〕
 
 2026-08-20 に正式版へ差し替えた。元絵は
-`/Users/osamu-yamakami/Develop/sabanote/sabanote_site/design/nullnote/nullnote_icon_dark1_sq.png`
+手元のデザインファイル（`nullnote_icon_dark1_sq.png`）
 （1024×1024、角の立った正方形）。
 
 差し替えるときは元絵を渡すだけでよい。
@@ -111,7 +111,7 @@ App Store の販売者欄に出したい場合は種別から検討が要る。
 
 ```
 CODE_SIGN_IDENTITY = "Apple Development"    ← "-" から変更
-DEVELOPMENT_TEAM = 542DBL2NGA               ← 新規設定
+DEVELOPMENT_TEAM = <Team ID>                ← 新規設定
 CODE_SIGN_STYLE = Automatic                 ← 変更なし
 ```
 
@@ -222,11 +222,11 @@ xcrun altool --validate-app -f build/export/Nullnote.pkg -t macos ...
 | 2026-08-20 | Web の登録画面をリロード | **同じ登録IDで再開できた。** 入力済みの情報はサーバー側に残っていた。料金表示も **¥12,980（円建て）** に戻り、国／地域の問題は起きなかった |
 | 2026-08-20 | 決済完了 | Individual として登録。有効化待ち（確認メールは24時間以内） |
 | 2026-08-20 | 申請用の設定を整備 | `MARKETING_VERSION` を `1.0` に。`NSHumanReadableCopyright` と `ITSAppUsesNonExemptEncryption = NO` を追加 |
-| 2026-08-20 | メンバーシップ有効化 | Team ID `542DBL2NGA`（Individual）|
-| 2026-08-20 | 署名設定を切り替え（T2-4） | `CODE_SIGN_IDENTITY` を `-` から `Apple Development` に。`DEVELOPMENT_TEAM = 542DBL2NGA` を追加。Debug / Release とも `TeamIdentifier=542DBL2NGA` で署名されることを確認 |
+| 2026-08-20 | メンバーシップ有効化 | Team ID を取得（Individual）|
+| 2026-08-20 | 署名設定を切り替え（T2-4） | `CODE_SIGN_IDENTITY` を `-` から `Apple Development` に。`DEVELOPMENT_TEAM` を追加。Debug / Release とも自分の Team ID で署名されることを確認 |
 | 2026-08-20 | 開発用証明書を作成 | `Apple Development: Osamu Yamakami (GAYKK44Y47)`。`xcodebuild` に `-allowProvisioningUpdates` を付けると自動で作られた |
 | 2026-08-20 | 公証の認証情報を用意 | アプリ用パスワードを作り、`notarytool store-credentials` でキーチェーンに `nullnote-notary` として保存 |
-| 2026-08-20 | Developer ID 版を書き出し | `Developer ID Application: Osamu Yamakami (542DBL2NGA)` で署名。**`get-task-allow` は書き出しで自動的に外れた** |
+| 2026-08-20 | Developer ID 版を書き出し | `Developer ID Application` の証明書で署名。**`get-task-allow` は書き出しで自動的に外れた** |
 | 2026-08-20 | アプリを公証・ステープル | Accepted。`spctl` が `source=Notarized Developer ID` を返す |
 | 2026-08-20 | DMG を作成（1回目） | **判定 `rejected（no usable signature）`。** 公証は通るが、**DMG 自体が未署名**だと Gatekeeper が受け付けない |
 | 2026-08-20 | Developer ID 証明書をローカルに作成 | Xcode → Manage Certificates… → 「+ ⌄」→ Developer ID Application。書き出し時のクラウド署名では `codesign` から使えないため |
@@ -312,7 +312,7 @@ defaults read com.apple.dt.Xcode DVTDeveloperAccountManagerAppleIDLists  # → �
 | `MARKETING_VERSION = 1.0` / `CURRENT_PROJECT_VERSION = 1` | ✅ |
 | `NSHumanReadableCopyright = © 2026 Osamu Yamakami` | ✅ |
 | `ITSAppUsesNonExemptEncryption = NO` | ✅ |
-| 署名 | ✅ `TeamIdentifier=542DBL2NGA`（開発用証明書） |
+| 署名 | ✅ `TeamIdentifier` が自分の Team ID（開発用証明書） |
 | `com.apple.security.get-task-allow` | ⚠️ 開発用署名なので入っている。**配布用に書き出すと外れる。書き出し後に必ず確認する** |
 
 確認に使ったコマンド:
