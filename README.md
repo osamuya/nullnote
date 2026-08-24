@@ -1,12 +1,16 @@
 # Nullnote
 
-macOS のための Markdown エディタ。**長い文章を書くための道具**として作っています。
+macOS のための、シンプルで軽快な Markdown エディタ。
 
-<img src="Apps/Nullnote-macOS/Screenshots/editor-light.png" width="420"> <img src="Apps/Nullnote-macOS/Screenshots/preview-light.png" width="420">
+**書きかけのメモが、いつのまにか下書きになり、やがて公開する文章になる。**
+その流れを途切れさせない道具として作りました。
+
+<img src="Apps/Nullnote-macOS/Screenshots/window-light.png" width="880">
 
 ## できること
 
 - **記法に色が付く編集画面** — 記号は薄く、本文は読みやすく。打鍵ごとに差分だけを塗り直すので、10万字でも引っかかりません
+- **保存の操作が要らない** — 打った内容はそのままファイルに書き込まれます
 - **プレビュー** — 表・コードブロック・引用・タスクリスト・画像。GFM 拡張に対応
 - **目次** — 見出しから組み立て、クリックでその場所へ。プレビューは編集画面のスクロールに追従します
 - **⌘D の複数選択** — 同じ語を次々に選んで、まとめて書き換える
