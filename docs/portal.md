@@ -1,7 +1,7 @@
 # docs
 
 Nullnote の開発ドキュメント。
-Git repository: [nullnote](https://github.com/roughlang/nullnote)
+Git repository: [nullnote](https://github.com/osamuya/nullnote)
 
 ## 起動方法
 
