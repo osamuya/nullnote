@@ -50,7 +50,11 @@ open -a /Applications/Nullnote.app --env NULLNOTE_TRACE=1 --stderr /tmp/nullnote
 
 ## 書きもの
 
+`docs/` は**手元にだけ置く開発資料**で、公開リポジトリには含めていない（`.gitignore`）。
+ソースのコメントに出てくる `D-24` のような番号は、この中の判断の記録を指す。
+
 - 判断は `docs/02-decision-log.md` に D-番号 で足す（新しいものが上）。
   **捨てた案とその理由まで書く。**
 - 要望と不具合は `docs/運用上の修正点・改良点.md`。終わったら「終了」へ移し、
   取り消し線を引いて D-番号 を添える
+- リポジトリ全体の構成は `docs/00-repository-guide.md`
