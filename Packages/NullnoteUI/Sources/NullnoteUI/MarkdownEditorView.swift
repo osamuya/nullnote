@@ -593,6 +593,53 @@ final class FocusReportingTextView: NSTextView {
         apply("", to: deletions)
     }
 
+    // MARK: - 貼り付ける
+
+    /// ⌘V。**既定の実装は選んだところを全部消して、先頭にだけ入れる**（実測）。
+    ///
+    /// 残りは消えたまま何も入らないので、黙って中身が減る。
+    /// しかも `insertText(_:replacementRange:)` を通らないため、打ち込みの側で
+    /// 塞いだ道はここには効かない。自分で全箇所へ当てる。
+    override func paste(_ sender: Any?) {
+        guard composition == nil, pasteEverywhere(from: .general) else {
+            return super.paste(sender)
+        }
+    }
+
+    /// ⌥⇧⌘V。書式を捨てる点だけが違い、複数選択の扱いは ⌘V と同じ。
+    override func pasteAsPlainText(_ sender: Any?) {
+        guard composition == nil, pasteEverywhere(from: .general) else {
+            return super.pasteAsPlainText(sender)
+        }
+    }
+
+    /// クリップボードの中身を、打ち込み先すべてに入れる。
+    ///
+    /// **中身は分けない。** 複数行でも、そのまま各所へ同じだけ入れる。
+    /// 貼り付けは元から「入れたものがそのまま入る」道具で、行が増えるのは
+    /// カーソル1つのときにも起きる。複数選択だけ別の決まりにすると読めなくなる。
+    ///
+    /// 引数で受けるのは、確認のときに本物のクリップボードを汚さないため。
+    ///
+    /// - Returns: 当てたなら `true`。複数選択でない、または文字が取れなければ `false`
+    ///   （呼ぶ側が `super` に戻す）。
+    func pasteEverywhere(from pasteboard: NSPasteboard) -> Bool {
+        guard let ranges = currentTargets, let replacement = plainText(from: pasteboard)
+        else { return false }
+        apply(replacement, to: ranges)
+        return true
+    }
+
+    /// クリップボードから文字だけを取り出す。
+    ///
+    /// 書式付きしか入っていないことがある（ブラウザからの複写など）。
+    /// 本文は素の文字列なので、どちらにしても文字だけを見る。
+    private func plainText(from pasteboard: NSPasteboard) -> String? {
+        if let text = pasteboard.string(forType: .string) { return text }
+        let rich = pasteboard.readObjects(forClasses: [NSAttributedString.self], options: nil)
+        return (rich?.first as? NSAttributedString)?.string
+    }
+
     /// 選んである範囲すべてを置き換える。
     ///
     /// 1回の取り消し（⌘Z）で元に戻るよう、まとめて1つの編集として当てる。
