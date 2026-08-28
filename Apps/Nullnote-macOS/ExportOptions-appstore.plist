@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  App Store 提出用の書き出し設定。DMG 配布（Developer ID）とは別物。
+
+  - method は Xcode 15.3 以降 `app-store-connect`。古い資料の `app-store` は旧名。
+  - destination は `export`。まず .pkg を手元に作り、中身を確かめてから上げる。
+    いきなり `upload` にすると、確認する前に App Store Connect に届いてしまう。
+  - manageAppVersionAndBuildNumber を false にしないと、Xcode が
+    ビルド番号を勝手に書き換えることがある。**番号はこちらで管理する。**
+-->
+<plist version="1.0">
+<dict>
+	<key>method</key>
+	<string>app-store-connect</string>
+	<key>destination</key>
+	<string>export</string>
+	<key>teamID</key>
+	<string>542DBL2NGA</string>
+	<key>signingStyle</key>
+	<string>automatic</string>
+	<key>uploadSymbols</key>
+	<true/>
+	<key>manageAppVersionAndBuildNumber</key>
+	<false/>
+</dict>
+</plist>

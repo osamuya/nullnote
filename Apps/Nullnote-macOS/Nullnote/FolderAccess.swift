@@ -1,4 +1,5 @@
 import AppKit
+import NullnoteUI
 
 /// フォルダを読む許可を、利用者から一度だけもらって覚えておく。
 ///
@@ -30,7 +31,8 @@ enum FolderAccess {
             ) else { continue }
 
             // 開いたら閉じない。アプリが動いているあいだ読めるようにしておく。
-            _ = url.startAccessingSecurityScopedResource()
+            let opened = url.startAccessingSecurityScopedResource()
+            Trace.log("FolderAccess: 復帰 \(path) 開けた=\(opened) 古い=\(isStale)")
 
             // 引っ越しなどで古くなっていたら、取り直して保存し直す。
             if isStale, let fresh = bookmark(for: url) {
@@ -82,21 +84,35 @@ enum FolderAccess {
         // 迷わせないよう、頼んだフォルダを最初から選んだ状態にする。
         panel.nameFieldStringValue = folder.lastPathComponent
 
-        guard await panel.begin() == .OK, let granted = panel.url else { return false }
+        guard await panel.begin() == .OK, let granted = panel.url else {
+            Trace.log("FolderAccess: 許可されなかった \(folder.path)")
+            return false
+        }
 
         _ = granted.startAccessingSecurityScopedResource()
         if let data = bookmark(for: granted) {
             save(data, for: granted.path)
+            Trace.log("FolderAccess: 覚えた \(granted.path) \(data.count)バイト")
         }
         return isSatisfied(folder)
     }
 
     // MARK: - 覚えておく
 
+    /// セキュリティスコープ付きブックマークを作る。
+    ///
+    /// **`com.apple.security.files.bookmarks.app-scope` が無いと、ここが必ず失敗する。**
+    /// 握り潰すと「毎回フォルダを聞き直される」という形でしか表に出ず、原因が見えない。
+    /// 足あとに残す（`NULLNOTE_TRACE=1`）。
     private static func bookmark(for url: URL) -> Data? {
-        try? url.bookmarkData(
-            options: .withSecurityScope, includingResourceValuesForKeys: nil, relativeTo: nil
-        )
+        do {
+            return try url.bookmarkData(
+                options: .withSecurityScope, includingResourceValuesForKeys: nil, relativeTo: nil
+            )
+        } catch {
+            Trace.log("FolderAccess: ブックマークを作れない \(url.path) \(error)")
+            return nil
+        }
     }
 
     private static func stored() -> [String: Data] {

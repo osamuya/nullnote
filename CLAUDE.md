@@ -1,5 +1,10 @@
 # このリポジトリでの決まり
 
+> **いま進行中の作業**: App Store 審査の差し戻しに対応中（2026-08-28、Guideline 2.1）。
+> 手順は `docs/09-release-fb1.md`。**コードは直さない。動画と説明文だけ。**
+> 状態と残作業は `docs/04-development-flow.md` の冒頭「App Store 公開の引き継ぎ」。
+> **着手する前にそこを読むこと。**
+
 ## `.md` を書き換えるときは `mdmerge` を通す
 
 **このリポジトリの文書は、利用者と Claude Code が代わる代わる直す。**
@@ -47,6 +52,12 @@ cd Apps/Nullnote-macOS   && xcodebuild -scheme Nullnote -configuration Debug bui
 ```sh
 open -a /Applications/Nullnote.app --env NULLNOTE_TRACE=1 --stderr /tmp/nullnote-trace.log <ファイル>
 ```
+
+**`open -a` は、すでに動いているアプリを起動し直さない。** ファイルを渡すだけなので、
+`--env` も効かない。**測る前に `pkill -f "MacOS/Nullnote"` で止め、止まったことを目で見る。**
+動いているプロセスは、消した設定をまだ手の中に持っている（フォルダの許可は
+起動時に復元され、プロセスが生きているあいだ有効なまま）。実際にこれで2度誤った。
+手順は README の「動きを確かめる」。
 
 ## 書きもの
 

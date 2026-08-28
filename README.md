@@ -35,6 +35,17 @@ Xcode で開く場合は `Apps/Nullnote-macOS/Nullnote.xcodeproj` を開き、**
 
 配布用の `.dmg` は準備中です。
 
+### 設定を初期化する
+
+フォルダの許可や表示の設定を、入れたてに戻したいとき。**アプリを終了してから**実行します。
+
+```sh
+pkill -f "MacOS/Nullnote"
+rm -rf ~/Library/Containers/com.sabanote.Nullnote/Data
+```
+
+`Data` にアプリのデータが入っています。次の起動で作り直されます。
+
 ## 作りについて
 
 外部依存は **`apple/swift-markdown` ひとつだけ**です。それ以外はすべて標準のフレームワークで書いています。

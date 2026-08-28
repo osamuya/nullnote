@@ -33,7 +33,7 @@ Apps/Nullnote-macOS/
 
 | 項目 | 値 |
 | --- | --- |
-| Bundle Identifier | com.roughlang.Nullnote |
+| Bundle Identifier | com.sabanote.Nullnote |
 | 最低 OS | macOS 14 |
 | Swift | 6.0 言語モード |
 | 署名 | ローカル実行用のアドホック（`CODE_SIGN_IDENTITY = "-"`） |
@@ -114,7 +114,7 @@ Markdown には Apple 定義の UTType が無い。`Supporting/Info.plist` で
 | 文字サイズ | `editorFontSize` | 10〜28 |
 
 ```sh
-defaults read ~/Library/Containers/com.roughlang.Nullnote/Data/Library/Preferences/com.roughlang.Nullnote.plist
+defaults read ~/Library/Containers/com.sabanote.Nullnote/Data/Library/Preferences/com.sabanote.Nullnote.plist
 ```
 
 テーマは配色を2組持つのではなく、動的な色の解決先を上書きしている

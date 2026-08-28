@@ -11,6 +11,10 @@ Packages/*/Package.resolved
 # 作り直せるものなので追跡しない（release-dmg.sh で再生成できる）。
 Apps/Nullnote-macOS/build/
 
+# App Store 申請用のスクリーンショット。元画像も出力も作り直せる。
+# 提出したものは App Store Connect 側に残るので、ここには置かない。
+Apps/Nullnote-macOS/AppStore/
+
 # Xcode
 DerivedData/
 *.xcuserstate

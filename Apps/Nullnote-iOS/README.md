@@ -18,7 +18,7 @@ xcodebuild -scheme NullnoteUI   -destination 'generic/platform=iOS' build
 
 ## 着手時にやること
 
-1. iOS アプリターゲットを作成（Interface: SwiftUI、Bundle Identifier は `com.roughlang.Nullnote`）
+1. iOS アプリターゲットを作成（Interface: SwiftUI、Bundle Identifier は `com.sabanote.Nullnote`）
 2. `Packages/MarkdownCore` と `Packages/NullnoteUI` を依存に追加
 3. `DocumentGroup` + Files アプリ連携。UTType の宣言は macOS 版と同じ
    （`Apps/Nullnote-macOS/Supporting/Info.plist` をそのまま持ってこられる）

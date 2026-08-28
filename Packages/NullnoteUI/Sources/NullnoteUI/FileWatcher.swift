@@ -62,7 +62,7 @@ public final class FileWatcher: @unchecked Sendable {
 
     private let url: URL
     private let onChange: @MainActor @Sendable () -> Void
-    private let queue = DispatchQueue(label: "com.roughlang.Nullnote.FileWatcher")
+    private let queue = DispatchQueue(label: "com.sabanote.Nullnote.FileWatcher")
 
     private var fileSource: DispatchSourceFileSystemObject?
     private var directorySource: DispatchSourceFileSystemObject?
