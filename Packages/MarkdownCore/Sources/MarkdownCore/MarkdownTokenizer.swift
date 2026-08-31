@@ -149,6 +149,18 @@ public struct MarkdownTokenizer: Sendable {
                 tokens.append(MarkdownToken(kind: .codeBlock, range: range))
                 return .indentedCode
             }
+            // **入れ子のリストは、深くても印として扱う。**
+            //
+            // 行だけを見ていると、4つ以上のインデントは「インデントによる
+            // コードブロック」と区別が付かない。ただし直前が段落（＝リストの行の
+            // 次の状態）なら、それは親の項目の続きであって、コードブロックは始まらない。
+            // その位置に印があれば入れ子のリストで、印として塗るのが正しい。
+            //
+            // これをやらないと、深い項目の `-` や `1.` だけが本文の色になる（実測）。
+            if BlockScanner.listMarker(text, body) != nil {
+                return appendListItem(text, body, into: &tokens)
+            }
+
             // 段落の途中なら遅延継続行。ブロック記法は開始しない。
             let stillOpen = InlineScanner.appendTokens(text, body, into: &tokens)
             return stillOpen ? .htmlComment(insideParagraph: true) : .paragraph
@@ -207,15 +219,8 @@ public struct MarkdownTokenizer: Sendable {
         }
 
         // リスト項目。チェックボックスが続けばタスクリスト。
-        if let list = BlockScanner.listMarker(text, body) {
-            tokens.append(MarkdownToken(kind: .marker(.list), range: list.markerRange))
-            var content = list.contentRange
-            if let task = BlockScanner.taskMarker(text, content) {
-                tokens.append(MarkdownToken(kind: .taskMarker(isChecked: task.isChecked), range: task.range))
-                content = task.contentRange
-            }
-            let stillOpen = InlineScanner.appendTokens(text, content, into: &tokens)
-            return stillOpen ? .htmlComment(insideParagraph: true) : .paragraph
+        if BlockScanner.listMarker(text, body) != nil {
+            return appendListItem(text, body, into: &tokens)
         }
 
         // 表のヘッダ行。次の行が列数の一致する区切り行のときだけ成立する。
@@ -283,4 +288,23 @@ public struct MarkdownTokenizer: Sendable {
             }
         }
     }
+
+    /// リスト項目を1つ分、トークンにする。**深さに関わらず同じ扱い。**
+    ///
+    /// 行頭から数えたインデントが4以上でも、直前が段落なら入れ子のリストなので、
+    /// ここを通す。印を本文の色で塗らないための共通経路。
+    private func appendListItem(
+        _ text: String, _ body: Range<String.Index>, into tokens: inout [MarkdownToken]
+    ) -> MarkdownBlockState {
+        guard let list = BlockScanner.listMarker(text, body) else { return .paragraph }
+        tokens.append(MarkdownToken(kind: .marker(.list), range: list.markerRange))
+        var content = list.contentRange
+        if let task = BlockScanner.taskMarker(text, content) {
+            tokens.append(MarkdownToken(kind: .taskMarker(isChecked: task.isChecked), range: task.range))
+            content = task.contentRange
+        }
+        let stillOpen = InlineScanner.appendTokens(text, content, into: &tokens)
+        return stillOpen ? .htmlComment(insideParagraph: true) : .paragraph
+    }
+
 }

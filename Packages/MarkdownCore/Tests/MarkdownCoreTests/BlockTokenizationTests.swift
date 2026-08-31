@@ -191,4 +191,30 @@ struct BlockTokenizationTests {
         let source = "paragraph\n    # still a paragraph"
         #expect(MarkdownTokenizer.snapshot(source).isEmpty)
     }
+    // MARK: - 入れ子のリスト
+
+    /// 深い項目の `-` や `1.` が、印ではなく本文として塗られていた（実測。2026-08-31）。
+    /// ダークテーマで白く出て、浅い項目の薄いグレーと揃わない。
+    @Test("4つ以上インデントしたリストも、印として扱う")
+    func deeplyIndentedListIsAList() {
+        // 直前がリストの行（＝状態は段落）なので、インデントコードではなく入れ子のリスト。
+        let tokens = MarkdownTokenizer.snapshot("1. foo\n    1. bar")
+        #expect(tokens.contains(TokenSnapshot(.marker(.list), "1.")))
+        #expect(tokens.filter { $0.kind == .marker(.list) }.count == 2)
+    }
+
+    @Test("8つインデントしても印として扱う")
+    func evenDeeper() {
+        let tokens = MarkdownTokenizer.snapshot("- a\n    - b\n        - c")
+        #expect(tokens.filter { $0.kind == .marker(.list) }.count == 3)
+    }
+
+    /// **空行のあとの4スペースは、いままでどおりコードブロック。**
+    /// 段落の途中かどうかで分かれる。ここを壊すと既存の記法が変わる。
+    @Test("空行の後の4スペースは、リストの印に見えてもコードブロックのまま")
+    func blankThenIndentedIsStillCode() {
+        let tokens = MarkdownTokenizer.snapshot("段落\n\n    - これはコード")
+        #expect(!tokens.contains { $0.kind == .marker(.list) })
+    }
+
 }

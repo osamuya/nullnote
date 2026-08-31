@@ -1,4 +1,5 @@
 import Foundation
+import NullnoteUI
 
 enum AppSettings {
     /// `UserDefaults` のキー。`@AppStorage` の綴り間違いを1か所に閉じ込める。
@@ -7,6 +8,7 @@ enum AppSettings {
     static let lineNumbersKey = "editorShowsLineNumbers"
     static let titleSyncKey = "syncsTitleWithFileName"
     static let breaksOnNewlineKey = "previewBreaksOnNewline"
+    static let indentStyleKey = "editorIndentStyle"
 
     /// 保存パネルを最初から詳細表示（ファイルブラウザ）で開かせる AppKit のキー。
     ///
@@ -36,6 +38,12 @@ enum AppSettings {
             // 普通の改行をプレビューでも改行にするのは**切ってある**。
             // Markdown の決まりから外れる見え方なので、選んだ人にだけ効かせる。
             breaksOnNewlineKey: false,
+
+            // Tab でリストを深くするときの1段ぶん。**スペース4つを既定にする。**
+            // Markdown のファイルとしてはスペースが多数派で、`markdownlint` の
+            // `MD010` は既定でタブを咎める。見る側のタブ幅設定にも左右されない。
+            // タブがよければ設定画面で選べる（D-39）。
+            indentStyleKey: IndentStyle.fourSpaces.rawValue,
         ])
 
         seedSavePanelExpansion()

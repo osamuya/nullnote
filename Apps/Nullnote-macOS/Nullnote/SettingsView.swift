@@ -8,6 +8,7 @@ struct SettingsView: View {
     @Binding var showsLineNumbers: Bool
     @Binding var syncsTitleWithFileName: Bool
     @Binding var breaksOnNewline: Bool
+    @Binding var indentStyle: IndentStyle
 
     var body: some View {
         Form {
@@ -25,6 +26,25 @@ struct SettingsView: View {
             LabeledContent("編集画面") {
                 Toggle("行番号を表示", isOn: $showsLineNumbers)
                     .frame(width: 240, alignment: .leading)
+            }
+
+            LabeledContent("インデント") {
+                VStack(alignment: .leading, spacing: 4) {
+                    Picker("インデント", selection: $indentStyle) {
+                        ForEach(IndentStyle.allCases) { option in
+                            Text(option.label).tag(option)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .labelsHidden()
+                    Text("リストの行で Tab を押したときに、1段ぶんとして入れるものです。⇧Tab で戻します。すでに書かれているインデントは、この設定に関係なくそのまま保たれます。")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .multilineTextAlignment(.leading)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .frame(width: 240, alignment: .leading)
             }
 
             LabeledContent("プレビュー") {

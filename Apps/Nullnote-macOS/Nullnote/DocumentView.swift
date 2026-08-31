@@ -16,6 +16,7 @@ struct DocumentView: View {
     let syncsTitleWithFileName: Bool
     /// 普通の改行を、プレビューでも改行として見せるか。
     let breaksOnNewline: Bool
+    let indentStyle: IndentStyle
 
     @State private var showsOutline = false
     /// 目次が開け閉めの最中か。ツールバーの輪を回すために持つ。
@@ -465,7 +466,8 @@ struct DocumentView: View {
             searchHighlight: showsSearch ? search.highlight : nil,
             focusRequest: editorFocusRequest,
             commandRequest: editorCommandRequest,
-            showsLineNumbers: showsLineNumbers
+            showsLineNumbers: showsLineNumbers,
+            indentStyle: indentStyle
         )
     }
 }

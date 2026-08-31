@@ -157,6 +157,18 @@ public struct MarkdownHighlighter {
         signatures = newSignatures
     }
 
+    /// その行を**打ち始める前**のブロック状態。
+    ///
+    /// 改行で行頭の印を継ぐかどうかの判断に使う（`LineContinuationRule`）。
+    /// コードブロックの中の `- foo` はリストではないので、そこでは継がない。
+    ///
+    /// `signatures[i]` は「i 行目を処理し終えた時点」なので、
+    /// **i 行目の手前は i-1 の値**。まだ塗っていない行を聞かれたら `.blank` を返す。
+    public func blockState(beforeLine line: Int) -> MarkdownBlockState {
+        guard line > 0, signatures.indices.contains(line - 1) else { return .blank }
+        return signatures[line - 1].block
+    }
+
     /// 各行の UTF-16 範囲（改行を含む）。
     private func lineExtents(of lines: [MarkdownLineTokens], in text: String) -> [NSRange] {
         var result: [NSRange] = []

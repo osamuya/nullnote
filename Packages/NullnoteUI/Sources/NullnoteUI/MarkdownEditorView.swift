@@ -1,3 +1,4 @@
+import MarkdownCore
 import SwiftUI
 
 #if canImport(AppKit)
@@ -86,6 +87,8 @@ public struct MarkdownEditorView {
     var commandRequest: EditorCommandRequest?
     /// 左端に行番号を出すか。
     var showsLineNumbers: Bool
+    /// リストを Tab で深くするときに入れる1段ぶん。
+    var indentStyle: IndentStyle
     /// システムの外観が変わったときに再評価させるためだけに読む。
     /// `.system` を実際の外観に解決している以上、OS 側の変化を拾う必要がある。
     @Environment(\.colorScheme) private var systemColorScheme
@@ -99,7 +102,8 @@ public struct MarkdownEditorView {
         searchHighlight: SearchHighlight? = nil,
         focusRequest: EditorFocusRequest? = nil,
         commandRequest: EditorCommandRequest? = nil,
-        showsLineNumbers: Bool = false
+        showsLineNumbers: Bool = false,
+        indentStyle: IndentStyle = .fourSpaces
     ) {
         self._text = text
         self.theme = theme
@@ -110,6 +114,7 @@ public struct MarkdownEditorView {
         self.focusRequest = focusRequest
         self.commandRequest = commandRequest
         self.showsLineNumbers = showsLineNumbers
+        self.indentStyle = indentStyle
     }
 
     public func makeCoordinator() -> Coordinator {
@@ -131,6 +136,11 @@ public struct MarkdownEditorView {
         private var lineIndex: LineIndex
         /// 最後に報告した行。同じ値を書き戻して再描画を誘発しないため。
         private var reportedLine = 0
+
+        /// UTF-16 の位置から行番号を引く。`lineIndex` は private なのでここを通す。
+        func lineNumber(atUTF16Offset offset: Int) -> Int {
+            lineIndex.line(atUTF16Offset: offset)
+        }
         /// テキストビューに載せてある本文。
         ///
         /// `NSTextView.string` / `UITextView.text` は呼ぶたびに文字列を作り直すため、
@@ -593,6 +603,118 @@ final class FocusReportingTextView: NSTextView {
         apply("", to: deletions)
     }
 
+    // MARK: - 改行する
+
+    /// その行を打ち始める前のブロック状態を返す。Coordinator が繋ぐ。
+    ///
+    /// **コードブロックの中では継がない**ための判断に使う。
+    /// 繋がっていなければ「中ではない」とみなす（継ぐ方に倒れる）。
+    var blockStateBeforeLine: ((Int) -> MarkdownBlockState)?
+
+    /// 行頭からの UTF-16 位置を行番号に直す。Coordinator が繋ぐ。
+    var lineNumber: ((Int) -> Int)?
+
+    /// Return。リストの行なら印を継ぎ、印だけの行なら抜ける。判断は
+    /// `LineContinuationRule`（`MarkdownCore`）にあり、ここは本文を書き換えるだけ。
+    override func insertNewline(_ sender: Any?) {
+        // 変換中と複数選択のときは触らない。
+        // **複数選択で行ごとに違う印を継ぐのは、狙いが定まらない。**
+        // 選んだ場所ごとに前の行が違うので、何が起きるか打つ前に見えない。
+        guard composition == nil, currentTargets == nil,
+              let decision = lineContinuation()
+        else { return super.insertNewline(sender) }
+
+        switch decision {
+        case .plain:
+            super.insertNewline(sender)
+        case .carry(let prefix):
+            super.insertText("\n" + prefix, replacementRange: selectedRange())
+        case .end(let clearing):
+            // 印だけの行を消して、改行だけ入れる。空行になってリストから抜ける。
+            let caret = selectedRange().location
+            super.insertText("\n", replacementRange: NSRange(location: caret - clearing,
+                                                             length: clearing))
+        }
+    }
+
+    /// いまのカーソル位置から、改行したときの振る舞いを決める。
+    ///
+    /// 選択範囲があるときは `nil`（ふつうの改行に任せる）。
+    /// 選んだ文字を消しながら印を継ぐのは、望まれる場面が思いつかない。
+    private func lineContinuation() -> LineContinuation? {
+        let selection = selectedRange()
+        guard selection.length == 0 else { return nil }
+
+        let text = string as NSString
+        let lineRange = text.lineRange(for: selection)
+        // `lineRange(for:)` は改行を含む。行の中身だけを見たいので落とす。
+        var contentLength = lineRange.length
+        while contentLength > 0,
+              let last = Unicode.Scalar(text.character(at: lineRange.location + contentLength - 1)),
+              CharacterSet.newlines.contains(last) {
+            contentLength -= 1
+        }
+        let line = text.substring(with: NSRange(location: lineRange.location, length: contentLength))
+
+        let insideCode: Bool
+        if let lineNumber, let blockStateBeforeLine,
+           case .fencedCode = blockStateBeforeLine(lineNumber(lineRange.location)) {
+            insideCode = true
+        } else {
+            insideCode = false
+        }
+
+        return LineContinuationRule.decide(
+            line: line,
+            caretUTF16Offset: selection.location - lineRange.location,
+            isInsideCode: insideCode
+        )
+    }
+
+    // MARK: - 深さを変える
+
+    /// リストを深くするときに入れる1段ぶん。設定から降りてくる。
+    var indentUnit: String = IndentStyle.fourSpaces.unit
+
+    /// Tab。リストの行なら1段深くする。**それ以外はふつうにタブが入る。**
+    override func insertTab(_ sender: Any?) {
+        guard changeIndent(deepen: true) else { return super.insertTab(sender) }
+    }
+
+    /// ⇧Tab。リストの行なら1段浅くする。
+    ///
+    /// **浅くするときは設定を見ない。** 書かれているものを見て外す。
+    /// スペースの文書をタブ設定で開いても、意図どおりに戻せるようにするため。
+    override func insertBacktab(_ sender: Any?) {
+        guard changeIndent(deepen: false) else { return super.insertBacktab(sender) }
+    }
+
+    /// - Returns: 深さを変えたら `true`。リストの行でなければ `false`（既定の動きに任せる）。
+    private func changeIndent(deepen: Bool) -> Bool {
+        // 変換中と複数選択のときは触らない。行ごとに前提が違う。
+        guard composition == nil, currentTargets == nil else { return false }
+
+        let text = string as NSString
+        let selection = selectedRange()
+        let lineRange = text.lineRange(for: selection)
+        var contentLength = lineRange.length
+        while contentLength > 0,
+              let last = Unicode.Scalar(text.character(at: lineRange.location + contentLength - 1)),
+              CharacterSet.newlines.contains(last) {
+            contentLength -= 1
+        }
+        let line = text.substring(with: NSRange(location: lineRange.location, length: contentLength))
+
+        if deepen {
+            guard let unit = IndentChange.deepen(line: line, unit: indentUnit) else { return false }
+            super.insertText(unit, replacementRange: NSRange(location: lineRange.location, length: 0))
+        } else {
+            guard let count = IndentChange.shallow(line: line) else { return false }
+            super.insertText("", replacementRange: NSRange(location: lineRange.location, length: count))
+        }
+        return true
+    }
+
     // MARK: - 貼り付ける
 
     /// ⌘V。**既定の実装は選んだところを全部消して、先頭にだけ入れる**（実測）。
@@ -953,6 +1075,14 @@ extension MarkdownEditorView: NSViewRepresentable {
         textView.delegate = context.coordinator
         // 「どこが書き換わったか」を受け取る。差分ハイライトの起点になる。
         textView.textStorage?.delegate = context.coordinator
+        textView.indentUnit = indentStyle.unit
+        // 改行でリストを継ぐかの判断に使う。コードブロックの中では継がない。
+        textView.lineNumber = { [weak coordinator = context.coordinator] offset in
+            coordinator?.lineNumber(atUTF16Offset: offset) ?? 0
+        }
+        textView.blockStateBeforeLine = { [weak coordinator = context.coordinator] line in
+            coordinator?.highlighter.blockState(beforeLine: line) ?? .blank
+        }
         textView.allowsUndo = true
         // 書式付きテキストを持ち込ませない。装飾はハイライタだけが付ける。
         textView.isRichText = false
@@ -1023,6 +1153,8 @@ extension MarkdownEditorView: NSViewRepresentable {
         coordinator.text = $text
         coordinator.topVisibleLine = topVisibleLine
         coordinator.highlighter.theme = theme
+        // 設定で変えたら、開いている窓にもすぐ効かせる。
+        (textView as? FocusReportingTextView)?.indentUnit = indentStyle.unit
 
         let resolved = theme.appearance.platformAppearance
         let themeChanged = coordinator.appliedFontSize != theme.fontSize

@@ -19,6 +19,8 @@ struct NullnoteApp: App {
 
     @AppStorage(AppSettings.breaksOnNewlineKey)
     private var breaksOnNewline = false
+    @AppStorage(AppSettings.indentStyleKey)
+    private var indentStyle: IndentStyle = .fourSpaces
 
     init() {
         AppSettings.registerDefaults()
@@ -43,7 +45,8 @@ struct NullnoteApp: App {
                 appearance: appearance,
                 showsLineNumbers: showsLineNumbers,
                 syncsTitleWithFileName: syncsTitleWithFileName,
-                breaksOnNewline: breaksOnNewline
+                breaksOnNewline: breaksOnNewline,
+                indentStyle: indentStyle
             )
             .tint(control)
             // 画像が読めなかったときに、フォルダの閲覧を頼めるようにする。
@@ -89,7 +92,8 @@ struct NullnoteApp: App {
                 appearance: $appearance,
                 showsLineNumbers: $showsLineNumbers,
                 syncsTitleWithFileName: $syncsTitleWithFileName,
-                breaksOnNewline: $breaksOnNewline
+                breaksOnNewline: $breaksOnNewline,
+                indentStyle: $indentStyle
             )
             .tint(control)
         }
