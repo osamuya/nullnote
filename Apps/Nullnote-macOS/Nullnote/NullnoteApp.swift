@@ -1,3 +1,4 @@
+import MarkdownCore
 import NullnoteUI
 import SwiftUI
 
@@ -148,6 +149,31 @@ private struct SelectionButtons: View {
 
         Button("同じ語を全部選ぶ") { commands?.selectAll() }
             .keyboardShortcut("g", modifiers: [.control, .command])
+            .disabled(commands == nil)
+
+        Divider()
+
+        // 選んだところを記法で囲む。選択が無ければ記法だけ置いて、あいだにカーソル。
+        // 記号キー（選んで `*` を押す）でも同じことができるが、
+        // **メニューに出しておかないと、機能があること自体に気づけない。**
+        Button("太字") { commands?.wrap(.strong) }
+            .keyboardShortcut("b", modifiers: .command)
+            .disabled(commands == nil)
+
+        Button("斜体") { commands?.wrap(.emphasis) }
+            .keyboardShortcut("i", modifiers: .command)
+            .disabled(commands == nil)
+
+        Button("コード") { commands?.wrap(.code) }
+            .keyboardShortcut("e", modifiers: .command)
+            .disabled(commands == nil)
+
+        Button("取り消し線") { commands?.wrap(.strikethrough) }
+            .keyboardShortcut("x", modifiers: [.command, .shift])
+            .disabled(commands == nil)
+
+        Button("リンク") { commands?.wrap(.link) }
+            .keyboardShortcut("k", modifiers: .command)
             .disabled(commands == nil)
     }
 }

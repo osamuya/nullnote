@@ -1,3 +1,4 @@
+import MarkdownCore
 import NullnoteUI
 import SwiftUI
 
@@ -147,7 +148,8 @@ struct DocumentView: View {
         .focusedSceneValue(\.outlineVisibility, $showsOutline)
         .focusedSceneValue(\.selectionCommands, SelectionCommands(
             selectNext: { editorCommandRequest = EditorCommandRequest(.selectNextOccurrence) },
-            selectAll: { editorCommandRequest = EditorCommandRequest(.selectAllOccurrences) }
+            selectAll: { editorCommandRequest = EditorCommandRequest(.selectAllOccurrences) },
+            wrap: { editorCommandRequest = EditorCommandRequest(.wrap($0)) }
         ))
         .focusedSceneValue(\.searchCommands, SearchCommands(
             open: openSearch,
@@ -502,6 +504,8 @@ private struct SearchCommandsKey: FocusedValueKey {
 struct SelectionCommands {
     let selectNext: () -> Void
     let selectAll: () -> Void
+    /// 選んだところを記法で囲む（⌘B / ⌘I / ⌘K）。
+    let wrap: (InlineWrap.Style) -> Void
 }
 
 private struct SelectionCommandsKey: FocusedValueKey {

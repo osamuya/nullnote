@@ -53,11 +53,13 @@ public struct EditorFocusRequest: Equatable, Sendable {
 /// メニューから来る。同じ操作を続けて出しても効くよう `id` を持つ。
 public struct EditorCommandRequest: Equatable, Sendable {
 
-    public enum Command: Sendable {
+    public enum Command: Equatable, Sendable {
         /// カーソルのある語、または次に出てくる同じ語を選びに行く。
         case selectNextOccurrence
         /// 文書中の同じ語を一度に全部選ぶ。
         case selectAllOccurrences
+        /// 選んだところを記法で囲む（⌘B / ⌘I / ⌘K）。
+        case wrap(InlineWrap.Style)
     }
 
     public let command: Command
@@ -376,6 +378,15 @@ public struct MarkdownEditorView {
         /// 「同じ語を選んで」を実行する。
         func run(_ command: EditorCommandRequest.Command) {
             guard let textView else { return }
+
+            // 囲むのは、語を選ぶ処理とは別。選択が無くても効かせる（記法だけ置く）。
+            #if canImport(AppKit)
+            if case .wrap(let style) = command {
+                (textView as? FocusReportingTextView)?.wrapSelection(with: style)
+                return
+            }
+            #endif
+
             let text = appliedText
             #if canImport(AppKit)
             let selected = textView.selectedRanges.map(\.rangeValue)
@@ -401,6 +412,9 @@ public struct MarkdownEditorView {
                 guard let next = MultiSelection.nextOccurrence(of: word, after: selected, in: text)
                 else { return }
                 select(selected + [next])
+
+            case .wrap:
+                break   // 上で片付けている。
             }
         }
 
@@ -541,10 +555,53 @@ final class FocusReportingTextView: NSTextView {
             spread(replacement, of: state)
             return
         }
+        // 選んだ状態で記号を打ったら、消さずに囲む。
+        // **選択が無ければ、いつもどおり文字が入る。** ふだんの打鍵は変わらない。
+        if composition == nil, currentTargets == nil, selectedRange().length > 0,
+           let style = InlineWrap.style(forTypedCharacter: replacement) {
+            return wrapSelection(with: style)
+        }
+
         guard let ranges = currentTargets else {
+            // 区切りを打った時点で、手前の URL をリンクにする。
+            // **URL は終わりの印を持たない**ので、ここでしか確定できない。
+            if replacement == " " || replacement == "\u{3000}", linkifyBeforeCaret() {
+                // 置き換えでカーソルが動いた。**渡された範囲はもう当てにならない。**
+                // そのまま使うと、空白がリンクの途中に入る（実測）。
+                return super.insertText(string, replacementRange: selectedRange())
+            }
             return super.insertText(string, replacementRange: replacementRange)
         }
         apply(replacement, to: ranges)
+    }
+
+    /// カーソルの手前にある URL を `[URL](URL)` に変える。
+    ///
+    /// 判断は `MarkdownCore` の `URLLinkify` にあり、ここは本文を書き換えるだけ。
+    @discardableResult
+    private func linkifyBeforeCaret() -> Bool {
+        let selection = selectedRange()
+        guard composition == nil, currentTargets == nil, selection.length == 0 else { return false }
+
+        let text = string as NSString
+        let lineRange = text.lineRange(for: selection)
+        var contentLength = lineRange.length
+        while contentLength > 0,
+              let last = Unicode.Scalar(text.character(at: lineRange.location + contentLength - 1)),
+              CharacterSet.newlines.contains(last) {
+            contentLength -= 1
+        }
+        let line = text.substring(with: NSRange(location: lineRange.location, length: contentLength))
+
+        guard let found = URLLinkify.replacement(
+            line: line, caretUTF16Offset: selection.location - lineRange.location
+        ) else { return false }
+
+        super.insertText(found.text, replacementRange: NSRange(
+            location: lineRange.location + found.range.lowerBound,
+            length: found.range.count
+        ))
+        return true
     }
 
     /// 変換が始まった。行き先を凍らせて、確定を待つ。
@@ -617,6 +674,8 @@ final class FocusReportingTextView: NSTextView {
     /// Return。リストの行なら印を継ぎ、印だけの行なら抜ける。判断は
     /// `LineContinuationRule`（`MarkdownCore`）にあり、ここは本文を書き換えるだけ。
     override func insertNewline(_ sender: Any?) {
+        // 改行も区切り。手前の URL を先にリンクにしてから、継ぎ足しを考える。
+        linkifyBeforeCaret()
         // 変換中と複数選択のときは触らない。
         // **複数選択で行ごとに違う印を継ぐのは、狙いが定まらない。**
         // 選んだ場所ごとに前の行が違うので、何が起きるか打つ前に見えない。
@@ -634,6 +693,24 @@ final class FocusReportingTextView: NSTextView {
             let caret = selectedRange().location
             super.insertText("\n", replacementRange: NSRange(location: caret - clearing,
                                                              length: clearing))
+        case .tableRow(let lines, let caretRow):
+            // 改行して行を並べ、**その中の最初のセル**にカーソルを置く。
+            // 打ち始める場所がそこなので、末尾に置くと必ず左へ戻ることになる。
+            let caret = selectedRange().location
+            super.insertText("\n" + lines.joined(separator: "\n"),
+                             replacementRange: selectedRange())
+            // 行頭までの距離＝改行1つ＋手前の行たち。
+            var offset = caret + 1
+            for line in lines.prefix(caretRow) { offset += (line as NSString).length + 1 }
+            // 空のセルは `|  |`。**2つの空白のあいだ**に置く。
+            // `|` の直後だと `|りんご  |` と詰まって出る。
+            setSelectedRange(NSRange(location: offset + 2, length: 0))
+        case .openFence(let closing):
+            // 改行 → 空行 → 閉じフェンス。**カーソルは空行に置く。**
+            // そこがコードを書き始める場所なので、閉じの後ろに置くと必ず戻ることになる。
+            let caret = selectedRange().location
+            super.insertText("\n\n" + closing, replacementRange: selectedRange())
+            setSelectedRange(NSRange(location: caret + 1, length: 0))
         }
     }
 
@@ -656,19 +733,67 @@ final class FocusReportingTextView: NSTextView {
         }
         let line = text.substring(with: NSRange(location: lineRange.location, length: contentLength))
 
-        let insideCode: Bool
-        if let lineNumber, let blockStateBeforeLine,
-           case .fencedCode = blockStateBeforeLine(lineNumber(lineRange.location)) {
-            insideCode = true
-        } else {
-            insideCode = false
+        // この行を打ち始める前のブロック状態。表の中かどうか、コードの中かどうか。
+        var stateBefore = MarkdownBlockState.blank
+        if let lineNumber, let blockStateBeforeLine {
+            stateBefore = blockStateBeforeLine(lineNumber(lineRange.location))
         }
+        let insideCode: Bool
+        if case .fencedCode = stateBefore { insideCode = true } else { insideCode = false }
 
         return LineContinuationRule.decide(
             line: line,
             caretUTF16Offset: selection.location - lineRange.location,
-            isInsideCode: insideCode
+            isInsideCode: insideCode,
+            hasClosingFenceAhead: hasClosingFence(after: lineRange, in: text),
+            blockState: stateBefore
         )
+    }
+
+    /// この行が開始フェンスのとき、後ろに**それを閉じる**行があるか。
+    ///
+    /// **閉じフェンスに言語名は書けない**（CommonMark）。
+    /// 「``` で始まる行」で数えると、後ろにある ```` ```swift ```` を閉じと誤解して、
+    /// 足すべき場面で足さなくなる（B-21）。判定は `MarkdownCore` に持たせる。
+    ///
+    /// 見つけた時点で止めるので、閉じが近ければ費用も小さい。
+    private func hasClosingFence(after lineRange: NSRange, in text: NSString) -> Bool {
+        let opener = text.substring(with: lineRange)
+            .trimmingCharacters(in: .newlines)
+        guard let shape = LineContinuationRule.openingFenceShape(of: opener) else { return false }
+
+        var location = lineRange.location + lineRange.length
+        while location < text.length {
+            let range = text.lineRange(for: NSRange(location: location, length: 0))
+            guard range.length > 0 else { break }
+            let line = text.substring(with: range).trimmingCharacters(in: .newlines)
+            if LineContinuationRule.closesFence(
+                line, marker: shape.marker, minimumLength: shape.length
+            ) {
+                return true
+            }
+            location = range.location + range.length
+        }
+        return false
+    }
+
+    // MARK: - 記法で囲む
+
+    /// 選んだところを記法で囲む。記号キーと ⌘B / ⌘I / ⌘K の共通の出口。
+    ///
+    /// 判断は `MarkdownCore` の `InlineWrap` にあり、ここは本文を書き換えるだけ。
+    func wrapSelection(with style: InlineWrap.Style) {
+        guard composition == nil, currentTargets == nil else { return }
+
+        let selection = selectedRange()
+        let selected = (string as NSString).substring(with: selection)
+        let result = InlineWrap.wrap(selected, with: style)
+
+        super.insertText(result.text, replacementRange: selection)
+        setSelectedRange(NSRange(
+            location: selection.location + result.caretOffset,
+            length: result.selectionLength
+        ))
     }
 
     // MARK: - 深さを変える
@@ -722,7 +847,50 @@ final class FocusReportingTextView: NSTextView {
     /// 残りは消えたまま何も入らないので、黙って中身が減る。
     /// しかも `insertText(_:replacementRange:)` を通らないため、打ち込みの側で
     /// 塞いだ道はここには効かない。自分で全箇所へ当てる。
+    /// URL だけを貼ったら、`[URL](URL)` にして入れる。
+    ///
+    /// **前後に何も付いていないときだけ。** 文章ごと貼ったときに囲むと邪魔になる。
+    /// 複数選択のときは、いつもどおり全箇所へ貼る（D-36）。
+    private func pasteAsLink(from pasteboard: NSPasteboard) -> Bool {
+        guard composition == nil, currentTargets == nil,
+              let contents = plainText(from: pasteboard),
+              let link = URLLinkify.linkify(pasted: contents),
+              // **貼る先が `(…)` や `<…>` の中なら、そのまま貼る。**
+              // `[](…)` の中で囲むと二重になり、記法が壊れる。
+              caretAllowsLinkify()
+        else { return false }
+        super.insertText(link, replacementRange: selectedRange())
+        return true
+    }
+
+    /// いまのカーソル位置でリンクを作ってよいか。
+    private func caretAllowsLinkify() -> Bool {
+        guard let (line, offset) = lineAndCaret() else { return false }
+        return URLLinkify.allowsLinkify(line: line, caretUTF16Offset: offset)
+    }
+
+    /// カーソルのある行の中身（改行を除く）と、行頭からの位置。
+    private func lineAndCaret() -> (line: String, offset: Int)? {
+        let selection = selectedRange()
+        let text = string as NSString
+        let lineRange = text.lineRange(for: selection)
+        var contentLength = lineRange.length
+        while contentLength > 0,
+              let last = Unicode.Scalar(text.character(at: lineRange.location + contentLength - 1)),
+              CharacterSet.newlines.contains(last) {
+            contentLength -= 1
+        }
+        let line = text.substring(with: NSRange(location: lineRange.location, length: contentLength))
+        return (line, selection.location - lineRange.location)
+    }
+
+    /// 確認のための入口。**本物のクリップボードを汚さずに試すため。**
+    func pasteAsLinkForTesting(from pasteboard: NSPasteboard) -> Bool {
+        pasteAsLink(from: pasteboard)
+    }
+
     override func paste(_ sender: Any?) {
+        if pasteAsLink(from: .general) { return }
         guard composition == nil, pasteEverywhere(from: .general) else {
             return super.paste(sender)
         }

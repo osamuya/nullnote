@@ -162,11 +162,16 @@ public struct MarkdownHighlighter {
     /// 改行で行頭の印を継ぐかどうかの判断に使う（`LineContinuationRule`）。
     /// コードブロックの中の `- foo` はリストではないので、そこでは継がない。
     ///
-    /// `signatures[i]` は「i 行目を処理し終えた時点」なので、
-    /// **i 行目の手前は i-1 の値**。まだ塗っていない行を聞かれたら `.blank` を返す。
+    /// **行番号は 1 始まり**（`LineIndex` に合わせる）。
+    ///
+    /// `signatures` は 0 始まりで、`signatures[i]` は「i 番目の行を処理し終えた時点」。
+    /// したがって **n 行目（1 始まり）の手前は `signatures[n - 2]`**。
+    /// 1 行目の手前は何も無いので `.blank`。まだ塗っていない行も `.blank`。
+    ///
+    /// ここを 1 ずらすと、閉じフェンスの行を「まだコードの外」と誤って判定する（実測。B-21）。
     public func blockState(beforeLine line: Int) -> MarkdownBlockState {
-        guard line > 0, signatures.indices.contains(line - 1) else { return .blank }
-        return signatures[line - 1].block
+        guard line > 1, signatures.indices.contains(line - 2) else { return .blank }
+        return signatures[line - 2].block
     }
 
     /// 各行の UTF-16 範囲（改行を含む）。

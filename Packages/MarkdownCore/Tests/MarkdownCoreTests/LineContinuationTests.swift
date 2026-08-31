@@ -11,6 +11,13 @@ struct LineContinuationTests {
         )
     }
 
+    /// 後ろに閉じになりうるフェンス行がある状態。
+    private func ahead(_ line: String) -> LineContinuation {
+        LineContinuationRule.decide(
+            line: line, caretUTF16Offset: line.utf16.count, hasClosingFenceAhead: true
+        )
+    }
+
     // MARK: - 継ぐ
 
     @Test("箇条書きは同じ印を継ぐ")
@@ -75,6 +82,115 @@ struct LineContinuationTests {
     @Test("引用のインデントもそのまま継ぐ")
     func indentedQuote() {
         #expect(atEnd("  > 引用") == .carry("  > "))
+    }
+
+    // MARK: - コードフェンス
+
+    @Test("フェンスを開いたら、閉じを置く")
+    func openFence() {
+        #expect(atEnd("```") == .openFence(closing: "```"))
+        #expect(atEnd("```bash") == .openFence(closing: "```"))
+        #expect(atEnd("```swift") == .openFence(closing: "```"))
+    }
+
+    @Test("記号と長さは開いたものに合わせる")
+    func fenceShape() {
+        #expect(atEnd("~~~") == .openFence(closing: "~~~"))
+        #expect(atEnd("~~~yaml") == .openFence(closing: "~~~"))
+        #expect(atEnd("````") == .openFence(closing: "````"))
+    }
+
+    @Test("後ろに閉じがあれば足さない")
+    func alreadyClosed() {
+        #expect(ahead("```bash") == .plain)
+        #expect(ahead("```") == .plain)
+    }
+
+    @Test("コードブロックの中のフェンス行は閉じなので、何もしない")
+    func closingFenceDoesNothing() {
+        #expect(atEnd("```", inCode: true) == .plain)
+    }
+
+    @Test("行の途中では閉じを足さない（言語名を打っている最中かもしれない）")
+    func caretInTheMiddleOfFence() {
+        #expect(LineContinuationRule.decide(line: "```bash", caretUTF16Offset: 3) == .plain)
+    }
+
+    @Test("バッククォート3つに満たなければフェンスではない")
+    func tooShort() {
+        #expect(atEnd("``") == .plain)
+        #expect(atEnd("`code`") == .plain)
+    }
+
+    @Test("閉じフェンスの判定に言語名は許さない")
+    func closingFenceHasNoInfoString() {
+        // 閉じになる
+        #expect(LineContinuationRule.closesFence("```", marker: "`", minimumLength: 3))
+        #expect(LineContinuationRule.closesFence("````", marker: "`", minimumLength: 3))
+        #expect(LineContinuationRule.closesFence("  ```", marker: "`", minimumLength: 3))
+        // 閉じにならない
+        #expect(!LineContinuationRule.closesFence("```swift", marker: "`", minimumLength: 3))
+        #expect(!LineContinuationRule.closesFence("``", marker: "`", minimumLength: 3))
+        #expect(!LineContinuationRule.closesFence("~~~", marker: "`", minimumLength: 3))
+        // 開いた方が長ければ、短い閉じでは閉じない
+        #expect(!LineContinuationRule.closesFence("```", marker: "`", minimumLength: 4))
+    }
+
+    @Test("開始フェンスの記号と長さを取り出せる")
+    func openingShape() {
+        #expect(LineContinuationRule.openingFenceShape(of: "```bash")?.marker == "`")
+        #expect(LineContinuationRule.openingFenceShape(of: "````")?.length == 4)
+        #expect(LineContinuationRule.openingFenceShape(of: "~~~")?.marker == "~")
+        #expect(LineContinuationRule.openingFenceShape(of: "ふつうの行") == nil)
+    }
+
+    // MARK: - 表
+
+    /// 表の状態を指定して、行末で改行したときの判断。
+    private func table(_ line: String, state: MarkdownBlockState) -> LineContinuation {
+        LineContinuationRule.decide(
+            line: line, caretUTF16Offset: line.utf16.count, blockState: state
+        )
+    }
+
+    @Test("見出し行なら、区切り行と空の行を置く")
+    func header() {
+        #expect(table("| 名前 | 値 |", state: .blank)
+                == .tableRow(lines: ["|---|---|", "|  |  |"], caretInFirstCellOf: 1))
+    }
+
+    @Test("列が増えれば、区切りも空の行も増える")
+    func columns() {
+        #expect(table("| a | b | c |", state: .blank)
+                == .tableRow(lines: ["|---|---|---|", "|  |  |  |"], caretInFirstCellOf: 1))
+    }
+
+    @Test("本体の行なら、空の行だけ置く")
+    func body() {
+        #expect(table("| りんご | 100 |", state: .tableBody(columnCount: 2))
+                == .tableRow(lines: ["|  |  |"], caretInFirstCellOf: 0))
+    }
+
+    @Test("区切り行の上でも、次は本体の行")
+    func afterDelimiter() {
+        #expect(table("|---|---|", state: .tableDelimiterExpected(columnCount: 2))
+                == .tableRow(lines: ["|  |  |"], caretInFirstCellOf: 0))
+    }
+
+    @Test("中身が空の行で改行すると、表から抜ける")
+    func endTable() {
+        #expect(table("|  |  |", state: .tableBody(columnCount: 2)) == .end(clearing: 7))
+    }
+
+    @Test("パイプが無ければ表ではない")
+    func notATable() {
+        #expect(table("ふつうの段落", state: .blank) == .plain)
+    }
+
+    @Test("コードブロックの中の `|` は表ではない")
+    func pipeInsideCode() {
+        #expect(LineContinuationRule.decide(
+            line: "| a | b |", caretUTF16Offset: 9, isInsideCode: true) == .plain)
     }
 
     // MARK: - 抜ける
