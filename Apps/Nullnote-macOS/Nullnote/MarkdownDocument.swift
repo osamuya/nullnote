@@ -1,3 +1,4 @@
+import NullnoteUI
 import SwiftUI
 import UniformTypeIdentifiers
 
@@ -20,6 +21,7 @@ struct MarkdownDocument: FileDocument {
     static let writableContentTypes: [UTType] = [.markdown]
 
     init(configuration: ReadConfiguration) throws {
+        Trace.mark("書類の読み込み開始")
         guard let data = configuration.file.regularFileContents else {
             throw CocoaError(.fileReadCorruptFile)
         }
@@ -32,6 +34,7 @@ struct MarkdownDocument: FileDocument {
         } else {
             throw CocoaError(.fileReadInapplicableStringEncoding)
         }
+        Trace.mark("書類の読み込み完了 \(text.count)文字")
     }
 
     func fileWrapper(configuration: WriteConfiguration) throws -> FileWrapper {

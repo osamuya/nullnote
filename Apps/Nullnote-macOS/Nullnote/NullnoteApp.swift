@@ -61,6 +61,11 @@ struct NullnoteApp: App {
                 TogglePreviewButton()
                 Divider()
             }
+            // ファイルメニューの終わりに置く。「Finder で表示」は macOS の定型句。
+            CommandGroup(after: .saveItem) {
+                Divider()
+                RevealInFinderButton()
+            }
             // 検索は編集メニューの、カット・コピー・ペーストの下。macOS の定位置。
             CommandGroup(after: .pasteboard) {
                 Divider()
@@ -134,6 +139,21 @@ private struct FindButtons: View {
         Button("前を検索") { commands?.previous() }
             .keyboardShortcut("g", modifiers: [.command, .shift])
             .disabled(commands?.hasMatches != true)
+    }
+}
+
+/// 書類のあるフォルダを Finder で開く。
+///
+/// タイトルの右クリック（プロキシアイコン）でも同じことができるが、
+/// **知らないと気づけない**ので、メニューにも出す。
+private struct RevealInFinderButton: View {
+
+    @FocusedValue(\.fileCommands) private var commands
+
+    var body: some View {
+        Button("Finder で表示") { commands?.revealInFinder() }
+            .keyboardShortcut("r", modifiers: [.option, .command])
+            .disabled(commands?.hasFile != true)
     }
 }
 

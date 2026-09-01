@@ -46,6 +46,13 @@ rm -rf ~/Library/Containers/com.sabanote.Nullnote/Data
 
 `Data` にアプリのデータが入っています。次の起動で作り直されます。
 
+`run.sh` で動かす開発版は Bundle ID が別（`com.sabanote.Nullnote.debug`）なので、
+**設定も許可も独立しています。** そちらだけを戻すときは `.debug` の方を消します。
+
+```sh
+rm -rf ~/Library/Containers/com.sabanote.Nullnote.debug/Data
+```
+
 ## 作りについて
 
 外部依存は **`apple/swift-markdown` ひとつだけ**です。それ以外はすべて標準のフレームワークで書いています。

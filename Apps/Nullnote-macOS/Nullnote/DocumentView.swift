@@ -98,6 +98,7 @@ struct DocumentView: View {
         // ヘッダは列ごとに切れず、窓の幅いっぱいに1本の帯として出す。
         .toolbarBackground(.visible, for: .windowToolbar)
         .straightHeader()
+        .proxyIcon(for: fileURL)
         .toolbar {
             ToolbarItem(placement: .navigation) {
                 Toggle(isOn: outlineVisibility) {
@@ -146,6 +147,15 @@ struct DocumentView: View {
         // メニューやキーボードショートカットから切り替えられるようにする。
         .focusedSceneValue(\.previewVisibility, $showsPreview)
         .focusedSceneValue(\.outlineVisibility, $showsOutline)
+        .focusedSceneValue(\.fileCommands, FileCommands(
+            revealInFinder: {
+                guard let fileURL else { return }
+                // フォルダを開いて、そのファイルを選んだ状態にする。
+                // `open` だけだとファイルが開いてしまう。
+                NSWorkspace.shared.activateFileViewerSelecting([fileURL])
+            },
+            hasFile: fileURL != nil
+        ))
         .focusedSceneValue(\.selectionCommands, SelectionCommands(
             selectNext: { editorCommandRequest = EditorCommandRequest(.selectNextOccurrence) },
             selectAll: { editorCommandRequest = EditorCommandRequest(.selectAllOccurrences) },
@@ -456,6 +466,23 @@ struct DocumentView: View {
         }
     }
 
+    /// 本文の右クリックに足す項目。
+    ///
+    /// **タイトルの右クリック（プロキシアイコン）は macOS が作るメニューで、
+    /// 項目を足せない。** あちらは階層をたどる仕組みなので、
+    /// 「このファイルのフォルダを開く」と名前で読める選択肢がここに要る。
+    private var contextMenuItems: [EditorContextMenuItem] {
+        guard let fileURL else { return [] }
+        return [
+            EditorContextMenuItem(
+                title: "Finder で表示する", key: "r", modifiers: [.option, .command]
+            ) {
+                // フォルダを開いて、そのファイルを選んだ状態にする。
+                NSWorkspace.shared.activateFileViewerSelecting([fileURL])
+            }
+        ]
+    }
+
     private var editor: some View {
         // プレビューを閉じているときは行番号を配らない。
         // スクロールのたびに状態を書き換えても意味が無いため。
@@ -469,7 +496,8 @@ struct DocumentView: View {
             focusRequest: editorFocusRequest,
             commandRequest: editorCommandRequest,
             showsLineNumbers: showsLineNumbers,
-            indentStyle: indentStyle
+            indentStyle: indentStyle,
+            contextMenuItems: contextMenuItems
         )
     }
 }
@@ -501,6 +529,28 @@ private struct SearchCommandsKey: FocusedValueKey {
 }
 
 /// 前面の書類ウインドウで、同じ語を選ぶ操作。
+/// いま開いている書類を Finder で見せる。
+///
+/// **`SelectionCommands` とは分けている。** あちらは編集の操作で、
+/// こちらはファイルの操作。メニューの置き場所も違う。
+struct FileCommands {
+    /// 書類のあるフォルダを Finder で開き、そのファイルを選んだ状態にする。
+    let revealInFinder: () -> Void
+    /// 新規書類など、まだファイルが無ければ `false`。
+    let hasFile: Bool
+}
+
+private struct FileCommandsKey: FocusedValueKey {
+    typealias Value = FileCommands
+}
+
+extension FocusedValues {
+    var fileCommands: FileCommands? {
+        get { self[FileCommandsKey.self] }
+        set { self[FileCommandsKey.self] = newValue }
+    }
+}
+
 struct SelectionCommands {
     let selectNext: () -> Void
     let selectAll: () -> Void

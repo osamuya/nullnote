@@ -70,6 +70,33 @@ public struct EditorCommandRequest: Equatable, Sendable {
     }
 }
 
+
+#if canImport(AppKit)
+/// 本文の右クリックに足す項目。**アプリ側が入れる。**
+///
+/// `NullnoteUI` は Finder も書類も知らないので、何をするかは持たない。
+/// **名前と処理だけを受け取る。**
+public struct EditorContextMenuItem {
+    public let title: String
+    /// メニューに併記するショートカット。`⌥⌘R` なら `("r", [.option, .command])`。
+    public let key: String
+    public let modifiers: NSEvent.ModifierFlags
+    public let isEnabled: () -> Bool
+    public let action: () -> Void
+
+    public init(
+        title: String, key: String = "", modifiers: NSEvent.ModifierFlags = [],
+        isEnabled: @escaping () -> Bool = { true }, action: @escaping () -> Void
+    ) {
+        self.title = title
+        self.key = key
+        self.modifiers = modifiers
+        self.isEnabled = isEnabled
+        self.action = action
+    }
+}
+#endif
+
 @MainActor
 public struct MarkdownEditorView {
 
@@ -91,6 +118,8 @@ public struct MarkdownEditorView {
     var showsLineNumbers: Bool
     /// リストを Tab で深くするときに入れる1段ぶん。
     var indentStyle: IndentStyle
+    /// 本文の右クリックに足す項目。アプリ側から渡す。
+    var contextMenuItems: [EditorContextMenuItem]
     /// システムの外観が変わったときに再評価させるためだけに読む。
     /// `.system` を実際の外観に解決している以上、OS 側の変化を拾う必要がある。
     @Environment(\.colorScheme) private var systemColorScheme
@@ -105,7 +134,8 @@ public struct MarkdownEditorView {
         focusRequest: EditorFocusRequest? = nil,
         commandRequest: EditorCommandRequest? = nil,
         showsLineNumbers: Bool = false,
-        indentStyle: IndentStyle = .fourSpaces
+        indentStyle: IndentStyle = .fourSpaces,
+        contextMenuItems: [EditorContextMenuItem] = []
     ) {
         self._text = text
         self.theme = theme
@@ -117,6 +147,7 @@ public struct MarkdownEditorView {
         self.commandRequest = commandRequest
         self.showsLineNumbers = showsLineNumbers
         self.indentStyle = indentStyle
+        self.contextMenuItems = contextMenuItems
     }
 
     public func makeCoordinator() -> Coordinator {
@@ -207,8 +238,10 @@ public struct MarkdownEditorView {
         func highlight(_ storage: NSTextStorage?, source: String, edited: NSRange? = nil) {
             guard let storage else { return }
             appliedText = source
-            lineIndex = LineIndex(source)
-            highlighter.apply(to: storage, text: source, edited: edited)
+            Trace.time("LineIndex \(source.count)文字") { lineIndex = LineIndex(source) }
+            Trace.time("highlighter.apply\(edited == nil ? "（全文）" : "（差分）")") {
+                highlighter.apply(to: storage, text: source, edited: edited)
+            }
             // ハイライタは属性を貼り直す（既存を捨てる）ので、検索の塗りは必ずその後。
             applySearchHighlight(to: storage)
             // 点灯はさらにその上。打鍵で貼り直されても消えないよう、ここに含める。
@@ -777,6 +810,37 @@ final class FocusReportingTextView: NSTextView {
         return false
     }
 
+    // MARK: - 右クリックのメニュー
+
+    /// 右クリックの末尾に足す項目。
+    var extraContextMenuItems: [EditorContextMenuItem] = []
+
+    /// 標準のメニュー（切り取り・コピー・ペースト…）の末尾に足す。
+    ///
+    /// **標準を作り直さない。** `super` が返したものに継ぎ足すだけなので、
+    /// OS の更新で項目が増えてもそのまま乗る。
+    override func menu(for event: NSEvent) -> NSMenu? {
+        guard let menu = super.menu(for: event), !extraContextMenuItems.isEmpty else {
+            return super.menu(for: event)
+        }
+        menu.addItem(.separator())
+        for item in extraContextMenuItems {
+            let entry = NSMenuItem(
+                title: item.title, action: #selector(runContextMenuItem(_:)), keyEquivalent: item.key
+            )
+            entry.keyEquivalentModifierMask = item.modifiers
+            entry.target = self
+            entry.representedObject = item.action
+            entry.isEnabled = item.isEnabled()
+            menu.addItem(entry)
+        }
+        return menu
+    }
+
+    @objc private func runContextMenuItem(_ sender: NSMenuItem) {
+        (sender.representedObject as? () -> Void)?()
+    }
+
     // MARK: - 記法で囲む
 
     /// 選んだところを記法で囲む。記号キーと ⌘B / ⌘I / ⌘K の共通の出口。
@@ -1244,6 +1308,7 @@ extension MarkdownEditorView: NSViewRepresentable {
         // 「どこが書き換わったか」を受け取る。差分ハイライトの起点になる。
         textView.textStorage?.delegate = context.coordinator
         textView.indentUnit = indentStyle.unit
+        textView.extraContextMenuItems = contextMenuItems
         // 改行でリストを継ぐかの判断に使う。コードブロックの中では継がない。
         textView.lineNumber = { [weak coordinator = context.coordinator] offset in
             coordinator?.lineNumber(atUTF16Offset: offset) ?? 0
@@ -1267,10 +1332,13 @@ extension MarkdownEditorView: NSViewRepresentable {
         // 順序が重要。`apply` は `textView.textColor` を設定するが、これは
         // 本文全体の色を塗り替える。ハイライトより後に呼ぶと装飾が消える。
         // 必ず「テーマ → 本文 → ハイライト」の順で行う。
-        textView.string = text
-        apply(theme, to: scrollView)
+        Trace.mark("makeNSView 開始 本文=\(text.count)文字")
+        Trace.time("textView.string に載せる") { textView.string = text }
+        Trace.time("テーマを貼る") { apply(theme, to: scrollView) }
         context.coordinator.searchHighlight = searchHighlight
-        context.coordinator.highlight(textView.textStorage, source: text)
+        Trace.time("初回ハイライト") {
+            context.coordinator.highlight(textView.textStorage, source: text)
+        }
 
         // スクロールに追従してプレビューを動かすため、表示範囲の変化を拾う。
         // target/selector 形式の監視は、監視者が解放された時点で自動的に外れるため
@@ -1323,6 +1391,8 @@ extension MarkdownEditorView: NSViewRepresentable {
         coordinator.highlighter.theme = theme
         // 設定で変えたら、開いている窓にもすぐ効かせる。
         (textView as? FocusReportingTextView)?.indentUnit = indentStyle.unit
+        // 開いているファイルが変わると処理の中身も変わるので、毎回入れ直す。
+        (textView as? FocusReportingTextView)?.extraContextMenuItems = contextMenuItems
 
         let resolved = theme.appearance.platformAppearance
         let themeChanged = coordinator.appliedFontSize != theme.fontSize
@@ -1332,9 +1402,11 @@ extension MarkdownEditorView: NSViewRepresentable {
 
         if textChanged {
             // 外から本文が差し替わったとき（ファイルを開いた、取り消した）。
-            let selection = textView.selectedRanges
-            textView.string = text
-            textView.selectedRanges = selection
+            Trace.time("本文の差し替え \(text.count)文字") {
+                let selection = textView.selectedRanges
+                textView.string = text
+                textView.selectedRanges = selection
+            }
         }
         if themeChanged {
             coordinator.appliedFontSize = theme.fontSize

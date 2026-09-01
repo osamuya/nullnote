@@ -27,6 +27,25 @@ struct WindowConfigurator: NSViewRepresentable {
 
 extension View {
 
+    /// タイトルにプロキシアイコンを持たせる。
+    ///
+    /// `representedURL` を入れると、macOS が**タイトルの右クリック（⌘クリックでも）**に
+    /// フォルダの階層メニューを出す。選んだ階層が Finder で開く。**標準の仕組み。**
+    ///
+    /// アイコンはタイトルに重ねて出るので、こちらで描くものは無い。
+    /// ファイルが変わったら差し替える。新規書類（`fileURL` が nil）なら外す。
+    func proxyIcon(for fileURL: URL?) -> some View {
+        background(
+            WindowConfigurator { window in
+                guard window.representedURL != fileURL else { return }
+                window.representedURL = fileURL
+            }
+            .frame(width: 0, height: 0)
+            // 開いているファイルが変わったら、載せ直して設定を反映させる。
+            .id(fileURL)
+        )
+    }
+
     /// ヘッダ（タイトルバー）を、窓の幅いっぱいの帯として見せる。
     ///
     /// SwiftUI の既定では、窓は `.fullSizeContentView` で開き、

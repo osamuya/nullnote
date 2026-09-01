@@ -53,6 +53,15 @@ cd Apps/Nullnote-macOS   && xcodebuild -scheme Nullnote -configuration Debug bui
 open -a /Applications/Nullnote.app --env NULLNOTE_TRACE=1 --stderr /tmp/nullnote-trace.log <ファイル>
 ```
 
+**Debug と Release は Bundle ID が別**（`com.sabanote.Nullnote.debug` / `com.sabanote.Nullnote`）。
+`run.sh` の開発版と `/Applications` の普段使いは**別のアプリ**で、同時に動かしてよい。
+`run.sh` は Debug 版だけを止め、最後に「✅ いまビルドしたものが動いています」と出す。
+設定とフォルダの許可も別なので、**普段使いを壊さずに初期状態から試せる**（D-46）。
+
+```sh
+rm -rf ~/Library/Containers/com.sabanote.Nullnote.debug/Data   # 開発版だけ戻す
+```
+
 **`open -a` は、すでに動いているアプリを起動し直さない。** ファイルを渡すだけなので、
 `--env` も効かない。**測る前に `pkill -f "MacOS/Nullnote"` で止め、止まったことを目で見る。**
 動いているプロセスは、消した設定をまだ手の中に持っている（フォルダの許可は
