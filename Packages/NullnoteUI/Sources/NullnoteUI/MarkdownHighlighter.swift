@@ -328,6 +328,34 @@ public struct MarkdownHighlighter {
             storage.addAttribute(
                 .backgroundColor, value: theme.invisibleWhitespace, range: range
             )
+
+        case .conflict(let part):
+            // **印は色、中身は薄い背景。** どこからどこまでが自分の版かを目で追える。
+            // 中身の文字色は変えない。読むのは中身そのものなので。
+            switch part {
+            case .ourMarker:
+                storage.addAttributes([
+                    .foregroundColor: theme.conflictOurs,
+                    .backgroundColor: theme.conflictOursBackground,
+                ], range: range)
+            case .ourBody:
+                storage.addAttribute(
+                    .backgroundColor, value: theme.conflictOursBackground, range: range
+                )
+            case .separator:
+                storage.addAttribute(
+                    .foregroundColor, value: theme.conflictSeparator, range: range
+                )
+            case .theirBody:
+                storage.addAttribute(
+                    .backgroundColor, value: theme.conflictTheirsBackground, range: range
+                )
+            case .theirMarker:
+                storage.addAttributes([
+                    .foregroundColor: theme.conflictTheirs,
+                    .backgroundColor: theme.conflictTheirsBackground,
+                ], range: range)
+            }
         }
     }
 

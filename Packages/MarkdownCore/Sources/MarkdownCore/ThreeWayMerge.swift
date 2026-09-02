@@ -44,13 +44,20 @@ public enum ThreeWayMerge {
         public var hasConflicts: Bool { conflictCount > 0 }
     }
 
-    public static func merge(base: String, ours: String, theirs: String) -> Result {
+    /// - Parameter whitespace: 空白の違いをどう扱うか。
+    ///   既定は**行の途中の空白の量を無視する**（`#020` / D-47）。
+    ///   **本文は書き換えない。比べ方だけが変わる。**
+    public static func merge(
+        base: String, ours: String, theirs: String,
+        whitespace: WhitespacePolicy = .ignoreInnerRuns
+    ) -> Result {
         // 行に切る。`components` は末尾の改行を空の行として残すので、
         // つなぎ直せば元に戻る（改行の有無が変わらない）。
         let merged = merge(
             base: base.components(separatedBy: "\n"),
             ours: ours.components(separatedBy: "\n"),
-            theirs: theirs.components(separatedBy: "\n")
+            theirs: theirs.components(separatedBy: "\n"),
+            whitespace: whitespace
         )
         return Result(
             text: merged.lines.joined(separator: "\n"),
@@ -71,11 +78,11 @@ public enum ThreeWayMerge {
     }
 
     private static func merge(
-        base: [String], ours: [String], theirs: [String]
+        base: [String], ours: [String], theirs: [String], whitespace: WhitespacePolicy
     ) -> (lines: [String], conflictCount: Int) {
 
-        let ourEdits = edits(base: base, other: ours)
-        let theirEdits = edits(base: base, other: theirs)
+        let ourEdits = edits(base: base, other: ours, whitespace: whitespace)
+        let theirEdits = edits(base: base, other: theirs, whitespace: whitespace)
 
         var lines: [String] = []
         var conflicts = 0
@@ -128,20 +135,22 @@ public enum ThreeWayMerge {
             } else if tEnd == t {
                 // 外は触っていない。自分の直しを採る。
                 lines += ourChunk
-            } else if ourChunk == theirChunk {
+            } else if same(ourChunk, theirChunk, whitespace) {
                 // 同じ直し方をしていた。どちらでもよい。
                 lines += ourChunk
-            } else if supersedes(theirChunk, over: ourChunk, base: Array(base[range])) {
+            } else if supersedes(theirChunk, over: ourChunk, base: Array(base[range]),
+                                 whitespace: whitespace) {
                 // 相手はこちらの直しを取り込んだ上で、さらに書いている。
                 lines += theirChunk
-            } else if supersedes(ourChunk, over: theirChunk, base: Array(base[range])) {
+            } else if supersedes(ourChunk, over: theirChunk, base: Array(base[range]),
+                                 whitespace: whitespace) {
                 lines += ourChunk
             } else {
                 // 重なるところを別々に直した。**ここだけ人に決めてもらう。**
                 //
                 // 印は**できるだけ小さく**する。両側で一致している行まで囲むと、
                 // 同じ行が上下に並んで、どこが食い違っているのか読めない。
-                let trimmed = trim(ours: ourChunk, theirs: theirChunk)
+                let trimmed = trim(ours: ourChunk, theirs: theirChunk, whitespace: whitespace)
                 lines += trimmed.prefix
                 lines.append(ourMarker)
                 lines += trimmed.ours
@@ -163,15 +172,16 @@ public enum ThreeWayMerge {
     ///
     /// 前後で一致している行は、双方が同意している内容。印の外に出す。
     private static func trim(
-        ours: [String], theirs: [String]
+        ours: [String], theirs: [String], whitespace: WhitespacePolicy
     ) -> (prefix: [String], ours: [String], theirs: [String], suffix: [String]) {
         var head = 0
-        while head < ours.count, head < theirs.count, ours[head] == theirs[head] {
+        while head < ours.count, head < theirs.count,
+              whitespace.equal(ours[head], theirs[head]) {
             head += 1
         }
         var tail = 0
         while head + tail < ours.count, head + tail < theirs.count,
-              ours[ours.count - 1 - tail] == theirs[theirs.count - 1 - tail] {
+              whitespace.equal(ours[ours.count - 1 - tail], theirs[theirs.count - 1 - tail]) {
             tail += 1
         }
         return (
@@ -193,13 +203,27 @@ public enum ThreeWayMerge {
     ///
     /// **消すだけの直しは対象にしない。** 消したいという意図は相手の版には残らず、
     /// 「片方が消した行を、もう片方が直した」は人に決めてもらうべき場面。
-    private static func supersedes(_ winner: [String], over loser: [String], base: [String]) -> Bool {
+    private static func supersedes(
+        _ winner: [String], over loser: [String], base: [String], whitespace: WhitespacePolicy
+    ) -> Bool {
+        // 比べる形に揃えてから見る。**空白の量だけの違いは、取り込み済みとみなす。**
+        let base = base.map(whitespace.key)
+        let winner = winner.map(whitespace.key)
+        let loser = loser.map(whitespace.key)
+
         let loserChange = change(from: base, to: loser)
         guard !loserChange.added.isEmpty else { return false }
 
         let winnerChange = change(from: base, to: winner)
         return loserChange.added.allSatisfy { winnerChange.added.contains($0) }
             && loserChange.removed.allSatisfy { winnerChange.removed.contains($0) }
+    }
+
+    /// 2つの塊が、この方針で同じか。
+    private static func same(
+        _ a: [String], _ b: [String], _ whitespace: WhitespacePolicy
+    ) -> Bool {
+        a.count == b.count && zip(a, b).allSatisfy { whitespace.equal($0, $1) }
     }
 
     /// 基準に対して、足された行と消された行。同じ行が何度も出る場合も数える。
@@ -250,8 +274,12 @@ public enum ThreeWayMerge {
     /// **ここで作る範囲が、重なりの判定の単位になる。**
     /// 対応の取れた行で区切るので、離れた直しは別々の編集になり、
     /// 隣り合う行を別々に直しても、互いに重ならないかぎり競合しない。
-    private static func edits(base: [String], other: [String]) -> [Edit] {
-        let matched = alignment(from: base, to: other)
+    private static func edits(
+        base: [String], other: [String], whitespace: WhitespacePolicy
+    ) -> [Edit] {
+        // **対応付けは比べる形で行う。** ここで空白の量だけの違いを「同じ行」と見れば、
+        // そもそも編集として拾われない。印を出す前の段階で消える。
+        let matched = alignment(from: base.map(whitespace.key), to: other.map(whitespace.key))
         var result: [Edit] = []
         var (i, j) = (0, 0)
 

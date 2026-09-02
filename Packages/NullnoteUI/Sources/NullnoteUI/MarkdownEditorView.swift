@@ -810,6 +810,41 @@ final class FocusReportingTextView: NSTextView {
         return false
     }
 
+    // MARK: - 計測
+
+    /// 最初に描かれた瞬間を1度だけ記録する。**体感の「見えた」はここ。**
+    ///
+    /// 塗り終わり（`初回ハイライト`）から、ここまでのあいだに
+    /// `NSTextView` のレイアウト（行の折り返しの計算）が入る。
+    /// **遅さがそこにあるかどうかは、この差で分かる。**
+    private var didMarkFirstDraw = false
+
+    /// 幅が 0 のあいだは、折り返しの計算が空振りする。**一度だけ組み直す。**
+    private var didLayOutOnce = false
+
+    /// 大きさが決まったところで組む。
+    ///
+    /// `makeNSView` の時点では、まだ SwiftUI が大きさを配っていない。
+    /// テキストビューの幅は 0、テキスト容器の幅は余白を引いて **-24**。
+    /// その幅で折り返しを計算しても置く場所が無いので、**文字が組まれない**（実測）。
+    ///
+    /// 放っておいても、窓のレイアウトが回れば正しい幅が入って組み直される。
+    /// ただし**それがいつ来るかはこちらで決められない**。遅れると
+    /// 「開いたのに編集画面が白いまま」になり、画面を触って初めて文字が出る。
+    ///
+    /// **`DispatchQueue.main.async` では遅い。** 描画の後に回ることがある（実測）。
+    /// 幅が入った最初の `layout()` で組む。
+    override func layout() {
+        super.layout()
+        guard !didLayOutOnce, frame.width > 0, !string.isEmpty,
+              let manager = layoutManager, let container = textContainer
+        else { return }
+        didLayOutOnce = true
+        Trace.time("幅が決まってから組む 幅=\(Int(frame.width))") {
+            manager.ensureLayout(for: container)
+        }
+    }
+
     // MARK: - 右クリックのメニュー
 
     /// 右クリックの末尾に足す項目。
@@ -1135,6 +1170,16 @@ final class FocusReportingTextView: NSTextView {
     /// 本文の上に、余分なカーソルと変換中の写しを描く。
     override func draw(_ dirtyRect: NSRect) {
         super.draw(dirtyRect)
+        if !didMarkFirstDraw, !string.isEmpty {
+            didMarkFirstDraw = true
+            // **文字が組まれているかまで見る。** `draw` が呼ばれても、
+            // レイアウトが空振りしていれば画面は白いまま。
+            let glyphs = layoutManager?.numberOfGlyphs ?? -1
+            Trace.mark(
+                "最初の描画 本文=\(string.count)文字 組まれた字=\(glyphs) "
+                    + "幅=\(Int(frame.width)) 容器幅=\(Int(textContainer?.size.width ?? -1))"
+            )
+        }
         if let composition {
             drawComposing(composition, in: dirtyRect)
         } else {
@@ -1339,6 +1384,13 @@ extension MarkdownEditorView: NSViewRepresentable {
         Trace.time("初回ハイライト") {
             context.coordinator.highlight(textView.textStorage, source: text)
         }
+        // **この時点の幅が 0 なら、折り返しの計算は空振りする。**
+        // あとで窓が組み直されるまで、文字が出てこない。
+        Trace.mark(
+            "makeNSView 終了 幅=\(Int(textView.frame.width)) "
+                + "容器幅=\(Int(textView.textContainer?.size.width ?? -1)) "
+                + "組まれた字=\(textView.layoutManager?.numberOfGlyphs ?? -1)"
+        )
 
         // スクロールに追従してプレビューを動かすため、表示範囲の変化を拾う。
         // target/selector 形式の監視は、監視者が解放された時点で自動的に外れるため
@@ -1353,6 +1405,7 @@ extension MarkdownEditorView: NSViewRepresentable {
         )
 
         updateGutter(on: scrollView, textView: textView, coordinator: context.coordinator)
+
         return scrollView
     }
 

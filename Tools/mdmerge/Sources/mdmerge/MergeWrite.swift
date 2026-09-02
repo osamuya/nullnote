@@ -20,7 +20,9 @@ public enum MergeWrite {
     ///   - base: **こちらが読んだ時点**のファイルの内容。合流の基準。
     ///   - ours: こちらが直した結果。
     ///   - theirs: **書く直前**のディスクの内容。
-    public static func plan(base: String, ours: String, theirs: String) -> Plan {
+    public static func plan(base: String, ours: String, theirs: String,
+        whitespace: WhitespacePolicy = .ignoreInnerRuns
+    ) -> Plan {
         // 読んだときから誰も触っていない。普通に書けばよい。
         guard base != theirs else {
             return Plan(text: ours, conflictCount: 0, needsWrite: ours != theirs)
@@ -29,7 +31,9 @@ public enum MergeWrite {
         guard base != ours else {
             return Plan(text: theirs, conflictCount: 0, needsWrite: false)
         }
-        let merged = ThreeWayMerge.merge(base: base, ours: ours, theirs: theirs)
+        let merged = ThreeWayMerge.merge(
+            base: base, ours: ours, theirs: theirs, whitespace: whitespace
+        )
         return Plan(
             text: merged.text,
             conflictCount: merged.conflictCount,

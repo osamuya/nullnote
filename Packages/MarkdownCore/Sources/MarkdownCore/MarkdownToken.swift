@@ -94,6 +94,13 @@ public struct MarkdownToken: Hashable, Sendable {
         ///
         /// 目で見つけられないので、印を付けるためだけに持つ。
         case invisibleWhitespace
+
+        /// 合流でぶつかったところ。**Markdown の記法ではない。**
+        ///
+        /// `<<<<<<< 自分の更新` から `>>>>>>> 外部の更新` までを塗り分けて、
+        /// **どこからどこまでが自分の版か**を目で追えるようにする。
+        /// 印の形は `ThreeWayMerge` が決めている。
+        case conflict(ConflictPart)
     }
 
     public let kind: Kind
@@ -113,4 +120,20 @@ extension MarkdownToken {
     public func nsRange(in text: String) -> NSRange {
         NSRange(range, in: text)
     }
+
+
+}
+
+/// 競合の印の、どの部分か。
+public enum ConflictPart: Equatable, Sendable {
+    /// `<<<<<<< 自分の更新` の行。
+    case ourMarker
+    /// 自分の版の中身。
+    case ourBody
+    /// `=======` の行。**上下を分ける仕切り。** どちらの側でもない。
+    case separator
+    /// 外の版の中身。
+    case theirBody
+    /// `>>>>>>> 外部の更新` の行。
+    case theirMarker
 }

@@ -9,6 +9,7 @@ struct SettingsView: View {
     @Binding var syncsTitleWithFileName: Bool
     @Binding var breaksOnNewline: Bool
     @Binding var indentStyle: IndentStyle
+    @Binding var ignoresWhitespace: Bool
 
     var body: some View {
         Form {
@@ -55,6 +56,19 @@ struct SettingsView: View {
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                         // `LabeledContent` の中は右揃えが受け継がれる。
+                        .multilineTextAlignment(.leading)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .frame(width: 240, alignment: .leading)
+            }
+
+            LabeledContent("合流") {
+                VStack(alignment: .leading, spacing: 4) {
+                    Toggle("空白の違いだけのところは印を出さない", isOn: $ignoresWhitespace)
+                    Text("外の道具が同じファイルを直したとき、行の途中の空白の数だけが違うところは、食い違いとして扱いません。行頭のインデントと行末の空白は、意味が変わるのでそのまま比べます。")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
                         .multilineTextAlignment(.leading)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }

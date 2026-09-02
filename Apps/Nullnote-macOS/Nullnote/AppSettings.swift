@@ -9,6 +9,7 @@ enum AppSettings {
     static let titleSyncKey = "syncsTitleWithFileName"
     static let breaksOnNewlineKey = "previewBreaksOnNewline"
     static let indentStyleKey = "editorIndentStyle"
+    static let ignoresWhitespaceKey = "mergeIgnoresWhitespace"
 
     /// 保存パネルを最初から詳細表示（ファイルブラウザ）で開かせる AppKit のキー。
     ///
@@ -44,6 +45,11 @@ enum AppSettings {
             // `MD010` は既定でタブを咎める。見る側のタブ幅設定にも左右されない。
             // タブがよければ設定画面で選べる（D-39）。
             indentStyleKey: IndentStyle.fourSpaces.rawValue,
+
+            // 空白の量だけの食い違いで印を出さないのは**入れてある**。
+            // 印は人の手を止めるものなので、意味の変わらない違いで出したくない。
+            // 行頭のインデントと行末は無視しないので、Markdown の意味は壊れない（D-47）。
+            ignoresWhitespaceKey: true,
         ])
 
         seedSavePanelExpansion()

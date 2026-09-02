@@ -24,6 +24,10 @@ public enum MarkdownBlockState: Hashable, Sendable {
     case tableDelimiterExpected(columnCount: Int)
     /// 表の本体。空行か別のブロックの開始で終わる。
     case tableBody(columnCount: Int)
+    /// 合流の印の中。**自分の版の側。** `=======` で相手の側に移る。
+    case conflictOurs
+    /// 合流の印の中。**外の版の側。** `>>>>>>> 外部の更新` で抜ける。
+    case conflictTheirs
     /// 閉じていない HTML コメント（`<!--`）の中。
     ///
     /// `insideParagraph` は、コメントが**段落の途中から**始まったか。

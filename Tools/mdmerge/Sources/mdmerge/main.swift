@@ -11,11 +11,14 @@ import MarkdownCore
 
 let usage = """
 使い方:
-  mdmerge --base <控え> --ours <直した結果> [--dry-run] <書き込み先>
+  mdmerge --base <控え> --ours <直した結果> [--dry-run] [--strict] <書き込み先>
 
   --base     こちらがファイルを読んだ時点の内容（控え）。合流の基準。
   --ours     こちらが直した結果。
   --dry-run  書かずに、何が起きるかだけを出す。
+  --strict   空白の量の違いも食い違いとして扱う。
+             既定では、行の途中の空白の数だけが違うところは同じとみなす
+             （行頭のインデントと行末は、意味が変わるのでそのまま比べる）。
 
 終了コード:
   0  書けた（印なし）
@@ -32,6 +35,7 @@ var basePath: String?
 var oursPath: String?
 var targetPath: String?
 var dryRun = false
+var whitespace = WhitespacePolicy.ignoreInnerRuns
 
 var arguments = Array(CommandLine.arguments.dropFirst())
 while let argument = arguments.first {
@@ -47,6 +51,8 @@ while let argument = arguments.first {
         oursPath = value
     case "--dry-run":
         dryRun = true
+    case "--strict":
+        whitespace = .strict
     case "-h", "--help":
         print(usage)
         exit(0)
@@ -73,7 +79,7 @@ let ours = read(oursPath, label: "--ours")
 // 相手が保存しているかもしれない。
 let theirs = read(targetPath, label: "書き込み先")
 
-let plan = MergeWrite.plan(base: base, ours: ours, theirs: theirs)
+let plan = MergeWrite.plan(base: base, ours: ours, theirs: theirs, whitespace: whitespace)
 
 if plan.conflictCount > 0 {
     FileHandle.standardError.write(

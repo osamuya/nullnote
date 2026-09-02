@@ -18,6 +18,8 @@ struct DocumentView: View {
     /// 普通の改行を、プレビューでも改行として見せるか。
     let breaksOnNewline: Bool
     let indentStyle: IndentStyle
+    /// 合流で、行の途中の空白の量を無視するか。
+    let ignoresWhitespace: Bool
 
     @State private var showsOutline = false
     /// 目次が開け閉めの最中か。ツールバーの輪を回すために持つ。
@@ -318,7 +320,10 @@ struct DocumentView: View {
             Task { @MainActor in DocumentBridge.acceptExternalContents(at: fileURL) }
 
         case .merge(let base, let ours, let theirs):
-            let result = ThreeWayMerge.merge(base: base, ours: ours, theirs: theirs)
+            let result = ThreeWayMerge.merge(
+                base: base, ours: ours, theirs: theirs,
+                whitespace: ignoresWhitespace ? .ignoreInnerRuns : .strict
+            )
             document.text = result.text
             // 外の内容は取り込んだ（印の中にでも入っている）ので、
             // 次の合流の基準はディスクの側。

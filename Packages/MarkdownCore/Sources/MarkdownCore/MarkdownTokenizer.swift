@@ -75,6 +75,17 @@ public struct MarkdownTokenizer: Sendable {
         into tokens: inout [MarkdownToken]
     ) -> MarkdownBlockState {
 
+        // 合流の印。**どのブロックより先に見る。**
+        //
+        // コードブロックの中でぶつかることもあり、そこで塗れないと
+        // 「どこからどこまでが自分の版か」が読めなくなる。
+        // 行が印と**そっくり一致する**ときだけ拾うので、
+        // ふつうの本文やコードを誤って掴むことはない。
+        if let part = conflictPart(text, range, state: state) {
+            tokens.append(MarkdownToken(kind: .conflict(part.kind), range: range))
+            return part.next
+        }
+
         // フェンスが開いている間は、閉じフェンス以外のすべてをコードとして扱う。
         if case .fencedCode(let marker, let length) = state {
             if let closing = BlockScanner.closingFence(text, range, marker: marker, minimumLength: length) {
@@ -286,6 +297,31 @@ public struct MarkdownTokenizer: Sendable {
             if parseInline {
                 InlineScanner.appendTokens(text, segment.range, into: &tokens)
             }
+        }
+    }
+
+    /// 合流の印か、その中身か。**印の形は `ThreeWayMerge` が決めている。**
+    ///
+    /// 印の行は、前後の空白を除いてそっくり一致するときだけ拾う。
+    /// `=======` は CommonMark では setext 見出しにもなるので、
+    /// **印の中にいるときだけ**仕切りとして扱う。
+    private func conflictPart(
+        _ text: String, _ range: Range<String.Index>, state: MarkdownBlockState
+    ) -> (kind: ConflictPart, next: MarkdownBlockState)? {
+        let line = text[range].trimmingCharacters(in: .whitespaces)
+
+        switch state {
+        case .conflictOurs:
+            if line == ThreeWayMerge.separator { return (.separator, .conflictTheirs) }
+            return (.ourBody, .conflictOurs)
+
+        case .conflictTheirs:
+            if line == ThreeWayMerge.theirMarker { return (.theirMarker, .blank) }
+            return (.theirBody, .conflictTheirs)
+
+        default:
+            if line == ThreeWayMerge.ourMarker { return (.ourMarker, .conflictOurs) }
+            return nil
         }
     }
 

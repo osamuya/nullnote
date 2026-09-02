@@ -245,6 +245,34 @@ public struct MarkdownTheme {
     public static let minimumFontSize: CGFloat = 10
     public static let maximumFontSize: CGFloat = 28
 
+    // MARK: - 合流の印
+
+    /// `<<<<<<< 自分の更新` の行。**赤。**
+    public var conflictOurs: PlatformColor {
+        .dynamic(light: .rgb(190, 45, 60), dark: .rgb(255, 120, 135))
+    }
+
+    /// `>>>>>>> 外部の更新` の行。**緑。**
+    public var conflictTheirs: PlatformColor {
+        .dynamic(light: .rgb(38, 122, 62), dark: .rgb(115, 210, 140))
+    }
+
+    /// `=======` の行。**どちらの側でもないので、記号と同じ薄いグレー。**
+    ///
+    /// 赤や緑にすると、上下どちらかに属して見える。分けているのは仕切りで、
+    /// 選ぶのは上か下か。そこに色を割く理由が無い（D-48）。
+    public var conflictSeparator: PlatformColor { marker }
+
+    /// 自分の版の中身に敷く背景。**薄く。文字が読めなくなっては元も子もない。**
+    public var conflictOursBackground: PlatformColor {
+        conflictOurs.withAlphaComponent(0.10)
+    }
+
+    /// 外の版の中身に敷く背景。
+    public var conflictTheirsBackground: PlatformColor {
+        conflictTheirs.withAlphaComponent(0.10)
+    }
+
     // MARK: - 派生する値
 
     /// 見出しの拡大率。レベルが浅いほど大きい。
