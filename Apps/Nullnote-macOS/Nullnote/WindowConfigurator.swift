@@ -76,3 +76,83 @@ extension View {
         )
     }
 }
+
+/// 書類の窓をタブとして扱う。
+///
+/// 決めた仕様はこの3つ（利用者と詰めた。D-49）。
+///
+/// | 操作 | どうなるか |
+/// |---|---|
+/// | 既存の md を開く | **新しい窓**。1枚でもタブバーを出し、タブが1つ付いた状態にする |
+/// | ⌘N（新規書類） | **前面の窓の、新しいタブ** |
+/// | タブをドラッグ | 窓同士を結合できる（AppKit の標準の動き） |
+///
+/// **1枚でもタブバーを出す**のが要。出ていないと、掴んで動かす取っ手が無く、
+/// 窓を結合しようがない（macOS の既定では、2枚目のタブができるまで出ない）。
+/// `isTabBarVisible` は読むだけなので、`toggleTabBar` で出す。
+///
+/// **開いた md を自動でタブへ入れない。** 入れると仕様1に反する。
+/// `tabbingMode` は既定の `.automatic` のままにし、OS の
+/// 「書類を開くときはタブで開く」に従わせる（既定は「フルスクリーンのときのみ」なので別窓になる）。
+private struct TabbedWindows: ViewModifier {
+
+    /// この窓が新規書類か。ファイルを持たずに現れた窓は ⌘N で作られたもの。
+    let isNewDocument: Bool
+
+    /// この窓で、もうまとめを試したか。窓ごとに1つ持つ。
+    @State private var merge = MergeOnce()
+
+    func body(content: Content) -> some View {
+        content.background(
+            WindowConfigurator { window in
+                showTabBarIfAlone(window)
+
+                // ⌘N だけを前面の窓へ入れる。開いた md は別窓のままにする。
+                guard isNewDocument, !merge.tried else { return }
+                merge.tried = true
+
+                // **`tabGroup` は nil にならない。** 単独の窓も1枚だけのタブ群を持つ（実測）。
+                // 2枚以上なら、もうどこかのタブになっている。
+                guard (window.tabGroup?.windows.count ?? 1) <= 1 else { return }
+                // **`orderedWindows` を使う。** `NSApp.windows` は前後の順を保証しない
+                // （実測: 手前が `tab_b` のときに `tab_a` を拾った）。
+                // 新しい窓はすでに手前なので、自分を除いた先頭が ⌘N を押した窓。
+                guard let host = NSApp.orderedWindows.first(where: {
+                    $0 !== window
+                        && $0.isVisible
+                        && $0.tabbingIdentifier == window.tabbingIdentifier
+                }) else { return }
+
+                host.addTabbedWindow(window, ordered: .above)
+                window.makeKeyAndOrderFront(nil)
+            }
+            .frame(width: 0, height: 0)
+        )
+    }
+
+    /// 1枚しか無い窓にも、タブバーを出す。
+    ///
+    /// **毎回確かめて出し直す。** 出しっぱなしにするのが仕様なので、
+    /// タブを引き出して1枚に戻った窓でも、また出す。
+    /// そのぶんウインドウメニューの「タブバーを非表示」は効かなくなる。
+    private func showTabBarIfAlone(_ window: NSWindow) {
+        guard let group = window.tabGroup,
+              group.windows.count == 1,
+              !group.isTabBarVisible
+        else { return }
+        window.toggleTabBar(nil)
+    }
+
+    /// 一度きりの合図を持つ入れ物。`@State` に置いて、窓が生きているあいだ残す。
+    private final class MergeOnce {
+        var tried = false
+    }
+}
+
+extension View {
+
+    /// 書類の窓をタブとして扱う。新規書類（`isNewDocument`）は前面の窓のタブにする。
+    func tabbedWindows(isNewDocument: Bool) -> some View {
+        modifier(TabbedWindows(isNewDocument: isNewDocument))
+    }
+}

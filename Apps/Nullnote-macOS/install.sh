@@ -26,11 +26,28 @@ if [ ! -d "$SOURCE" ]; then
     exit 1
 fi
 
-# 起動中だと差し替えられないので、先に終了させる。
-if pgrep -f "Nullnote.app/Contents/MacOS/Nullnote" > /dev/null; then
+# 起動中だと差し替えても、**古いプロセスが動き続ける**。
+# 差し替えは中身の入れ替えでしかなく、動いているアプリは入れ替わらない。
+# ここを確かめないと「入れ替えたのに直っていない」になる
+# （実測: 20:17 に入れ替えたのに、19:49 に始まったプロセスが動いたままだった）。
+RUNNING="/Applications/Nullnote.app/Contents/MacOS/Nullnote"
+if pgrep -f "$RUNNING" > /dev/null; then
     echo "==> 起動中の Nullnote を終了"
-    osascript -e 'tell application "Nullnote" to quit' || true
-    sleep 2
+    # **Bundle ID で狙う。** 名前で送ると、開発版（DerivedData の Nullnote.app）に届く。
+    osascript -e 'tell application id "com.sabanote.Nullnote" to quit' || true
+
+    # 終了しきるまで待つ。書類を扱う道具なので、**強制終了はしない**
+    # （保存していない書き掛けが消える）。終わらなければ手で閉じてもらう。
+    i=0
+    while pgrep -f "$RUNNING" > /dev/null; do
+        i=$((i + 1))
+        if [ "$i" -gt 20 ]; then
+            echo "    終了できません。保存していない書類が残っているかもしれません。" >&2
+            echo "    Nullnote を手で終了してから、もう一度実行してください。" >&2
+            exit 1
+        fi
+        sleep 0.5
+    done
 fi
 
 echo "==> $DESTINATION へコピー"
@@ -45,4 +62,5 @@ echo "==> 完了"
     | xargs -I{} echo "    バージョン {}"
 echo
 echo "    Finder / Launchpad / Dock から起動できます。"
+echo "    ※ 開き直すまで、直した内容は反映されません。"
 echo "    ターミナルからは:  open -a $DESTINATION ファイル.md"

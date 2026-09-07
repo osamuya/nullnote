@@ -100,6 +100,8 @@ struct DocumentView: View {
         // ヘッダは列ごとに切れず、窓の幅いっぱいに1本の帯として出す。
         .toolbarBackground(.visible, for: .windowToolbar)
         .straightHeader()
+        // 1枚でもタブバーを出す。新規書類（⌘N）は前面の窓のタブにする。
+        .tabbedWindows(isNewDocument: fileURL == nil)
         .proxyIcon(for: fileURL)
         .toolbar {
             ToolbarItem(placement: .navigation) {
