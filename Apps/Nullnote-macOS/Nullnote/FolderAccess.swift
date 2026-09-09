@@ -74,6 +74,8 @@ enum FolderAccess {
         // すでに足りているなら聞かない。
         if isSatisfied(folder) { return true }
 
+        AppearanceTrace.snapshot("フォルダを頼む直前")
+
         let panel = NSOpenPanel()
         panel.message = message
         panel.prompt = "許可"
@@ -84,7 +86,10 @@ enum FolderAccess {
         // 迷わせないよう、頼んだフォルダを最初から選んだ状態にする。
         panel.nameFieldStringValue = folder.lastPathComponent
 
-        guard await panel.begin() == .OK, let granted = panel.url else {
+        let response = await panel.begin()
+        AppearanceTrace.snapshot("パネルが閉じた直後 返り=\(response.rawValue)")
+
+        guard response == .OK, let granted = panel.url else {
             Trace.log("FolderAccess: 許可されなかった \(folder.path)")
             return false
         }
@@ -94,6 +99,7 @@ enum FolderAccess {
             save(data, for: granted.path)
             Trace.log("FolderAccess: 覚えた \(granted.path) \(data.count)バイト")
         }
+        AppearanceTrace.snapshot("許可を覚えた後")
         return isSatisfied(folder)
     }
 

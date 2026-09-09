@@ -77,7 +77,9 @@ struct DocumentView: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
+        // 設定の値が落ちていないかを見る（#023）。`NULLNOTE_TRACE=1` のときだけ。
+        AppearanceTrace.note(appearance)
+        return VStack(spacing: 0) {
             // **目次の有無で `mainArea` の居場所を変えないこと。**
             // 入れ替えると SwiftUI が別のビューとみなし、`NSTextView` を作り直す
             // （プレビューで踏んだのと同じ。`SidePane` に書いた）。

@@ -28,7 +28,11 @@ struct NullnoteApp: App {
     init() {
         AppSettings.registerDefaults()
         // 前に許可をもらったフォルダを、また読めるようにする。
-        MainActor.assumeIsolated { FolderAccess.restoreAll() }
+        MainActor.assumeIsolated {
+            FolderAccess.restoreAll()
+            // 外観が外れる瞬間を見張る（#023）。`NULLNOTE_TRACE=1` のときだけ動く。
+            AppearanceTrace.start()
+        }
     }
 
     /// ボタンやトグルの色。
