@@ -1,9 +1,10 @@
 # このリポジトリでの決まり
 
-> **いま進行中の作業**: App Store 審査待ち（2026-08-29 に Guideline 2.1 へ回答し再提出）。
-> 経緯は `docs/09-release-fb1.md`。**返事が来るまで、こちらから動かすことは無い。**
-> 状態と残作業は `docs/04-development-flow.md` の冒頭「App Store 公開の引き継ぎ」。
-> **着手する前にそこを読むこと。**
+> **いま進行中の作業**: 1.1 の開発（ブランチ `version1.1`）。
+> 1.0 は 2026-08-30 に承認され、148 地域で公開済み。経緯は `docs/09-release-fb1.md`。
+> **残っている要望と不具合は `docs/運用上の修正点・改良点.md`。着手する前にそこを読むこと。**
+> 版とビルド番号の上げ方は `Apps/Nullnote-macOS/Version.xcconfig` に書いてある。
+> `docs/04-development-flow.md` の冒頭は審査待ちのまま止まっている（`09-release-fb1.md` の T-6）。
 
 ## `.md` を書き換えるときは `mdmerge` を通す
 
@@ -63,10 +64,34 @@ rm -rf ~/Library/Containers/com.sabanote.Nullnote.debug/Data   # 開発版だけ
 ```
 
 **`open -a` は、すでに動いているアプリを起動し直さない。** ファイルを渡すだけなので、
-`--env` も効かない。**測る前に `pkill -f "MacOS/Nullnote"` で止め、止まったことを目で見る。**
+`--env` も効かない。**測る前に止め、止まったことを目で見る。**
 動いているプロセスは、消した設定をまだ手の中に持っている（フォルダの許可は
 起動時に復元され、プロセスが生きているあいだ有効なまま）。実際にこれで2度誤った。
 手順は README の「動きを確かめる」。
+
+**止めるときはパスまで指す。**
+
+```sh
+# 何が動いているかを先に見る
+ps -eo pid,lstart,command | grep "MacOS/Nullnote" | grep -v grep
+# Debug 版だけを止める
+pkill -f "Products/Debug/Nullnote.app/Contents/MacOS/Nullnote"
+```
+
+**`pkill -f "MacOS/Nullnote"` と書いてはいけない。普段使いの `/Applications` 版まで落ちる。**
+2026-09-09 に実際に落とし、利用者が開いていた窓を消した。
+書類の中身は自動保存で残るが、**macOS に窓の記憶が無ければ開き直しになる。**
+
+**きれいに終了させたいときは `osascript` を使う。** `pkill` で落とすと
+macOS が窓の記憶を残し、次の起動で前回の書類を全部開き直す（D-52）。
+
+```sh
+osascript -e 'tell application id "com.sabanote.Nullnote.debug" to quit'
+```
+
+**`tell application "Nullnote"` と名前で書くと、同名のアプリの片方にしか届かない。**
+`System Events` の `process "Nullnote"` も同じで、名前では1つにしか解決されない。
+プロセス番号か Bundle ID で指すこと（D-53）。
 
 ## 書きもの
 

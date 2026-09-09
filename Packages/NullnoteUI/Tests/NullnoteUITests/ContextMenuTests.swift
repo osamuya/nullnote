@@ -57,6 +57,32 @@ struct ContextMenuTests {
         #expect(after == before + 2)
     }
 
+    @Test("複数足したときは、渡した順に並ぶ")
+    func keepsOrder() {
+        let textView = makeTextView()
+        var pressed: [String] = []
+        textView.extraContextMenuItems = [
+            EditorContextMenuItem(title: "Finder で表示する", key: "r",
+                                  modifiers: [.option, .command]) { pressed.append("finder") },
+            EditorContextMenuItem(title: "パスをコピー", key: "c",
+                                  modifiers: [.option, .command]) { pressed.append("path") },
+            EditorContextMenuItem(title: "フォルダのパスをコピー") { pressed.append("folder") },
+            EditorContextMenuItem(title: "ファイル名をコピー") { pressed.append("name") }
+        ]
+        let items = textView.menu(for: rightClick(in: textView))?.items ?? []
+        #expect(items.suffix(4).map(\.title)
+                == ["Finder で表示する", "パスをコピー", "フォルダのパスをコピー", "ファイル名をコピー"])
+
+        // ショートカットを持たない項目は、持たないまま出す。
+        #expect(items.suffix(2).allSatisfy { $0.keyEquivalent.isEmpty })
+
+        // それぞれが自分の処理を呼ぶ（取り違えていない）。
+        for item in items.suffix(4) {
+            _ = item.target?.perform(item.action, with: item)
+        }
+        #expect(pressed == ["finder", "path", "folder", "name"])
+    }
+
     @Test("足す項目が無ければ、標準のまま")
     func noExtras() {
         let textView = makeTextView()

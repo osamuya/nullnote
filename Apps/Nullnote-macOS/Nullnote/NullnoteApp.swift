@@ -68,6 +68,7 @@ struct NullnoteApp: App {
             CommandGroup(after: .saveItem) {
                 Divider()
                 RevealInFinderButton()
+                CopyPathButtons()
             }
             // 検索は編集メニューの、カット・コピー・ペーストの下。macOS の定位置。
             CommandGroup(after: .pasteboard) {
@@ -157,6 +158,30 @@ private struct RevealInFinderButton: View {
     var body: some View {
         Button("Finder で表示") { commands?.revealInFinder() }
             .keyboardShortcut("r", modifiers: [.option, .command])
+            .disabled(commands?.hasFile != true)
+    }
+}
+
+/// 開いているファイルの場所をコピーする（#025）。
+///
+/// **タイトルの右クリックには足せない。** あれは macOS が作るメニューで、
+/// 項目を差し込む口が無い（D-45）。本文の右クリックと、ここに置く。
+///
+/// Nullnote には「プロジェクト」が無いので、**相対パスは出さない**。
+private struct CopyPathButtons: View {
+
+    @FocusedValue(\.fileCommands) private var commands
+
+    var body: some View {
+        // Finder の「パス名としてコピー」と同じ ⌥⌘C。
+        Button("パスをコピー") { commands?.copyPath() }
+            .keyboardShortcut("c", modifiers: [.option, .command])
+            .disabled(commands?.hasFile != true)
+
+        Button("フォルダのパスをコピー") { commands?.copyFolderPath() }
+            .disabled(commands?.hasFile != true)
+
+        Button("ファイル名をコピー") { commands?.copyFileName() }
             .disabled(commands?.hasFile != true)
     }
 }

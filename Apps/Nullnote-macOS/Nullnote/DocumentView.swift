@@ -158,6 +158,18 @@ struct DocumentView: View {
                 // `open` だけだとファイルが開いてしまう。
                 NSWorkspace.shared.activateFileViewerSelecting([fileURL])
             },
+            copyPath: {
+                guard let fileURL else { return }
+                Self.putOnPasteboard(FilePathText.absolute(fileURL))
+            },
+            copyFolderPath: {
+                guard let fileURL else { return }
+                Self.putOnPasteboard(FilePathText.folder(fileURL))
+            },
+            copyFileName: {
+                guard let fileURL else { return }
+                Self.putOnPasteboard(FilePathText.name(fileURL))
+            },
             hasFile: fileURL != nil
         ))
         .focusedSceneValue(\.selectionCommands, SelectionCommands(
@@ -478,6 +490,7 @@ struct DocumentView: View {
     /// **タイトルの右クリック（プロキシアイコン）は macOS が作るメニューで、
     /// 項目を足せない。** あちらは階層をたどる仕組みなので、
     /// 「このファイルのフォルダを開く」と名前で読める選択肢がここに要る。
+    /// パスのコピーも同じ理由でここに置く（D-53）。
     private var contextMenuItems: [EditorContextMenuItem] {
         guard let fileURL else { return [] }
         return [
@@ -486,8 +499,31 @@ struct DocumentView: View {
             ) {
                 // フォルダを開いて、そのファイルを選んだ状態にする。
                 NSWorkspace.shared.activateFileViewerSelecting([fileURL])
+            },
+            // ⌥⌘C は Finder の「パス名としてコピー」と同じ組み合わせ。
+            EditorContextMenuItem(
+                title: "パスをコピー", key: "c", modifiers: [.option, .command]
+            ) {
+                Self.putOnPasteboard(FilePathText.absolute(fileURL))
+            },
+            EditorContextMenuItem(title: "フォルダのパスをコピー") {
+                Self.putOnPasteboard(FilePathText.folder(fileURL))
+            },
+            EditorContextMenuItem(title: "ファイル名をコピー") {
+                Self.putOnPasteboard(FilePathText.name(fileURL))
             }
         ]
+    }
+
+    /// 文字を貼り板に載せる。
+    ///
+    /// **先に空にする。** `clearContents` を呼ばないと、
+    /// 前に載っていた別の種類（画像やファイルの参照）が残り、
+    /// 貼る側がそちらを拾うことがある。
+    private static func putOnPasteboard(_ text: String) {
+        let board = NSPasteboard.general
+        board.clearContents()
+        board.setString(text, forType: .string)
     }
 
     private var editor: some View {
@@ -543,6 +579,13 @@ private struct SearchCommandsKey: FocusedValueKey {
 struct FileCommands {
     /// 書類のあるフォルダを Finder で開き、そのファイルを選んだ状態にする。
     let revealInFinder: () -> Void
+    /// 絶対パスを貼り板に載せる。**Nullnote に「プロジェクト」は無いので、
+    /// 相対パスは作らない**（何を基準にするか決められない。#025）。
+    let copyPath: () -> Void
+    /// そのファイルが入っているフォルダのパスを貼り板に載せる。
+    let copyFolderPath: () -> Void
+    /// ファイル名だけを貼り板に載せる。
+    let copyFileName: () -> Void
     /// 新規書類など、まだファイルが無ければ `false`。
     let hasFile: Bool
 }
