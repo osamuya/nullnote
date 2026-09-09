@@ -64,13 +64,17 @@
 	<!--
 	これが無いと「ファイル」「編集」などの標準メニューが英語のまま出て、
 	自作のメニュー項目（日本語）と混ざる。
+
+	**ここには、実体のある言語だけを並べる。** 並べた言語は App Store の
+	「言語」欄にそのまま出るので、`.lproj` も `.strings` も無い言語を書くと、
+	その言語の利用者が日本語の画面に当たる（#021）。
+	英語を足すときは、先に文字列カタログを用意すること。判断の記録は D-54。
 	-->
 	<key>CFBundleDevelopmentRegion</key>
 	<string>ja</string>
 	<key>CFBundleLocalizations</key>
 	<array>
 		<string>ja</string>
-		<string>en</string>
 	</array>
 
 	<key>NSHumanReadableCopyright</key>
