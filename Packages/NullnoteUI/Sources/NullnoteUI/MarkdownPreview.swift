@@ -163,7 +163,7 @@ enum PreviewSpacing {
         case .paragraph:
             Margin(top: 0.85, bottom: 0.85)         // 11.9pt
 
-        case .codeBlock, .table, .list, .quote, .images, .thematicBreak:
+        case .codeBlock, .table, .list, .quote, .images, .thematicBreak, .conflict:
             // 地の色や罫線を持つ塊。本文と同じ間隔だと貼り付いて見える。
             //
             // **差を付けすぎるくらいでちょうどよい。** 行そのものが持つ行間が
@@ -236,11 +236,83 @@ private struct PreviewBlockView: View {
 
         case .thematicBreak:
             Divider().overlay(Color(platform: theme.marker))
+
+        case .conflict(let conflict):
+            PreviewConflictView(
+                conflict: conflict, theme: theme, documentURL: documentURL, textColor: textColor
+            )
         }
     }
 
     /// 再帰する箇所で型が無限に育つのを避ける。
     var erased: AnyView { AnyView(self) }
+}
+
+// MARK: - 合流の印
+
+/// 合流の印で割られたところ。**印そのものは出さない。**
+///
+/// 印を出さずに「どちらの版か」を伝えるため、編集画面（D-48）と同じ色と言葉を使う。
+/// 赤が自分、緑が外部。仕切りは灰色で、どちらの側でもない。
+///
+/// **選ぶ口は付けない。** どちらを残すかは編集画面で決めること。
+/// プレビューに決定のボタンを置くと、押し間違いで片方が消える（D-60）。
+private struct PreviewConflictView: View {
+
+    let conflict: PreviewConflict
+    let theme: MarkdownTheme
+    var documentURL: URL?
+    var textColor: PlatformColor?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            side(
+                label: ThreeWayMerge.ourLabel,
+                blocks: conflict.ours,
+                tint: theme.conflictOurs,
+                background: theme.conflictOursBackground
+            )
+            Divider().overlay(Color(platform: theme.conflictSeparator))
+            side(
+                label: ThreeWayMerge.theirLabel,
+                blocks: conflict.theirs,
+                tint: theme.conflictTheirs,
+                background: theme.conflictTheirsBackground
+            )
+        }
+        .clipShape(RoundedRectangle(cornerRadius: 5))
+        .overlay(
+            RoundedRectangle(cornerRadius: 5)
+                .stroke(Color(platform: theme.conflictSeparator), lineWidth: 1)
+        )
+    }
+
+    private func side(
+        label: String, blocks: [PreviewBlock], tint: PlatformColor, background: PlatformColor
+    ) -> some View {
+        VStack(alignment: .leading, spacing: theme.fontSize * 0.5) {
+            Text(label)
+                .font(.system(size: theme.fontSize * 0.8, weight: .semibold))
+                .foregroundStyle(Color(platform: tint))
+
+            if blocks.isEmpty {
+                // **空でも黙って詰めない。** 帯だけが並ぶと、描き損ねに見える。
+                // 片側だけが書き足した競合では、こちらが本当に空になる。
+                Text("（この版では空）")
+                    .font(.system(size: theme.fontSize * 0.9))
+                    .foregroundStyle(Color(platform: theme.quote))
+            } else {
+                ForEach(blocks) {
+                    PreviewBlockView(
+                        block: $0, theme: theme, documentURL: documentURL, textColor: textColor
+                    ).erased
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(theme.fontSize * 0.6)
+        .background(Color(platform: background))
+    }
 }
 
 // MARK: - リスト

@@ -1,5 +1,6 @@
 import Foundation
 import Markdown
+import MarkdownCore
 import SwiftUI
 
 // プレビューの中間表現。
@@ -32,7 +33,21 @@ struct PreviewBlock: Identifiable {
         /// Markdown では1つの段落になる。
         case images([PreviewImageRef])
         case thematicBreak
+        /// 合流の印で割られたところ。**Markdown の記法ではない。**
+        ///
+        /// 印をそのまま解釈させると `=======` が下線見出しになり、
+        /// `>>>>>>>` が7重の引用になる。**周りの本文の意味まで変わる**ので、
+        /// 解釈させる前に切り分けて、印は印として見せる（D-60）。
+        case conflict(PreviewConflict)
     }
+}
+
+/// 合流の印で割られたところ。中身はどちらも Markdown として組んである。
+struct PreviewConflict {
+    /// 自分の版の中身。**空のこともある**（外だけが書き足した場合）。
+    let ours: [PreviewBlock]
+    /// 外の版の中身。
+    let theirs: [PreviewBlock]
 }
 
 /// 絵として置く画像1枚ぶん。
@@ -81,6 +96,7 @@ extension Array where Element == PreviewBlock {
             case .images(let images): images
             case .quote(let blocks): blocks.allImages
             case .list(let list): list.items.flatMap { $0.blocks.allImages }
+            case .conflict(let conflict): conflict.ours.allImages + conflict.theirs.allImages
             default: []
             }
         }
@@ -137,6 +153,12 @@ struct PreviewBuilder {
     private var counter = 0
     /// 行番号を持たないノードに与える値。直前に分かっている行を引き継ぐ。
     private var lastKnownLine = 1
+    /// いま組んでいる断片が、元の本文の何行目から始まるか（0 始まり）。
+    ///
+    /// 合流の印で本文を切って組むので、`swift-markdown` が返す行番号は
+    /// 断片の中の位置でしかない。**元の本文の行に直す**ために足す。
+    /// エディタとのスクロール同期がここに乗っている。
+    private var lineOffset = 0
 
     static func build(
         _ source: String,
@@ -144,7 +166,50 @@ struct PreviewBuilder {
         breaksOnNewline: Bool = false
     ) -> [PreviewBlock] {
         var builder = PreviewBuilder(theme: theme, breaksOnNewline: breaksOnNewline)
-        return builder.blocks(in: Document(parsing: source))
+        return builder.blocks(splittingConflictsIn: source)
+    }
+
+    /// 合流の印で切り分けてから組む。
+    ///
+    /// **印を `Document(parsing:)` に渡さない。** 渡すと `=======` が下線見出しに、
+    /// `>>>>>>>` が7重の引用になり、印の周りの本文まで違う姿で出る（D-60）。
+    private mutating func blocks(splittingConflictsIn source: String) -> [PreviewBlock] {
+        let regions = ConflictScanner.regions(in: source)
+        guard !regions.isEmpty else { return blocks(in: Document(parsing: source)) }
+
+        let lines = source.components(separatedBy: "\n")
+        var result: [PreviewBlock] = []
+        var cursor = 0
+        for region in regions {
+            result += blocks(of: lines, in: cursor..<region.ourMarkerLine)
+
+            // 中身は普段どおり組む。プレビューは「どうなるか」を見る場なので、
+            // どちらの版も本来の姿で見せる（2026-09-10 に利用者と決めた）。
+            let conflict = PreviewConflict(
+                ours: blocks(of: lines, in: region.ourBody),
+                theirs: blocks(of: lines, in: region.theirBody)
+            )
+            counter += 1
+            result.append(PreviewBlock(
+                id: counter,
+                sourceLine: region.ourMarkerLine + 1,
+                content: .conflict(conflict)
+            ))
+            cursor = region.theirMarkerLine + 1
+        }
+        result += blocks(of: lines, in: cursor..<lines.count)
+        return result
+    }
+
+    /// 与えた行だけを Markdown として組む。行番号は元の本文のものに直す。
+    private mutating func blocks(of lines: [String], in range: Range<Int>) -> [PreviewBlock] {
+        guard !range.isEmpty else { return [] }
+        let outerOffset = lineOffset
+        lineOffset = range.lowerBound
+        lastKnownLine = range.lowerBound + 1
+        let built = blocks(in: Document(parsing: lines[range].joined(separator: "\n")))
+        lineOffset = outerOffset
+        return built
     }
 
     // MARK: ブロック
@@ -155,7 +220,8 @@ struct PreviewBuilder {
 
     private mutating func block(from markup: Markup) -> PreviewBlock? {
         // 子を辿ると lastKnownLine が進んでしまうので、先に自分の行を控える。
-        let line = markup.range?.lowerBound.line ?? lastKnownLine
+        // **断片の中の行番号なので、元の本文の行に直す。**
+        let line = markup.range.map { $0.lowerBound.line + lineOffset } ?? lastKnownLine
         lastKnownLine = line
 
         guard let content = content(from: markup) else { return nil }

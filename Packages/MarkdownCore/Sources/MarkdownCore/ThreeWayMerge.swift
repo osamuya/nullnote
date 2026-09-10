@@ -31,9 +31,14 @@ import Foundation
 /// ファイルにも書類にも触らない。合流の判断だけをここに集めて、テストで縛る。
 public enum ThreeWayMerge {
 
-    public static let ourMarker = "<<<<<<< 自分の更新"
+    /// 印に添える名前。**印そのものと別に持つ。**
+    /// プレビューは印を出さず、この名前だけを見出しに使う（D-60）。
+    public static let ourLabel = "自分の更新"
+    public static let theirLabel = "外部の更新"
+
+    public static let ourMarker = "<<<<<<< \(ourLabel)"
     public static let separator = "======="
-    public static let theirMarker = ">>>>>>> 外部の更新"
+    public static let theirMarker = ">>>>>>> \(theirLabel)"
 
     public struct Result: Equatable {
         /// 合流した結果。競合したところには印が入っている。
