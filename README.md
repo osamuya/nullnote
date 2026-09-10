@@ -22,7 +22,11 @@ macOS のための、シンプルで軽快な Markdown エディタ。
 - **ファイルの場所を、開ける・写せる** — 上部のファイル名を右クリックで Finder。パス・フォルダのパス・ファイル名のコピーも
 - 個別のWindowでも、複数のタブでもファイルが開けます。
 
-## 動かす
+## 入手
+
+**[App Store で配布しています](https://apps.apple.com/jp/app/nullnote/id6805716413?mt=12)。** 無料。macOS 14 以降。
+
+## ソースから動かす
 
 macOS 14 以降、Xcode 16 以降。
 
@@ -34,8 +38,6 @@ cd nullnote
 ```
 
 Xcode で開く場合は `Apps/Nullnote-macOS/Nullnote.xcodeproj` を開き、**署名の設定で自分のチームを選んでください**（`DEVELOPMENT_TEAM` は作者のものが入っています）。
-
-**App Store で配布しています。**
 
 署名・公証まで通した `.dmg` を自分で作ることもできます。
 
