@@ -71,21 +71,31 @@ public struct EditorCommandRequest: Equatable, Sendable {
 }
 
 
-#if canImport(AppKit)
 /// 本文の右クリックに足す項目。**アプリ側が入れる。**
 ///
 /// `NullnoteUI` は Finder も書類も知らないので、何をするかは持たない。
 /// **名前と処理だけを受け取る。**
+///
+/// 実際に使うのは macOS の右クリックだけだが、**型は両方で見えるようにしてある。**
+/// `MarkdownEditorView` は片方の実装ではなく両方が共有する形なので、
+/// これを AppKit の側に閉じ込めると iOS のビルドが通らない（2026-09-10 に踏んだ）。
 public struct EditorContextMenuItem {
+    /// ショートカットの修飾キー。AppKit と UIKit で別の型なのでここで吸収する。
+    #if canImport(AppKit)
+    public typealias ModifierFlags = NSEvent.ModifierFlags
+    #else
+    public typealias ModifierFlags = UIKeyModifierFlags
+    #endif
+
     public let title: String
     /// メニューに併記するショートカット。`⌥⌘R` なら `("r", [.option, .command])`。
     public let key: String
-    public let modifiers: NSEvent.ModifierFlags
+    public let modifiers: ModifierFlags
     public let isEnabled: () -> Bool
     public let action: () -> Void
 
     public init(
-        title: String, key: String = "", modifiers: NSEvent.ModifierFlags = [],
+        title: String, key: String = "", modifiers: ModifierFlags = [],
         isEnabled: @escaping () -> Bool = { true }, action: @escaping () -> Void
     ) {
         self.title = title
@@ -95,7 +105,6 @@ public struct EditorContextMenuItem {
         self.action = action
     }
 }
-#endif
 
 @MainActor
 public struct MarkdownEditorView {
