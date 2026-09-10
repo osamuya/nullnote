@@ -186,6 +186,15 @@ final class InlineCodeLayoutManager: NSLayoutManager {
     /// 角丸と余白の寸法を決めるために持つ。設定されるまでは既定の描き方に任せる。
     var theme: MarkdownTheme?
 
+    /// `fillBackgroundRectArray` に渡る矩形は、この分だけずらされている。
+    /// 行の実寸（レイアウトの座標）と突き合わせるために控える。
+    private var backgroundOrigin: NSPoint = .zero
+
+    override func drawBackground(forGlyphRange glyphsToShow: NSRange, at origin: NSPoint) {
+        backgroundOrigin = origin
+        super.drawBackground(forGlyphRange: glyphsToShow, at: origin)
+    }
+
     override func fillBackgroundRectArray(
         _ rectArray: UnsafePointer<NSRect>,
         count: Int,
@@ -201,12 +210,27 @@ final class InlineCodeLayoutManager: NSLayoutManager {
         color.setFill()
         theme.inlineCodeBorder.setStroke()
 
+        // 行ごとの「文字が実際に使っている右端」。
+        let lines = usedRects(forCharacterRange: charRange)
+
         for index in 0..<count {
             var rect = rectArray[index]
 
+            // **折り返した行では、渡される矩形が行の端まで伸びている。**
+            // 札が次の行へ続くとき、AppKit は残りの余白まで背景として渡してくる。
+            // 空白の部分にまで枠が出るのはこれ（#027）。行の実寸まで詰める。
+            if let limit = usedMaxX(at: rect.midY, in: lines) {
+                rect.size.width = max(0, min(rect.maxX, limit) - rect.minX)
+            }
+
             // 左の余白は札の中（幅ゼロの文字）に入っているので、ここでは触らない。
             // 右端に付けた空き（padding * 2）だけ、半分を隣との隙間として残す。
-            rect.size.width = max(0, rect.width - padding)
+            //
+            // **削るのは最後の矩形だけ。** その空きは札の**最後の文字**に付けてあり、
+            // 折り返した途中の行には無い。そこで削ると本文が欠ける。
+            if index == count - 1 {
+                rect.size.width = max(0, rect.width - padding)
+            }
 
             // 高さは行の高さではなく文字の大きさから決める。行間まで塗ると
             // 札が縦に伸びて、行が詰まって見える。
@@ -214,11 +238,37 @@ final class InlineCodeLayoutManager: NSLayoutManager {
             rect.origin.y += ((rect.height - height) / 2).rounded()
             rect.size.height = height
 
+            // 詰めた結果、枠を描く幅が残っていない行は飛ばす。
+            guard rect.width > 1 else { continue }
+
             let path = NSBezierPath(roundedRect: rect.insetBy(dx: 0.5, dy: 0.5), xRadius: radius, yRadius: radius)
             path.fill()
             path.lineWidth = 1
             path.stroke()
         }
+    }
+
+    /// 札がまたぐ行それぞれの、**文字が実際に使っている範囲**。
+    ///
+    /// 札が次の行へ続く行では、渡される背景の矩形が行の端まで伸びる。
+    /// 詰める先をここで持つ。座標はレイアウトのもの（`backgroundOrigin` を足す前）。
+    private func usedRects(forCharacterRange charRange: NSRange) -> [NSRect] {
+        let glyphRange = glyphRange(forCharacterRange: charRange, actualCharacterRange: nil)
+        var rects: [NSRect] = []
+        enumerateLineFragments(forGlyphRange: glyphRange) { _, usedRect, _, _, _ in
+            rects.append(usedRect)
+        }
+        return rects
+    }
+
+    /// 描こうとしている矩形の高さに当たる行の、文字が使っている右端。
+    ///
+    /// 渡された矩形は `backgroundOrigin` の分だけずれているので、
+    /// 突き合わせるときに戻し、返すときに足し直す。
+    private func usedMaxX(at midY: CGFloat, in lines: [NSRect]) -> CGFloat? {
+        let y = midY - backgroundOrigin.y
+        guard let line = lines.first(where: { $0.minY <= y && y < $0.maxY }) else { return nil }
+        return line.maxX + backgroundOrigin.x
     }
 }
 
