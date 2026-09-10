@@ -48,6 +48,11 @@ struct DocumentView: View {
     /// **自分で保存しても進めない。** 進めてしまうと、外から書く道具が
     /// 古い内容を基準に書いてきたときに、こちらの直しが黙って消える（D-35）。
     @State private var lastExternalText: String?
+    /// 基準を張った相手。**`knownURL` とは別に持つ。**
+    ///
+    /// あちらは改名に気づくためのもので、`.task` の最後で毎回いまの値になる。
+    /// こちらは「どのファイルに対して基準を置いたか」だけを覚える（#024）。
+    @State private var baselineURL: URL?
     /// いま見ているファイル。改名に気づくために、前の値を覚えておく。
     @State private var knownURL: URL?
     /// フォルダに書く許可を、この書類でもう頼んだか。
@@ -204,10 +209,12 @@ struct DocumentView: View {
         // 外でファイルが書き換わったら取り込む。
         // 別のファイルになったとき（改名・別名で保存）も、ここを通る。
         .task(id: fileURL) {
-            // **見張りを張り直すのが先。** ここで `lastExternalText` が
-            // ディスクと同じ内容になる。見出しを直すのはそのあと。
-            // 逆にすると、直した本文が「ディスクと一致していた内容」として
-            // 記録され、次に外の変更が来たときに合流で消される。
+            // **見張りを張り直すのが先。** ここで基準がディスクの内容になる。
+            // 見出しを直すのはそのあと。逆にすると、直した本文がまだ
+            // ディスクに無いうちに基準の判断へ混ざる。
+            // **ここは毎回走る。** ファイルが変わったときだけではなく、
+            // ビューが現れ直すたびに通る。基準を動かすかどうかは
+            // `startWatching` の中で決める（#024）。
             startWatching()
             syncTitleIfRenamed()
             // 次の改名は、いまの名前との差で判断する。
@@ -229,15 +236,46 @@ struct DocumentView: View {
     // MARK: - 外の変更を取り込む
 
     /// ファイルの見張りを張り直す。書類が別のファイルになったときも呼ばれる。
+    ///
+    /// **基準は、相手のファイルが変わったときだけ置き直す。**
+    /// ここは `.task(id: fileURL)` から呼ばれるが、`.task` は
+    /// **ファイルが変わったときだけでなく、ビューが現れ直すたびにも走る**。
+    /// 呼ばれるたびに基準を置き直すと、未保存の編集が「外が最後に見た版」に化ける。
+    /// すると `ExternalChangeResolver` が `基準 == 編集画面` と見て `.reload` を返し、
+    /// 次に外から書かれたときに、こちらの編集が印も出さずに消える（#024）。
+    ///
+    /// **置き直す値は `document.text` ではなくディスクから取る。**
+    /// 基準の意味は「外の世界が最後に見たはずの内容」であって、編集画面の中身ではない。
+    /// 窓をまたいでビューごと作り直され、`@State` が消えた場合でも、
+    /// ディスクから取れば正しい基準に戻る（`document.text` から取ると、
+    /// そこに乗っている未保存の編集が基準に混ざる）。
     private func startWatching() {
         watcher?.stop()
         guard let fileURL else {
             watcher = nil
+            baselineURL = nil
             return
         }
-        // いま開いた内容は、ディスクと一致しているはず。ここを基準にする。
-        lastExternalText = document.text
-        Trace.log("startWatching: \(fileURL.path) 基準=\(document.text.count)文字")
+        switch ExternalChangeResolver.baseline(
+            watched: baselineURL,
+            opening: fileURL,
+            disk: readFromDisk(fileURL),
+            editor: document.text
+        ) {
+        case .keep:
+            Trace.log(
+                "startWatching: \(fileURL.lastPathComponent) 基準は据え置き"
+                    + "=\(lastExternalText?.count.description ?? "nil")文字"
+                    + "（編集画面=\(document.text.count)文字）"
+            )
+        case .replace(let text):
+            lastExternalText = text
+            baselineURL = fileURL
+            Trace.log(
+                "startWatching: \(fileURL.lastPathComponent) 基準を置いた"
+                    + "=\(text.count)文字（編集画面=\(document.text.count)文字）"
+            )
+        }
         watcher = FileWatcher(url: fileURL) { externalChangeCount += 1 }
     }
 

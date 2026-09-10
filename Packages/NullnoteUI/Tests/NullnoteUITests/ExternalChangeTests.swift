@@ -1,3 +1,4 @@
+import Foundation
 import Testing
 @testable import NullnoteUI
 
@@ -92,6 +93,100 @@ struct ExternalChangeTests {
             ExternalChangeResolver.resolve(
                 disk: "", editor: "もとの内容", lastExternal: "もとの内容"
             ) == .reload("")
+        )
+    }
+
+    // MARK: - 見張りを張り直すときの基準
+
+    /// 画面が組み直されただけで基準を動かすと、未保存の編集が黙って消える（#024）。
+    ///
+    /// `.task(id: fileURL)` はファイルが変わったときだけでなく、
+    /// ビューが現れ直すたびにも走る。そこを縛る。
+    @Suite("見張りを張り直すときの基準")
+    struct BaselineTests {
+
+        private let file = URL(fileURLWithPath: "/tmp/a.md")
+        private let another = URL(fileURLWithPath: "/tmp/b.md")
+
+        @Test("同じファイルを見張り直すだけなら、基準は動かさない")
+        func keepsBaselineForSameFile() {
+            #expect(
+                ExternalChangeResolver.baseline(
+                    watched: file, opening: file,
+                    disk: "ディスクの内容", editor: "書きかけ"
+                ) == .keep
+            )
+        }
+
+        @Test("はじめて見張るときは、ディスクの内容を基準にする")
+        func takesBaselineFromDisk() {
+            // **編集画面ではなくディスク。** 基準の意味は
+            // 「外の世界が最後に見たはずの内容」。
+            #expect(
+                ExternalChangeResolver.baseline(
+                    watched: nil, opening: file,
+                    disk: "ディスクの内容", editor: "書きかけ"
+                ) == .replace("ディスクの内容")
+            )
+        }
+
+        @Test("別のファイルになったら、そちらのディスクを基準にする")
+        func rebasesOnAnotherFile() {
+            // 改名・別名で保存でここを通る。
+            #expect(
+                ExternalChangeResolver.baseline(
+                    watched: file, opening: another,
+                    disk: "別のファイルの内容", editor: "書きかけ"
+                ) == .replace("別のファイルの内容")
+            )
+        }
+
+        @Test("ディスクが読めないときだけ、編集画面を頼る")
+        func fallsBackToEditor() {
+            #expect(
+                ExternalChangeResolver.baseline(
+                    watched: nil, opening: file, disk: nil, editor: "書きかけ"
+                ) == .replace("書きかけ")
+            )
+        }
+
+        @Test("同じファイルなら、ディスクを読みに行かない")
+        func doesNotReadDiskWhenKeeping() {
+            // 見張りの張り直しは画面が現れるたびに通る。
+            // そのたびに 100 KB を読み直すのでは割に合わない。
+            nonisolated(unsafe) var reads = 0
+            _ = ExternalChangeResolver.baseline(
+                watched: file, opening: file,
+                disk: { reads += 1; return "ディスクの内容" }(), editor: "書きかけ"
+            )
+            #expect(reads == 0)
+        }
+    }
+
+    // MARK: - 組み直しのあとに外から書かれる
+
+    /// #024 そのもの。**基準の置き方だけで、消えるか印が出るかが変わる。**
+    @Test("組み直しで基準を編集画面にすると、外の変更が印なしで差し替わる")
+    func rebuildingWithEditorTextLosesEdits() {
+        // 画面が組み直された時点の編集画面（未保存の直しが乗っている）
+        let editor = "- A こちらの直し\n"
+        // 誤った置き方: 基準 = 編集画面
+        #expect(
+            ExternalChangeResolver.resolve(
+                disk: "- A 外の直し\n", editor: editor, lastExternal: editor
+            ) == .reload("- A 外の直し\n")
+        )
+    }
+
+    @Test("組み直しで基準をディスクにすれば、突き合わせに回る")
+    func rebuildingWithDiskTextKeepsEdits() {
+        let onDisk = "- A\n"
+        let editor = "- A こちらの直し\n"
+        // 正しい置き方: 基準 = そのときのディスク
+        #expect(
+            ExternalChangeResolver.resolve(
+                disk: "- A 外の直し\n", editor: editor, lastExternal: onDisk
+            ) == .merge(base: onDisk, ours: editor, theirs: "- A 外の直し\n")
         )
     }
 

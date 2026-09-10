@@ -51,4 +51,40 @@ public enum ExternalChangeResolver {
 
         return .merge(base: base, ours: editor, theirs: disk)
     }
+
+    /// 見張りを張り直すときに、合流の基準をどうするか。
+    public enum Baseline: Equatable {
+        /// いま持っている基準をそのまま使う。
+        case keep
+        /// 新しい基準に置き直す。
+        case replace(String)
+    }
+
+    /// 見張りを張り直すときの基準を決める。
+    ///
+    /// **同じファイルを見張り直すだけなら、基準は動かさない。**
+    /// 見張りを張り直す場面は、ファイルが変わったときだけではない。
+    /// 画面が組み直されただけでも通る。そこで基準を編集画面の中身に置き直すと、
+    /// **未保存の編集が「外が最後に見た版」に化ける。**
+    /// すると次に外から書かれたとき `resolve` が `.reload` を返し、
+    /// こちらの編集が印も出さずに消える（#024）。
+    ///
+    /// **置き直す値はディスクから取る。** 基準の意味は
+    /// 「外の世界が最後に見たはずの内容」であって、編集画面の中身ではない。
+    /// ディスクが読めないときだけ、最後の頼りとして編集画面を使う。
+    ///
+    /// - Parameters:
+    ///   - watched: いま基準を張っている相手。まだ張っていなければ `nil`。
+    ///   - opening: これから見張る相手。
+    ///   - disk: `opening` のディスクの内容。読めなければ `nil`。
+    ///   - editor: 編集画面の内容。
+    public static func baseline(
+        watched: URL?,
+        opening: URL,
+        disk: @autoclosure () -> String?,
+        editor: String
+    ) -> Baseline {
+        guard watched != opening else { return .keep }
+        return .replace(disk() ?? editor)
+    }
 }
