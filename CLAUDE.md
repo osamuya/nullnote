@@ -1,10 +1,13 @@
 # このリポジトリでの決まり
 
-> **いま進行中の作業**: 1.1 の開発（ブランチ `version1.1`）。
-> 1.0 は 2026-08-30 に承認され、148 地域で公開済み。経緯は `docs/09-release-fb1.md`。
+> **いま進行中の作業**: **1.1（ビルド2）を出すところ**（ブランチ `version1.1`）。
+> 版は `Apps/Nullnote-macOS/Version.xcconfig` で 1.1 / 2 に上げてある。
+> 残りの段取りは `docs/04-development-flow.md` の「10. 1.1 を出す」。
+> 1.0 は 2026-08-30 に承認され、8-31 に 148 地域で公開済み。経緯は `docs/09-release-fb1.md`。
 > **残っている要望と不具合は `docs/運用上の修正点・改良点.md`。着手する前にそこを読むこと。**
-> 版とビルド番号の上げ方は `Apps/Nullnote-macOS/Version.xcconfig` に書いてある。
-> `docs/04-development-flow.md` の冒頭は審査待ちのまま止まっている（`09-release-fb1.md` の T-6）。
+>
+> **版を出す前に iOS 向けのビルドも通す**（`xcodebuild -destination 'generic/platform=iOS'`）。
+> `#if canImport(AppKit)` の入れ違いは macOS 側では何も言わない。1.1 で実際に踏んだ（D-61）。
 
 ## `.md` を書き換えるときは `mdmerge` を通す
 
@@ -43,6 +46,13 @@ cd Packages/MarkdownCore && swift test
 cd Packages/NullnoteUI   && swift test
 cd Tools/mdmerge         && swift test
 cd Apps/Nullnote-macOS   && xcodebuild -scheme Nullnote -configuration Debug build
+```
+
+`Packages/` を直したら、**iOS 向けにも通す**（版を出す前は必ず）。
+
+```sh
+cd Packages/MarkdownCore && xcodebuild -scheme MarkdownCore -destination 'generic/platform=iOS' build
+cd Packages/NullnoteUI   && xcodebuild -scheme NullnoteUI   -destination 'generic/platform=iOS' build
 ```
 
 画面の見え方を確かめるときは、`NSHostingView` をウインドウに載せてランループを回してから
