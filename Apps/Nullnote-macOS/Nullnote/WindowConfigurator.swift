@@ -77,6 +77,90 @@ extension View {
     }
 }
 
+/// 1枚しか無い窓にも、タブバーを出し続ける。
+///
+/// **要は取っ手。** 出ていないと、掴んで動かすところが無く、窓を結合しようがない
+/// （macOS の既定では、2枚目のタブができるまで出ない）。決めた仕様は D-49。
+///
+/// ## `WindowConfigurator` から呼ぶだけでは足りない
+///
+/// あの中身が走るのは、**SwiftUI がビューを更新したときだけ**。
+/// タブを**ドラッグ**で分けたときは窓の大きさと位置が変わり、そのついでに更新が走るので
+/// 出ていた。ところが**「タブを新しいウインドウに移動」で分けたときは何も変わらない**ので
+/// 更新が届かず、タブバーの無い窓が残っていた（#026）。
+///
+/// そこで、窓の動きを AppKit 側から受けて確かめ直す。
+///
+/// **窓そのものは覚えない。** 通知の中身も窓も他所へ渡せない（Swift 6）ので、
+/// 覚えるのは書類の窓が共有するタブの識別子（文字列）だけにして、
+/// 確かめるときに `NSApp.windows` から数え直す。
+@MainActor
+enum TabBarKeeper {
+
+    /// 書類の窓が使うタブの識別子。`DocumentGroup` の窓はこれを共有する。
+    private static var documentTabbingIdentifier: NSWindow.TabbingIdentifier?
+    private static var observing = false
+    /// 次の周回の確かめを、もう頼んであるか。
+    private static var scheduled = false
+
+    /// 書類の窓から呼ぶ。この窓の仲間には、1枚でもタブバーを出す。
+    static func keepTabBar(on window: NSWindow) {
+        documentTabbingIdentifier = window.tabbingIdentifier
+        showIfAlone(window)
+        startObserving()
+    }
+
+    /// 窓の動きを受け取る。**一度だけ登録する。**
+    private static func startObserving() {
+        guard !observing else { return }
+        observing = true
+        for name: Notification.Name in [
+            // 分かれた窓が前に出る。
+            NSWindow.didBecomeKeyNotification,
+            NSWindow.didBecomeMainNotification,
+            // ドラッグで分けたときは、位置と大きさが変わる。
+            NSWindow.didMoveNotification,
+            NSWindow.didResizeNotification,
+        ] {
+            NotificationCenter.default.addObserver(forName: name, object: nil, queue: .main) { _ in
+                MainActor.assumeIsolated { checkSoon() }
+            }
+        }
+    }
+
+    /// **次の周回で確かめる。** 通知が届いた時点では、タブ群がまだ
+    /// 組み替わっていないことがある（分けた直後も、元の群にいるように見える）。
+    ///
+    /// 窓をドラッグしているあいだ `didMove` は何度も飛ぶので、まとめて1回にする。
+    private static func checkSoon() {
+        guard !scheduled else { return }
+        scheduled = true
+        DispatchQueue.main.async {
+            MainActor.assumeIsolated {
+                scheduled = false
+                guard let identifier = documentTabbingIdentifier else { return }
+                for window in NSApp?.windows ?? []
+                where window.isVisible && window.tabbingIdentifier == identifier {
+                    showIfAlone(window)
+                }
+            }
+        }
+    }
+
+    /// 1枚しか無い窓に、タブバーを出す。
+    ///
+    /// **毎回確かめて出し直す。** 出しっぱなしにするのが仕様なので、
+    /// タブを引き出して1枚に戻った窓でも、また出す。
+    /// そのぶんウインドウメニューの「タブバーを非表示」は効かなくなる。
+    private static func showIfAlone(_ window: NSWindow) {
+        guard let group = window.tabGroup,
+              group.windows.count == 1,
+              !group.isTabBarVisible
+        else { return }
+        window.toggleTabBar(nil)
+    }
+}
+
 /// 書類の窓をタブとして扱う。
 ///
 /// 決めた仕様はこの3つ（利用者と詰めた。D-49）。
@@ -105,7 +189,7 @@ private struct TabbedWindows: ViewModifier {
     func body(content: Content) -> some View {
         content.background(
             WindowConfigurator { window in
-                showTabBarIfAlone(window)
+                TabBarKeeper.keepTabBar(on: window)
 
                 // ⌘N だけを前面の窓へ入れる。開いた md は別窓のままにする。
                 guard isNewDocument, !merge.tried else { return }
@@ -128,19 +212,6 @@ private struct TabbedWindows: ViewModifier {
             }
             .frame(width: 0, height: 0)
         )
-    }
-
-    /// 1枚しか無い窓にも、タブバーを出す。
-    ///
-    /// **毎回確かめて出し直す。** 出しっぱなしにするのが仕様なので、
-    /// タブを引き出して1枚に戻った窓でも、また出す。
-    /// そのぶんウインドウメニューの「タブバーを非表示」は効かなくなる。
-    private func showTabBarIfAlone(_ window: NSWindow) {
-        guard let group = window.tabGroup,
-              group.windows.count == 1,
-              !group.isTabBarVisible
-        else { return }
-        window.toggleTabBar(nil)
     }
 
     /// 一度きりの合図を持つ入れ物。`@State` に置いて、窓が生きているあいだ残す。
