@@ -3,6 +3,12 @@
   "strings" : {
     "%@ — 押すと大きく表示します" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ — Click to enlarge"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13,6 +19,24 @@
     },
     "%lld 行" : {
       "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld line"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld lines"
+                }
+              }
+            }
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -23,6 +47,12 @@
     },
     "この画像があるフォルダの閲覧を許可します" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Allow access to the folder that contains this image"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -33,6 +63,12 @@
     },
     "システム" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "System"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -43,6 +79,12 @@
     },
     "スペース2" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "2 Spaces"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -53,6 +95,12 @@
     },
     "スペース4" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "4 Spaces"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -63,6 +111,12 @@
     },
     "タブ" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tab"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -73,6 +127,12 @@
     },
     "ダーク" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dark"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -83,6 +143,12 @@
     },
     "ライト" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Light"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -93,6 +159,12 @@
     },
     "前のヒットへ（⌘⇧G）" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Previous Match (⇧⌘G)"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -103,6 +175,12 @@
     },
     "前の画像へ（←）" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Previous Image (←)"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -113,6 +191,12 @@
     },
     "場所が分かりません" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Invalid location"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -123,6 +207,12 @@
     },
     "押すと大きく表示します" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Click to enlarge"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -133,6 +223,12 @@
     },
     "検索" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Search"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -143,6 +239,12 @@
     },
     "検索を閉じる" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Close Search"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -153,6 +255,12 @@
     },
     "検索を閉じる（esc）" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Close Search (esc)"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -163,6 +271,12 @@
     },
     "検索語を消す" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clear Search"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -173,6 +287,12 @@
     },
     "次のヒットへ（⌘G）" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Next Match (⌘G)"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -183,6 +303,12 @@
     },
     "次の画像へ（→）" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Next Image (→)"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -193,6 +319,12 @@
     },
     "画像" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Image"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -203,6 +335,12 @@
     },
     "画像を読み込み中…" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Loading image…"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -214,6 +352,12 @@
     "見つかりません" : {
       "comment" : "2か所で使う（検索欄の件数／画像が読めない理由）。どちらにも合う言葉にすること",
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not found"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -240,6 +384,12 @@
     },
     "許可する…" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Allow Access…"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -250,6 +400,12 @@
     },
     "読み込めません" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn't be loaded"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -260,6 +416,12 @@
     },
     "読む許可がありません" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No permission to read"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -270,6 +432,12 @@
     },
     "閉じる" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Close"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -280,6 +448,12 @@
     },
     "（この版では空）" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "(Empty in this version)"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",

@@ -58,6 +58,35 @@ struct LocalizationSourceTests {
         #expect(missing.isEmpty, "ja が無い: \(missing)")
     }
 
+    /// 足した文字列に英語が無ければ、英語の画面にそこだけ日本語が出る。
+    /// 英語の値に日本語が混じっているもの（写しただけで訳し忘れたもの）も止める。
+    @Test("カタログのすべての文字列に英語の訳がある")
+    func catalogHasEnglish() throws {
+        let url = Self.packageRoot.appendingPathComponent("Sources/NullnoteUI/Localizable.xcstrings")
+        let json = try JSONSerialization.jsonObject(with: Data(contentsOf: url)) as? [String: Any]
+        let strings = json?["strings"] as? [String: [String: Any]] ?? [:]
+        var missing: [String] = []
+        var japanese: [String] = []
+        for (key, entry) in strings {
+            let en = (entry["localizations"] as? [String: Any])?["en"]
+            let values = en.map(Self.values(in:)) ?? []
+            if values.isEmpty { missing.append(key) }
+            if values.contains(where: Self.containsJapanese) { japanese.append(key) }
+        }
+        #expect(!strings.isEmpty)
+        #expect(missing.isEmpty, "英語が無い: \(missing.sorted())")
+        #expect(japanese.isEmpty, "英語の値に日本語が残っている: \(japanese.sorted())")
+    }
+
+    /// `stringUnit` の `value` を、複数形の枝も含めてすべて集める。
+    private static func values(in node: Any) -> [String] {
+        guard let dict = node as? [String: Any] else { return [] }
+        return dict.flatMap { key, value -> [String] in
+            if key == "value", let text = value as? String { return [text] }
+            return values(in: value)
+        }
+    }
+
     // MARK: - 走査
 
     struct Offender: Equatable {

@@ -3,6 +3,12 @@
   "strings" : {
     "Finder で表示" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reveal in Finder"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13,6 +19,12 @@
     },
     "Finder で表示する" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reveal in Finder"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -23,6 +35,12 @@
     },
     "Markdown は行末に半角スペース2つを置いたときだけ改行します。入れておくと、そのままの改行もプレビューで改行になります。本文は書き換えません。" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Markdown breaks a line only where it ends with two spaces. With this on, plain line breaks also break in the preview. Your text isn't changed."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -33,6 +51,12 @@
     },
     "「%@」の中の画像を表示するために、このフォルダの閲覧を許可してください。" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "To show the images in “%@”, allow access to this folder."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -43,6 +67,12 @@
     },
     "インデント" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Indentation"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -53,6 +83,12 @@
     },
     "コード" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Code"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -63,6 +99,12 @@
     },
     "テーマ" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Theme"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -73,6 +115,12 @@
     },
     "ファイル名" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "File Name"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -83,6 +131,12 @@
     },
     "ファイル名をコピー" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copy File Name"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -93,6 +147,12 @@
     },
     "ファイル名を変えたとき、本文の先頭の見出しも同じ名前にします。見出しが無ければ足します。" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "When you rename the file, the first heading is changed to the same name. If there's no heading, one is added."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -103,6 +163,12 @@
     },
     "フォルダのパスをコピー" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copy Folder Path"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -113,6 +179,12 @@
     },
     "フルパスをコピー" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copy Path"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -123,6 +195,12 @@
     },
     "プレビュー" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preview"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -133,6 +211,12 @@
     },
     "プレビューを左右に並べる" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show Preview Side by Side"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -143,6 +227,12 @@
     },
     "プレビューを表示" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show Preview"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -153,6 +243,12 @@
     },
     "プレビューを隠す" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hide Preview"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -163,6 +259,12 @@
     },
     "リストの行で Tab を押したときに、1段ぶんとして入れるものです。⇧Tab で戻します。すでに書かれているインデントは、この設定に関係なくそのまま保たれます。" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What Tab inserts for one level in a list. ⇧Tab moves it back. Indentation that's already written is kept as it is, whatever this setting."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -173,6 +275,12 @@
     },
     "リンク" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Link"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -183,6 +291,12 @@
     },
     "先頭の見出しと同期" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sync with first heading"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -193,6 +307,12 @@
     },
     "前を検索" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Find Previous"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -203,6 +323,12 @@
     },
     "取り消し線" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Strikethrough"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -213,6 +339,12 @@
     },
     "合流" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Merging"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -223,6 +355,12 @@
     },
     "同じ語を全部選ぶ" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Select All Occurrences"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -233,6 +371,12 @@
     },
     "同じ語を選ぶ" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Select Next Occurrence"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -243,6 +387,12 @@
     },
     "外の道具が同じファイルを直したとき、行の途中の空白の数だけが違うところは、食い違いとして扱いません。行頭のインデントと行末の空白は、意味が変わるのでそのまま比べます。" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "When another app edits the same file, lines that differ only in the number of spaces within them aren't treated as conflicts. Indentation at the start of a line and spaces at the end are still compared, since they change the meaning."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -253,6 +403,12 @@
     },
     "太字" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bold"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -263,6 +419,12 @@
     },
     "文字を大きく" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bigger"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -273,6 +435,12 @@
     },
     "文字を小さく" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Smaller"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -283,6 +451,12 @@
     },
     "文字サイズ" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Font Size"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -293,6 +467,12 @@
     },
     "文字サイズを戻す" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Actual Size"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -303,6 +483,12 @@
     },
     "文書内を検索（⌘F）" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Find in Document (⌘F)"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -313,6 +499,12 @@
     },
     "斜体" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Italic"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -323,6 +515,12 @@
     },
     "普通の改行でも改行する" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preserve single line breaks"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -333,6 +531,12 @@
     },
     "検索" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Search"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -343,6 +547,12 @@
     },
     "検索…" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Find…"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -353,6 +563,12 @@
     },
     "検索を閉じる" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Close Search"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -363,6 +579,12 @@
     },
     "次を検索" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Find Next"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -373,6 +595,12 @@
     },
     "目次" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Outline"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -383,6 +611,12 @@
     },
     "目次を表示" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show Outline"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -393,6 +627,12 @@
     },
     "目次を隠す" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hide Outline"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -403,6 +643,12 @@
     },
     "空白の違いだけのところは印を出さない" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ignore whitespace-only changes"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -413,6 +659,12 @@
     },
     "編集画面" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Editor"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -423,6 +675,12 @@
     },
     "行番号を表示" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show line numbers"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -433,6 +691,12 @@
     },
     "見出しに合わせてファイル名を付け直すために、「%@」への書き込みを許可してください。" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "To rename the file to match its heading, allow writing to “%@”."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -443,6 +707,12 @@
     },
     "見出しの目次を表示" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show Outline"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -453,6 +723,12 @@
     },
     "許可" : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Allow"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
