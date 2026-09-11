@@ -26,6 +26,9 @@ struct SettingsView: View {
 
             LabeledContent("編集画面") {
                 Toggle("行番号を表示", isOn: $showsLineNumbers)
+                    // 札が折り返したとき、2行目が右に寄らないように。
+                    // `LabeledContent` の中は右揃えが受け継がれる（説明文と同じ手当て）。
+                    .multilineTextAlignment(.leading)
                     .frame(width: 240, alignment: .leading)
             }
 
@@ -51,6 +54,7 @@ struct SettingsView: View {
             LabeledContent("プレビュー") {
                 VStack(alignment: .leading, spacing: 4) {
                     Toggle("普通の改行でも改行する", isOn: $breaksOnNewline)
+                        .multilineTextAlignment(.leading)
                     Text("Markdown は行末に半角スペース2つを置いたときだけ改行します。入れておくと、そのままの改行もプレビューで改行になります。本文は書き換えません。")
                         .font(.callout)
                         .foregroundStyle(.secondary)
@@ -65,6 +69,7 @@ struct SettingsView: View {
             LabeledContent("合流") {
                 VStack(alignment: .leading, spacing: 4) {
                     Toggle("空白の違いだけのところは印を出さない", isOn: $ignoresWhitespace)
+                        .multilineTextAlignment(.leading)
                     Text("外の道具が同じファイルを直したとき、行の途中の空白の数だけが違うところは、食い違いとして扱いません。行頭のインデントと行末の空白は、意味が変わるのでそのまま比べます。")
                         .font(.callout)
                         .foregroundStyle(.secondary)
@@ -78,6 +83,7 @@ struct SettingsView: View {
             LabeledContent("ファイル名") {
                 VStack(alignment: .leading, spacing: 4) {
                     Toggle("先頭の見出しと同期", isOn: $syncsTitleWithFileName)
+                        .multilineTextAlignment(.leading)
                     Text("ファイル名を変えたとき、本文の先頭の見出しも同じ名前にします。見出しが無ければ足します。")
                         .font(.callout)
                         .foregroundStyle(.secondary)
