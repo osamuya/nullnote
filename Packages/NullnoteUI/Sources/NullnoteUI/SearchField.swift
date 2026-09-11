@@ -60,8 +60,8 @@ public struct MarkdownSearchField: View {
                 // （54pt にしていたときは 10pt ぶん余っていた）。
                 .frame(minWidth: 44, alignment: .leading)
 
-            step(systemImage: "chevron.up", help: "前のヒットへ（⌘⇧G）", action: onPrevious)
-            step(systemImage: "chevron.down", help: "次のヒットへ（⌘G）", action: onNext)
+            step(systemImage: "chevron.up", help: Text("前のヒットへ（⌘⇧G）", bundle: .module), action: onPrevious)
+            step(systemImage: "chevron.down", help: Text("次のヒットへ（⌘G）", bundle: .module), action: onNext)
 
             Button(action: onClose) {
                 Image(systemName: "xmark")
@@ -71,8 +71,8 @@ public struct MarkdownSearchField: View {
             }
             .buttonStyle(.plain)
             .foregroundStyle(Color(platform: theme.quote))
-            .help("検索を閉じる（esc）")
-            .accessibilityLabel("検索を閉じる")
+            .help(Text("検索を閉じる（esc）", bundle: .module))
+            .accessibilityLabel(Text("検索を閉じる", bundle: .module))
         }
         // ツールバーが項目の背景をカプセル状に敷く。その縁と中身が近すぎると、
         // 角が丸いぶん**入力欄が縁に食い込んで見える**。左は広めに取る。
@@ -95,7 +95,7 @@ public struct MarkdownSearchField: View {
                 .foregroundStyle(Color(platform: theme.marker))
 
             // ラベルは読み上げ用。画面には出さない（虫めがねで用は足りている）。
-            TextField("検索", text: $query)
+            TextField(String(localized: "検索", bundle: .module), text: $query)
                 .textFieldStyle(.plain)
                 .font(.system(size: 12))
                 .foregroundStyle(Color(platform: theme.text))
@@ -104,7 +104,7 @@ public struct MarkdownSearchField: View {
                 // `onKeyPress` で return を横取りすると、日本語入力の変換確定まで
                 // 奪ってしまう。前へ戻るのは ⌘⇧G とボタンに任せる。
                 .onSubmit(onNext)
-                .accessibilityLabel("検索")
+                .accessibilityLabel(Text("検索", bundle: .module))
                 .focusFromAppKit(generation: focusGeneration)
 
             if !query.isEmpty {
@@ -117,8 +117,8 @@ public struct MarkdownSearchField: View {
                 }
                 .buttonStyle(.plain)
                 .foregroundStyle(Color(platform: theme.marker))
-                .help("検索語を消す")
-                .accessibilityLabel("検索語を消す")
+                .help(Text("検索語を消す", bundle: .module))
+                .accessibilityLabel(Text("検索語を消す", bundle: .module))
             }
         }
         .padding(.horizontal, 7)
@@ -131,7 +131,7 @@ public struct MarkdownSearchField: View {
         .frame(minWidth: 110, idealWidth: 200, maxWidth: 240)
     }
 
-    private func step(systemImage: String, help: String, action: @escaping () -> Void) -> some View {
+    private func step(systemImage: String, help: Text, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: systemImage)
                 .font(.system(size: 10, weight: .semibold))

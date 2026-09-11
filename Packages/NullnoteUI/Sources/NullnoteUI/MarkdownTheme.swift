@@ -14,11 +14,14 @@ public enum MarkdownAppearance: String, CaseIterable, Identifiable, Sendable {
     public var id: String { rawValue }
 
     /// 画面に出す名前。設定画面とフッターで同じ言葉を使う。
-    public var label: String {
+    ///
+    /// **`String` にしない。** `String(localized:)` で引くとその場で言語が決まってしまう。
+    /// 描画するときまで決めない（docs/12-make-multilingual.md の 5.3.1）。
+    public var label: LocalizedStringResource {
         switch self {
-        case .system: "システム"
-        case .light: "ライト"
-        case .dark: "ダーク"
+        case .system: LocalizedStringResource("システム", bundle: .module)
+        case .light: LocalizedStringResource("ライト", bundle: .module)
+        case .dark: LocalizedStringResource("ダーク", bundle: .module)
         }
     }
 }

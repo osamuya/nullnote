@@ -120,7 +120,9 @@ public struct SearchSession: Equatable, Sendable {
     /// まだ何も打っていないのに見つからなかったように読める。
     public var countLabel: String {
         guard !query.isEmpty else { return "" }
-        guard let currentIndex else { return "見つかりません" }
+        guard let currentIndex else {
+            return String(localized: "見つかりません", bundle: .module, comment: "2か所で使う（検索欄の件数／画像が読めない理由）。どちらにも合う言葉にすること")
+        }
         return "\(currentIndex + 1) / \(matches.count)"
     }
 }

@@ -298,7 +298,7 @@ private struct PreviewConflictView: View {
             if blocks.isEmpty {
                 // **空でも黙って詰めない。** 帯だけが並ぶと、描き損ねに見える。
                 // 片側だけが書き足した競合では、こちらが本当に空になる。
-                Text("（この版では空）")
+                Text("（この版では空）", bundle: .module)
                     .font(.system(size: theme.fontSize * 0.9))
                     .foregroundStyle(Color(platform: theme.quote))
             } else {
@@ -361,11 +361,11 @@ private struct PreviewListView: View {
                     .font(.system(size: theme.fontSize))
             }
         } else if list.isOrdered {
-            Text("\(list.start + index).")
+            Text(verbatim: "\(list.start + index).")
                 .font(.system(size: theme.fontSize, design: .monospaced))
                 .foregroundStyle(Color(platform: theme.marker))
         } else {
-            Text("•")
+            Text(verbatim: "•")
                 .font(.system(size: theme.fontSize))
                 .foregroundStyle(Color(platform: theme.marker))
         }

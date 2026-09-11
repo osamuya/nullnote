@@ -47,7 +47,7 @@ enum FolderAccess {
     static func request(for folder: URL) async -> Bool {
         await request(
             for: folder,
-            message: "「\(folder.lastPathComponent)」の中の画像を表示するために、このフォルダの閲覧を許可してください。",
+            message: String(localized: "「\(folder.lastPathComponent)」の中の画像を表示するために、このフォルダの閲覧を許可してください。"),
             isSatisfied: { FileManager.default.isReadableFile(atPath: $0.path) }
         )
     }
@@ -61,7 +61,7 @@ enum FolderAccess {
     static func requestWriting(for folder: URL) async -> Bool {
         await request(
             for: folder,
-            message: "見出しに合わせてファイル名を付け直すために、「\(folder.lastPathComponent)」への書き込みを許可してください。",
+            message: String(localized: "見出しに合わせてファイル名を付け直すために、「\(folder.lastPathComponent)」への書き込みを許可してください。"),
             isSatisfied: { FileManager.default.isWritableFile(atPath: $0.path) }
         )
     }
@@ -78,7 +78,7 @@ enum FolderAccess {
 
         let panel = NSOpenPanel()
         panel.message = message
-        panel.prompt = "許可"
+        panel.prompt = String(localized: "許可")
         panel.canChooseFiles = false
         panel.canChooseDirectories = true
         panel.allowsMultipleSelection = false

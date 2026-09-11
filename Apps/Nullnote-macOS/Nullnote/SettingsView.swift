@@ -97,7 +97,7 @@ struct SettingsView: View {
                         in: Double(MarkdownTheme.minimumFontSize)...Double(MarkdownTheme.maximumFontSize),
                         step: 1
                     )
-                    Text("\(Int(fontSize)) pt")
+                    Text(verbatim: "\(Int(fontSize)) pt")
                         .font(.callout)
                         .foregroundStyle(.secondary)
                         .monospacedDigit()

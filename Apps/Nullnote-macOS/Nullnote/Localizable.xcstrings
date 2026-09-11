@@ -1,0 +1,466 @@
+{
+  "sourceLanguage" : "ja",
+  "strings" : {
+    "Finder で表示" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Finder で表示"
+          }
+        }
+      }
+    },
+    "Finder で表示する" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Finder で表示する"
+          }
+        }
+      }
+    },
+    "Markdown は行末に半角スペース2つを置いたときだけ改行します。入れておくと、そのままの改行もプレビューで改行になります。本文は書き換えません。" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Markdown は行末に半角スペース2つを置いたときだけ改行します。入れておくと、そのままの改行もプレビューで改行になります。本文は書き換えません。"
+          }
+        }
+      }
+    },
+    "「%@」の中の画像を表示するために、このフォルダの閲覧を許可してください。" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "「%@」の中の画像を表示するために、このフォルダの閲覧を許可してください。"
+          }
+        }
+      }
+    },
+    "インデント" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "インデント"
+          }
+        }
+      }
+    },
+    "コード" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "コード"
+          }
+        }
+      }
+    },
+    "テーマ" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "テーマ"
+          }
+        }
+      }
+    },
+    "ファイル名" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ファイル名"
+          }
+        }
+      }
+    },
+    "ファイル名をコピー" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ファイル名をコピー"
+          }
+        }
+      }
+    },
+    "ファイル名を変えたとき、本文の先頭の見出しも同じ名前にします。見出しが無ければ足します。" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ファイル名を変えたとき、本文の先頭の見出しも同じ名前にします。見出しが無ければ足します。"
+          }
+        }
+      }
+    },
+    "フォルダのパスをコピー" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "フォルダのパスをコピー"
+          }
+        }
+      }
+    },
+    "フルパスをコピー" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "フルパスをコピー"
+          }
+        }
+      }
+    },
+    "プレビュー" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "プレビュー"
+          }
+        }
+      }
+    },
+    "プレビューを左右に並べる" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "プレビューを左右に並べる"
+          }
+        }
+      }
+    },
+    "プレビューを表示" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "プレビューを表示"
+          }
+        }
+      }
+    },
+    "プレビューを隠す" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "プレビューを隠す"
+          }
+        }
+      }
+    },
+    "リストの行で Tab を押したときに、1段ぶんとして入れるものです。⇧Tab で戻します。すでに書かれているインデントは、この設定に関係なくそのまま保たれます。" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "リストの行で Tab を押したときに、1段ぶんとして入れるものです。⇧Tab で戻します。すでに書かれているインデントは、この設定に関係なくそのまま保たれます。"
+          }
+        }
+      }
+    },
+    "リンク" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "リンク"
+          }
+        }
+      }
+    },
+    "先頭の見出しと同期" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "先頭の見出しと同期"
+          }
+        }
+      }
+    },
+    "前を検索" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "前を検索"
+          }
+        }
+      }
+    },
+    "取り消し線" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "取り消し線"
+          }
+        }
+      }
+    },
+    "合流" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "合流"
+          }
+        }
+      }
+    },
+    "同じ語を全部選ぶ" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "同じ語を全部選ぶ"
+          }
+        }
+      }
+    },
+    "同じ語を選ぶ" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "同じ語を選ぶ"
+          }
+        }
+      }
+    },
+    "外の道具が同じファイルを直したとき、行の途中の空白の数だけが違うところは、食い違いとして扱いません。行頭のインデントと行末の空白は、意味が変わるのでそのまま比べます。" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "外の道具が同じファイルを直したとき、行の途中の空白の数だけが違うところは、食い違いとして扱いません。行頭のインデントと行末の空白は、意味が変わるのでそのまま比べます。"
+          }
+        }
+      }
+    },
+    "太字" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "太字"
+          }
+        }
+      }
+    },
+    "文字を大きく" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "文字を大きく"
+          }
+        }
+      }
+    },
+    "文字を小さく" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "文字を小さく"
+          }
+        }
+      }
+    },
+    "文字サイズ" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "文字サイズ"
+          }
+        }
+      }
+    },
+    "文字サイズを戻す" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "文字サイズを戻す"
+          }
+        }
+      }
+    },
+    "文書内を検索（⌘F）" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "文書内を検索（⌘F）"
+          }
+        }
+      }
+    },
+    "斜体" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "斜体"
+          }
+        }
+      }
+    },
+    "普通の改行でも改行する" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "普通の改行でも改行する"
+          }
+        }
+      }
+    },
+    "検索" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "検索"
+          }
+        }
+      }
+    },
+    "検索…" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "検索…"
+          }
+        }
+      }
+    },
+    "検索を閉じる" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "検索を閉じる"
+          }
+        }
+      }
+    },
+    "次を検索" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "次を検索"
+          }
+        }
+      }
+    },
+    "目次" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "目次"
+          }
+        }
+      }
+    },
+    "目次を表示" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "目次を表示"
+          }
+        }
+      }
+    },
+    "目次を隠す" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "目次を隠す"
+          }
+        }
+      }
+    },
+    "空白の違いだけのところは印を出さない" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "空白の違いだけのところは印を出さない"
+          }
+        }
+      }
+    },
+    "編集画面" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "編集画面"
+          }
+        }
+      }
+    },
+    "行番号を表示" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "行番号を表示"
+          }
+        }
+      }
+    },
+    "見出しに合わせてファイル名を付け直すために、「%@」への書き込みを許可してください。" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "見出しに合わせてファイル名を付け直すために、「%@」への書き込みを許可してください。"
+          }
+        }
+      }
+    },
+    "見出しの目次を表示" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "見出しの目次を表示"
+          }
+        }
+      }
+    },
+    "許可" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "許可"
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

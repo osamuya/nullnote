@@ -121,12 +121,12 @@ struct ZoomedImageView: View {
     private var controls: some View {
         HStack(spacing: 10) {
             if images.count > 1 {
-                step(systemImage: "chevron.left", help: "前の画像へ（←）", key: .leftArrow) { move(by: -1) }
+                step(systemImage: "chevron.left", help: Text("前の画像へ（←）", bundle: .module), key: .leftArrow) { move(by: -1) }
                     .disabled(index <= 0)
-                Text("\(index + 1) / \(images.count)")
+                Text(verbatim: "\(index + 1) / \(images.count)")
                     .font(.system(size: 11).monospacedDigit())
                     .foregroundStyle(Color(platform: theme.quote))
-                step(systemImage: "chevron.right", help: "次の画像へ（→）", key: .rightArrow) { move(by: 1) }
+                step(systemImage: "chevron.right", help: Text("次の画像へ（→）", bundle: .module), key: .rightArrow) { move(by: 1) }
                     .disabled(index >= images.count - 1)
             }
 
@@ -136,14 +136,14 @@ struct ZoomedImageView: View {
                 .lineLimit(1)
                 .frame(maxWidth: .infinity, alignment: .leading)
 
-            Button("閉じる") { onClose() }
+            Button(String(localized: "閉じる", bundle: .module)) { onClose() }
                 .keyboardShortcut(.cancelAction)
         }
         .padding(12)
     }
 
     private func step(
-        systemImage: String, help: String, key: KeyEquivalent, action: @escaping () -> Void
+        systemImage: String, help: Text, key: KeyEquivalent, action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
             Image(systemName: systemImage)
@@ -193,6 +193,11 @@ struct PreviewImageView: View {
         case failed(ImageLoader.Failure)
     }
 
+    /// 読み上げと、読めなかったときの表示に使う名前。代替テキストが無ければ「画像」。
+    private var altLabel: String {
+        alt.isEmpty ? String(localized: "画像", bundle: .module) : alt
+    }
+
     var body: some View {
         content
             .task(id: ImageLoadKey(source: source, document: documentURL)) { await load() }
@@ -212,8 +217,8 @@ struct PreviewImageView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 6))
                     .contentShape(RoundedRectangle(cornerRadius: 6))
                     .onTapGesture { onTap?() }
-                    .help(alt.isEmpty ? "押すと大きく表示します" : "\(alt) — 押すと大きく表示します")
-                    .accessibilityLabel(alt.isEmpty ? "画像" : alt)
+                    .help(alt.isEmpty ? Text("押すと大きく表示します", bundle: .module) : Text("\(alt) — 押すと大きく表示します", bundle: .module))
+                    .accessibilityLabel(altLabel)
 
             case .center:
                 // **幅いっぱいに広げる。** 元より小さい絵は引き伸ばされる。
@@ -222,7 +227,7 @@ struct PreviewImageView: View {
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .frame(maxWidth: .infinity)
-                    .accessibilityLabel(alt.isEmpty ? "画像" : alt)
+                    .accessibilityLabel(altLabel)
 
             case .fitted:
                 // 与えられた場所に収まるだけ広げる。はみ出させない。
@@ -230,7 +235,7 @@ struct PreviewImageView: View {
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .accessibilityLabel(alt.isEmpty ? "画像" : alt)
+                    .accessibilityLabel(altLabel)
 
             case .normal:
                 Image(platform: image)
@@ -239,19 +244,19 @@ struct PreviewImageView: View {
                     // 元の大きさより引き伸ばさない。粗くなるだけで得が無い。
                     .frame(maxWidth: image.size.width)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .accessibilityLabel(alt.isEmpty ? "画像" : alt)
+                    .accessibilityLabel(altLabel)
             }
 
         case .loading:
-            placeholder(alt.isEmpty ? "画像を読み込み中…" : alt)
+            placeholder(alt.isEmpty ? String(localized: "画像を読み込み中…", bundle: .module) : alt)
 
         case .failed(let failure):
             HStack(spacing: 10) {
-                placeholder("\(alt.isEmpty ? "画像" : alt) — \(failure.reason)")
+                placeholder("\(altLabel) — \(failure.reason)")
                 // 許可さえあれば読めるものだけ、頼む口を出す。
                 // 「見つかりません」に許可のボタンを出しても、押しても直らない。
                 if failure == .noPermission, accessRequester != nil {
-                    Button("許可する…") { Task { await requestAccess() } }
+                    Button(String(localized: "許可する…", bundle: .module)) { Task { await requestAccess() } }
                         .controlSize(.small)
                         .buttonStyle(.bordered)
                         // **アプリ全体の色（黄色）を使わない。**
@@ -259,7 +264,7 @@ struct PreviewImageView: View {
                         // 明るい黄色だとライトの地に溶けて読めない。
                         // 記法の灰色に寄せて、本文より一段引いた見た目にする。
                         .tint(Color(platform: theme.quote))
-                        .help("この画像があるフォルダの閲覧を許可します")
+                        .help(Text("この画像があるフォルダの閲覧を許可します", bundle: .module))
                 }
             }
         }
@@ -322,10 +327,10 @@ actor ImageLoader {
 
         var reason: String {
             switch self {
-            case .notFound: "見つかりません"
-            case .noPermission: "読む許可がありません"
-            case .unreadable: "読み込めません"
-            case .badSource: "場所が分かりません"
+            case .notFound: String(localized: "見つかりません", bundle: .module, comment: "2か所で使う（検索欄の件数／画像が読めない理由）。どちらにも合う言葉にすること")
+            case .noPermission: String(localized: "読む許可がありません", bundle: .module)
+            case .unreadable: String(localized: "読み込めません", bundle: .module)
+            case .badSource: String(localized: "場所が分かりません", bundle: .module)
             }
         }
     }

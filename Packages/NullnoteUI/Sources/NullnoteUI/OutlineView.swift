@@ -98,7 +98,7 @@ public struct OutlineView: View {
     }
 
     private var emptyState: some View {
-        Text("見出しがありません")
+        Text("見出しがありません", bundle: .module)
             .font(.system(size: theme.fontSize * 0.9))
             .foregroundStyle(Color(platform: theme.marker))
             .frame(maxWidth: .infinity, maxHeight: .infinity)

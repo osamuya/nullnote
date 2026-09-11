@@ -20,11 +20,14 @@ public struct MarkdownStatusBar: View {
     public var body: some View {
         HStack(spacing: 0) {
             Spacer(minLength: 0)
-            item(theme.appearance.label)
+            item(String(localized: theme.appearance.label))
             divider
             item("\(Int(theme.fontSize)) pt")
             divider
-            item("\(DocumentSize.lineCount(of: source).formatted()) 行")
+            // 数は `.formatted()` せずに差し込む。`String(localized:)` が桁区切りを入れる
+            // （2026-09-11 に実測。1234 → "1,234 行"）。数を書式指定子（%lld）のまま
+            // 残しておくと、英語の "1 line" / "25 lines" をカタログの側で書き分けられる。
+            item(String(localized: "\(DocumentSize.lineCount(of: source)) 行", bundle: .module))
             divider
             item(DocumentSize.byteLabel(of: source))
         }
@@ -54,7 +57,7 @@ public struct MarkdownStatusBar: View {
     }
 
     private var divider: some View {
-        Text("·").padding(.horizontal, 8).opacity(0.6)
+        Text(verbatim: "·").padding(.horizontal, 8).opacity(0.6)
     }
 }
 

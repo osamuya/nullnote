@@ -39,8 +39,8 @@ struct StatusBarTests {
 
     @Test("テーマの名前は設定画面と同じ言葉を使う")
     func appearanceLabels() {
-        #expect(MarkdownAppearance.system.label == "システム")
-        #expect(MarkdownAppearance.light.label == "ライト")
-        #expect(MarkdownAppearance.dark.label == "ダーク")
+        #expect(String(localized: MarkdownAppearance.system.label) == "システム")
+        #expect(String(localized: MarkdownAppearance.light.label) == "ライト")
+        #expect(String(localized: MarkdownAppearance.dark.label) == "ダーク")
     }
 }

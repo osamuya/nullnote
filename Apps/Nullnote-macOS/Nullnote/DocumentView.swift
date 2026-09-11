@@ -535,21 +535,21 @@ struct DocumentView: View {
         guard let fileURL else { return [] }
         return [
             EditorContextMenuItem(
-                title: "Finder で表示する", key: "r", modifiers: [.option, .command]
+                title: String(localized: "Finder で表示する"), key: "r", modifiers: [.option, .command]
             ) {
                 // フォルダを開いて、そのファイルを選んだ状態にする。
                 NSWorkspace.shared.activateFileViewerSelecting([fileURL])
             },
             // ⌥⌘C は Finder の「パス名としてコピー」と同じ組み合わせ。
             EditorContextMenuItem(
-                title: "フルパスをコピー", key: "c", modifiers: [.option, .command]
+                title: String(localized: "フルパスをコピー"), key: "c", modifiers: [.option, .command]
             ) {
                 Self.putOnPasteboard(FilePathText.absolute(fileURL))
             },
-            EditorContextMenuItem(title: "フォルダのパスをコピー") {
+            EditorContextMenuItem(title: String(localized: "フォルダのパスをコピー")) {
                 Self.putOnPasteboard(FilePathText.folder(fileURL))
             },
-            EditorContextMenuItem(title: "ファイル名をコピー") {
+            EditorContextMenuItem(title: String(localized: "ファイル名をコピー")) {
                 Self.putOnPasteboard(FilePathText.name(fileURL))
             }
         ]

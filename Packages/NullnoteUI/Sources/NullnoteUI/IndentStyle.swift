@@ -31,11 +31,12 @@ public enum IndentStyle: String, CaseIterable, Identifiable, Sendable {
         }
     }
 
-    public var label: String {
+    /// 設定画面に出す名前。`MarkdownAppearance.label` と同じ理由で `String` にしない。
+    public var label: LocalizedStringResource {
         switch self {
-        case .fourSpaces: "スペース4"
-        case .twoSpaces: "スペース2"
-        case .tab: "タブ"
+        case .fourSpaces: LocalizedStringResource("スペース4", bundle: .module)
+        case .twoSpaces: LocalizedStringResource("スペース2", bundle: .module)
+        case .tab: LocalizedStringResource("タブ", bundle: .module)
         }
     }
 }
