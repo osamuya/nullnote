@@ -542,7 +542,7 @@ struct DocumentView: View {
             },
             // ⌥⌘C は Finder の「パス名としてコピー」と同じ組み合わせ。
             EditorContextMenuItem(
-                title: "パスをコピー", key: "c", modifiers: [.option, .command]
+                title: "フルパスをコピー", key: "c", modifiers: [.option, .command]
             ) {
                 Self.putOnPasteboard(FilePathText.absolute(fileURL))
             },

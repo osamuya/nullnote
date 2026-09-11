@@ -1,13 +1,18 @@
 # このリポジトリでの決まり
 
-> **いま進行中の作業**: **1.1（ビルド2）を出すところ**（ブランチ `version1.1`）。
-> 版は `Apps/Nullnote-macOS/Version.xcconfig` で 1.1 / 2 に上げてある。
-> 残りの段取りは `docs/04-development-flow.md` の「10. 1.1 を出す」。
-> 1.0 は 2026-08-30 に承認され、8-31 に 148 地域で公開済み。経緯は `docs/09-release-fb1.md`。
-> **残っている要望と不具合は `docs/運用上の修正点・改良点.md`。着手する前にそこを読むこと。**
->
-> **版を出す前に iOS 向けのビルドも通す**（`xcodebuild -destination 'generic/platform=iOS'`）。
-> `#if canImport(AppKit)` の入れ違いは macOS 側では何も言わない。1.1 で実際に踏んだ（D-61）。
+**ここには変わらないことだけを書く。** いま何版を出しているか、どのブランチか、
+何が残っているかといった**動く情報はここに置かない**。古くなったまま断定形で
+残り、読む側が毎回「どこが古いか」を判定する羽目になるため。
+
+動く情報の置き場所:
+
+| 知りたいこと | 見るところ |
+|---|---|
+| いまの版・出す段取り・公開の経緯 | `docs/03-release-plan.md` |
+| 残っている要望と不具合 | `docs/運用上の修正点・改良点.md` |
+| 版の番号そのもの | `Apps/Nullnote-macOS/Version.xcconfig` |
+
+**着手する前に `docs/運用上の修正点・改良点.md` を読むこと。**
 
 ## `.md` を書き換えるときは `mdmerge` を通す
 
@@ -49,6 +54,7 @@ cd Apps/Nullnote-macOS   && xcodebuild -scheme Nullnote -configuration Debug bui
 ```
 
 `Packages/` を直したら、**iOS 向けにも通す**（版を出す前は必ず）。
+`#if canImport(AppKit)` の入れ違いは macOS 側では何も言わない。1.1 で実際に踏んだ（D-61）。
 
 ```sh
 cd Packages/MarkdownCore && xcodebuild -scheme MarkdownCore -destination 'generic/platform=iOS' build

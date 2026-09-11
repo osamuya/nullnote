@@ -3,6 +3,9 @@ import PackageDescription
 
 let package = Package(
     name: "MarkdownCore",
+    // 画面に出る文字列を持つため、既定の言語を宣言する。
+    // 詳細は docs/12-make-multilingual.md。
+    defaultLocalization: "ja",
     // macOS アプリが先行するが、iOS 展開時にそのまま載せ替えられるよう
     // 最初から両プラットフォームを宣言しておく。
     platforms: [

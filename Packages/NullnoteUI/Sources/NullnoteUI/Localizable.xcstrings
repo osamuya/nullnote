@@ -1,0 +1,22 @@
+{
+  "sourceLanguage" : "ja",
+  "strings" : {
+    "見出しがありません" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No headings"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "見出しがありません"
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

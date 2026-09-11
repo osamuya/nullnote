@@ -178,7 +178,7 @@ private struct CopyPathButtons: View {
 
     var body: some View {
         // Finder の「パス名としてコピー」と同じ ⌥⌘C。
-        Button("パスをコピー") { commands?.copyPath() }
+        Button("フルパスをコピー") { commands?.copyPath() }
             .keyboardShortcut("c", modifiers: [.option, .command])
             .disabled(commands?.hasFile != true)
 

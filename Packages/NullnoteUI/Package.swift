@@ -3,6 +3,12 @@ import PackageDescription
 
 let package = Package(
     name: "NullnoteUI",
+    // 画面の文字列をこのパッケージの中に持つため、既定の言語を宣言する。
+    // これが無いと localized resources を置けない。
+    // **このパッケージの文字列は Bundle.module から引く。**
+    // 使う側で bundle: .module を渡し忘れると Bundle.main を見にいき、
+    // 訳が見つからず日本語のまま出る（エラーにはならない）。docs/12-make-multilingual.md
+    defaultLocalization: "ja",
     platforms: [
         .macOS(.v14),
         .iOS(.v17),
@@ -21,7 +27,9 @@ let package = Package(
             dependencies: [
                 "MarkdownCore",
                 .product(name: "Markdown", package: "swift-markdown"),
-            ]
+            ],
+            // 画面の文字列。Bundle.module に入るので、使う側で bundle: .module が要る。
+            resources: [.process("Localizable.xcstrings")]
         ),
         .testTarget(name: "NullnoteUITests", dependencies: ["NullnoteUI"]),
     ]
