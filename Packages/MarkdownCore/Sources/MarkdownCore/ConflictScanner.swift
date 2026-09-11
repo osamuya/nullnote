@@ -3,11 +3,11 @@ import Foundation
 /// 合流の印で割られたところ。行番号は **0 始まり**。
 public struct ConflictRegion: Equatable, Sendable {
 
-    /// `<<<<<<< 自分の更新` の行。
+    /// `<<<<<<< Internal updates` の行。
     public let ourMarkerLine: Int
     /// `=======` の行。
     public let separatorLine: Int
-    /// `>>>>>>> 外部の更新` の行。
+    /// `>>>>>>> External updates` の行。
     public let theirMarkerLine: Int
 
     public init(ourMarkerLine: Int, separatorLine: Int, theirMarkerLine: Int) {
@@ -45,13 +45,13 @@ public enum ConflictScanner {
         for (index, raw) in lines.enumerated() {
             let line = raw.trimmingCharacters(in: .whitespaces)
 
-            if line == ThreeWayMerge.ourMarker {
+            if ThreeWayMerge.isOurMarker(line) {
                 // 入れ子にはならない。開いたまま次の開きが来たら、新しい方を採る。
                 ourMarker = index
                 separator = nil
             } else if line == ThreeWayMerge.separator, ourMarker != nil, separator == nil {
                 separator = index
-            } else if line == ThreeWayMerge.theirMarker,
+            } else if ThreeWayMerge.isTheirMarker(line),
                 let start = ourMarker, let middle = separator {
                 found.append(
                     ConflictRegion(

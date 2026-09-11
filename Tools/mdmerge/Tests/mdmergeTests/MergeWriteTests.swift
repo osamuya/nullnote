@@ -105,5 +105,5 @@ struct MergeWriteTests {
 
 /// テストから印の綴りを直書きしないための入口。
 enum ThreeWayMergeMarkers {
-    static let ours = "<<<<<<< 自分の更新"
+    static let ours = "<<<<<<< Internal updates"
 }

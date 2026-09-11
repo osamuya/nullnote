@@ -250,12 +250,12 @@ public struct MarkdownTheme {
 
     // MARK: - 合流の印
 
-    /// `<<<<<<< 自分の更新` の行。**赤。**
+    /// `<<<<<<< Internal updates` の行。**赤。**
     public var conflictOurs: PlatformColor {
         .dynamic(light: .rgb(190, 45, 60), dark: .rgb(255, 120, 135))
     }
 
-    /// `>>>>>>> 外部の更新` の行。**緑。**
+    /// `>>>>>>> External updates` の行。**緑。**
     public var conflictTheirs: PlatformColor {
         .dynamic(light: .rgb(38, 122, 62), dark: .rgb(115, 210, 140))
     }

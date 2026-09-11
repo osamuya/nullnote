@@ -17,11 +17,11 @@ import Foundation
 /// ## 印の形
 ///
 /// ```
-/// <<<<<<< 自分の更新
+/// <<<<<<< Internal updates
 /// 自分が書いた行
 /// =======
 /// 外で書かれた行
-/// >>>>>>> 外部の更新
+/// >>>>>>> External updates
 /// ```
 ///
 /// **git と同じ形にしてある。** 見慣れているうえ、他のツールもこの形を競合として扱える。
@@ -33,12 +33,30 @@ public enum ThreeWayMerge {
 
     /// 印に添える名前。**印そのものと別に持つ。**
     /// プレビューは印を出さず、この名前だけを見出しに使う（D-60）。
-    public static let ourLabel = "自分の更新"
-    public static let theirLabel = "外部の更新"
+    ///
+    /// **英語で固定し、画面の言語では変えない**（D-64）。書類に書き込むものなので、
+    /// 言語で変えると、別の言語の画面で書いた印を読めなくなる（読む側は綴りの完全一致で見る）。
+    /// プレビューの見出しも、日本語の画面のままこの英語を出す。
+    public static let ourLabel = "Internal updates"
+    public static let theirLabel = "External updates"
 
     public static let ourMarker = "<<<<<<< \(ourLabel)"
     public static let separator = "======="
     public static let theirMarker = ">>>>>>> \(theirLabel)"
+
+    /// 1.1 までの印。**読むときだけ認め、書かない**（D-64）。
+    /// 片付けないまま 1.2 に上げた書類で、印が本文に化けないようにする。
+    static let legacyOurMarker = "<<<<<<< 自分の更新"
+    static let legacyTheirMarker = ">>>>>>> 外部の更新"
+
+    /// 読む側（編集画面の色分けとプレビュー）はこれで判定する。前後の空白は除いてから渡すこと。
+    static func isOurMarker(_ line: String) -> Bool {
+        line == ourMarker || line == legacyOurMarker
+    }
+
+    static func isTheirMarker(_ line: String) -> Bool {
+        line == theirMarker || line == legacyTheirMarker
+    }
 
     public struct Result: Equatable {
         /// 合流した結果。競合したところには印が入っている。

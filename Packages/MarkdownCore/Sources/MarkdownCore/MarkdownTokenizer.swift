@@ -316,11 +316,11 @@ public struct MarkdownTokenizer: Sendable {
             return (.ourBody, .conflictOurs)
 
         case .conflictTheirs:
-            if line == ThreeWayMerge.theirMarker { return (.theirMarker, .blank) }
+            if ThreeWayMerge.isTheirMarker(line) { return (.theirMarker, .blank) }
             return (.theirBody, .conflictTheirs)
 
         default:
-            if line == ThreeWayMerge.ourMarker { return (.ourMarker, .conflictOurs) }
+            if ThreeWayMerge.isOurMarker(line) { return (.ourMarker, .conflictOurs) }
             return nil
         }
     }

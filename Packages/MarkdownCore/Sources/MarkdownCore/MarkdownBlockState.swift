@@ -26,7 +26,7 @@ public enum MarkdownBlockState: Hashable, Sendable {
     case tableBody(columnCount: Int)
     /// 合流の印の中。**自分の版の側。** `=======` で相手の側に移る。
     case conflictOurs
-    /// 合流の印の中。**外の版の側。** `>>>>>>> 外部の更新` で抜ける。
+    /// 合流の印の中。**外の版の側。** `>>>>>>> External updates` で抜ける。
     case conflictTheirs
     /// 閉じていない HTML コメント（`<!--`）の中。
     ///
