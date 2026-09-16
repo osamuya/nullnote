@@ -28,8 +28,14 @@ let package = Package(
                 "MarkdownCore",
                 .product(name: "Markdown", package: "swift-markdown"),
             ],
-            // 画面の文字列。Bundle.module に入るので、使う側で bundle: .module が要る。
-            resources: [.process("Localizable.xcstrings")]
+            resources: [
+                // 画面の文字列。Bundle.module に入るので、使う側で bundle: .module が要る。
+                .process("Localizable.xcstrings"),
+                // mermaid の図を描く器。**`.copy` で folder ごと入れる。**
+                // `.process` にすると HTML と JS が束の直下に散らばり、
+                // `host.html` から `mermaid.min.js` を相対で読めなくなる。
+                .copy("Mermaid"),
+            ]
         ),
         .testTarget(name: "NullnoteUITests", dependencies: ["NullnoteUI"]),
     ]

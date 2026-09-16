@@ -26,6 +26,12 @@ struct PreviewBlock: Identifiable {
         case quote([PreviewBlock])
         case list(PreviewList)
         case codeBlock(code: String, language: String?)
+        /// ```` ```mermaid ```` で囲まれた図。**中身は解釈しない。**
+        ///
+        /// 記述の解釈と作図は mermaid.js に任せ、ここでは素通しする。
+        /// 自前で解釈すると「Nullnote が描けるもの」と「mermaid が描けるもの」が
+        /// 永久にずれ続け、そのずれを説明し続けることになる（D-65）。
+        case mermaid(code: String)
         case table(PreviewTable)
         /// 画像だけで出来た段落。**文中に混ざった画像は含めない**（そちらは代替テキストのまま）。
         ///
@@ -98,6 +104,23 @@ extension Array where Element == PreviewBlock {
             case .list(let list): list.items.flatMap { $0.blocks.allImages }
             case .conflict(let conflict): conflict.ours.allImages + conflict.theirs.allImages
             default: []
+            }
+        }
+    }
+
+    /// 文書のどこかに mermaid の図があるか。**引用やリストの中も見る。**
+    ///
+    /// プレビューの積み方を決めるのに使う。図があるときは `LazyVStack` を使えない
+    /// （高さが遅れて決まるため、送れる範囲が足りなくなる。D-65）。
+    var containsDiagram: Bool {
+        contains { block in
+            switch block.content {
+            case .mermaid: true
+            case .quote(let blocks): blocks.containsDiagram
+            case .list(let list): list.items.contains { $0.blocks.containsDiagram }
+            case .conflict(let conflict):
+                conflict.ours.containsDiagram || conflict.theirs.containsDiagram
+            default: false
             }
         }
     }
@@ -321,6 +344,12 @@ struct PreviewBuilder {
         case let code as CodeBlock:
             // 末尾の改行は表示上ノイズになるので落とす。
             let body = code.code.hasSuffix("\n") ? String(code.code.dropLast()) : code.code
+            if isMermaid(code.language) {
+                // **空のときは図にしない。** 書きかけの ```mermaid を開いている最中に、
+                // 空の枠が出たり消えたりする。中身が入るまではコードのまま置く。
+                let trimmed = body.trimmingCharacters(in: .whitespacesAndNewlines)
+                if !trimmed.isEmpty { return .mermaid(code: body) }
+            }
             return .codeBlock(code: body, language: code.language)
 
         case let table as Markdown.Table:
@@ -386,6 +415,17 @@ struct PreviewBuilder {
     private func isHTMLComment(_ rawHTML: String) -> Bool {
         let trimmed = rawHTML.trimmingCharacters(in: .whitespacesAndNewlines)
         return trimmed.hasPrefix("<!--") && trimmed.hasSuffix("-->")
+    }
+
+    /// 囲みの言語指定が mermaid かどうか。
+    ///
+    /// cmark は ``` の後ろを丸ごと `language` に入れてくる（`mermaid` のことも
+    /// `mermaid theme=dark` のこともある）。GitHub と同じく**最初の語だけ**を見る。
+    /// 大文字小文字は区別しない。
+    private func isMermaid(_ language: String?) -> Bool {
+        guard let language else { return false }
+        let first = language.split(separator: " ", maxSplits: 1, omittingEmptySubsequences: true).first
+        return first?.lowercased() == "mermaid"
     }
 
     private func inlineText(_ markup: Markup) -> AttributedString {

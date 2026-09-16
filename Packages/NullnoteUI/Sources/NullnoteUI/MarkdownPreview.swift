@@ -20,6 +20,10 @@ public struct MarkdownPreview: View {
     private let breaksOnNewline: Bool
 
     @State private var blocks: [PreviewBlock] = []
+    /// 図が高さを決めた回数。**変わるたびにスクロール同期を送り直す。**
+    /// 同期が走る時点では図がまだ描かれておらず、送り先が頭打ちになるため
+    /// （`DiagramRendered.swift` に実測と理由を書いてある）。
+    @State private var diagramRenderCount = 0
 
     public init(
         source: String,
@@ -44,24 +48,7 @@ public struct MarkdownPreview: View {
         GeometryReader { geometry in
         ScrollViewReader { proxy in
             ScrollView {
-                // 間隔はブロックの組で決める（`PreviewSpacing`）。
-                // `VStack(spacing:)` の一律の値だと、見出しの前も段落どうしも同じになる。
-                //
-                // **見えているところだけ組む。** ブロックはどれも `NSTextView` を持ち、
-                // 表はマスの数だけ持つ。全部を先に組むと、表20個の文書で 1341 枚になり、
-                // 開くのに 1290 ms かかっていた（release 実測）。
-                // 画面ぶんだけなら 135 枚・218 ms。費用が「開くとき」から
-                // 「スクロールするとき」へ移り、どちらも待てる長さに収まる。
-                LazyVStack(alignment: .leading, spacing: 0) {
-                    ForEach(Array(blocks.enumerated()), id: \.element.id) { index, block in
-                        PreviewBlockView(block: block, theme: theme, documentURL: documentURL).erased
-                            .padding(.top, PreviewSpacing.gap(
-                                before: block,
-                                after: index > 0 ? blocks[index - 1] : nil,
-                                fontSize: theme.fontSize
-                            ))
-                    }
-                }
+                stack
                 .frame(
                     width: max(0, geometry.size.width - Self.horizontalPadding * 2),
                     alignment: .leading
@@ -71,12 +58,20 @@ public struct MarkdownPreview: View {
                 .textSelection(.enabled)
                 // 拡大表示は段落をまたいで送れる。文書ぜんぶの画像を配る。
                 .environment(\.previewImageList, blocks.allImages)
+                .environment(\.onDiagramRendered) { diagramRenderCount += 1 }
             }
             .onChange(of: anchorLine) { _, line in
                 scroll(to: line, using: proxy)
             }
             .onChange(of: blocks.count) { _, _ in
                 // 解析し直した直後は id が振り直されるので、位置を取り直す。
+                scroll(to: anchorLine, using: proxy)
+            }
+            .onChange(of: diagramRenderCount) { _, count in
+                Trace.log("プレビュー: 図の合図 \(count) 回目")
+                // **図が高さを決めたら、送り直す。**
+                // 最初の同期は、図がまだ 24pt だったときの短い中身に対して
+                // 走っている。そのままだと図より下へ届かない。
                 scroll(to: anchorLine, using: proxy)
             }
         }
@@ -90,13 +85,56 @@ public struct MarkdownPreview: View {
         }
     }
 
+    /// ブロックを縦に積む。**図があるかどうかで積み方を変える。**
+    ///
+    /// 間隔はブロックの組で決める（`PreviewSpacing`）。
+    /// `VStack(spacing:)` の一律の値だと、見出しの前も段落どうしも同じになる。
+    @ViewBuilder private var stack: some View {
+        if hasDiagram {
+            // **図があるときは先に全部組む。**
+            //
+            // 図の高さは描き終わるまで分からず、枠は仮の高さで置かれる。
+            // `LazyVStack` は中身の高さを見積もりで持っていて、遅れて変わった
+            // 高さを取り込まない。送れる範囲が足りないまま残り、
+            // **図より下の本文が出せなくなる**（実測：図5個で 2010pt、
+            // 本当は 2987pt。977pt 足りなかった）。
+            //
+            // 代償は開くのが遅くなること（review-demo.md で 67ms → 388ms）。
+            // **図を含まない文書には一切かけない**ので、今までの文書は変わらない。
+            VStack(alignment: .leading, spacing: 0) { rows }
+        } else {
+            // **見えているところだけ組む。** ブロックはどれも `NSTextView` を持ち、
+            // 表はマスの数だけ持つ。全部を先に組むと、42,290字の文書で
+            // 192ms → 651ms、表20個で 104ms → 473ms になる（実測 2026-09-16）。
+            LazyVStack(alignment: .leading, spacing: 0) { rows }
+        }
+    }
+
+    private var rows: some View {
+        ForEach(Array(blocks.enumerated()), id: \.element.id) { index, block in
+            PreviewBlockView(block: block, theme: theme, documentURL: documentURL).erased
+                .padding(.top, PreviewSpacing.gap(
+                    before: block,
+                    after: index > 0 ? blocks[index - 1] : nil,
+                    fontSize: theme.fontSize
+                ))
+        }
+    }
+
+    /// 文書のどこかに図があるか。**引用やリストの中も見る。**
+    private var hasDiagram: Bool { blocks.containsDiagram }
+
     /// 指定した行を含むブロックを画面上端に合わせる。
     ///
     /// ブロック単位でしか合わせられないので、段落の途中までスクロールしても
     /// プレビューはその段落の先頭で止まる。行の高さがエディタとプレビューで
     /// 違う以上、比率で合わせるとかえって大きくずれるため、こちらを採る。
     private func scroll(to line: Int?, using proxy: ScrollViewProxy) {
-        guard let line, let id = blockID(containing: line) else { return }
+        guard let line, let id = blockID(containing: line) else {
+            Trace.log("プレビュー同期: 行 \(line.map(String.init) ?? "nil") に対応するブロックが無い")
+            return
+        }
+        Trace.log("プレビュー同期: 行 \(line) → ブロック \(id) を上端へ")
         proxy.scrollTo(id, anchor: .top)
     }
 
@@ -163,7 +201,7 @@ enum PreviewSpacing {
         case .paragraph:
             Margin(top: 0.85, bottom: 0.85)         // 11.9pt
 
-        case .codeBlock, .table, .list, .quote, .images, .thematicBreak, .conflict:
+        case .codeBlock, .table, .list, .quote, .images, .thematicBreak, .conflict, .mermaid:
             // 地の色や罫線を持つ塊。本文と同じ間隔だと貼り付いて見える。
             //
             // **差を付けすぎるくらいでちょうどよい。** 行そのものが持つ行間が
@@ -227,6 +265,9 @@ private struct PreviewBlockView: View {
 
         case .codeBlock(let code, let language):
             PreviewCodeBlockView(code: code, language: language, theme: theme)
+
+        case .mermaid(let code):
+            MermaidBlockView(code: code, theme: theme)
 
         case .table(let table):
             PreviewTableView(table: table, theme: theme)

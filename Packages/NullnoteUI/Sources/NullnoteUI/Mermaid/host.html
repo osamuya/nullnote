@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<!--
+  mermaid の図を1つだけ描くための器。図1つにつき、この頁を1枚読み込む。
+
+  **外へは出ない。** mermaid.min.js は同じ束の中から読む。
+  ネットワークを見にいく記述をここに足さないこと。アプリの entitlements の
+  `network.client` は本文の画像のためのもので、図のために使うものではない。
+-->
+<html>
+<head>
+<meta charset="utf-8">
+<!--
+  **外部への接続を頁の側でも塞ぐ。** 本文は利用者が書いたものとは限らず、
+  他所からもらった文書をそのまま開くことがある。図の記述に仕込まれても、
+  ここで止まる。`script-src` に 'unsafe-inline' が要るのは、下の初期化を
+  頁に直接書いているため。
+-->
+<meta http-equiv="Content-Security-Policy"
+      content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src data:;">
+<style>
+  html, body { margin: 0; padding: 0; background: transparent; }
+  /* **埋め込みのときは、頁をスクロールさせない。**
+     枠と中身の高さが 0.5px でも食い違うと WebKit はホイールを自分のものにし、
+     プレビュー全体が動かなくなる。埋め込みの図は枠に合わせて縮めてあるので、
+     頁の側がスクロールする必要はない。拡大窓は `#box` の側で送るので影響しない。 */
+  html, body { overflow: hidden; overscroll-behavior: none; }
+  /* **line-height を殺す。** 既定のままだと行の下端に余白が数 px 残り、
+     それだけで WebView の中身が枠からはみ出す。はみ出すと、図の上で
+     ホイールを回したときに WebView が自分の中を動かしてしまい、
+     プレビュー全体が動かなくなる（実測で 4px はみ出していた）。 */
+  body { line-height: 0; }
+  #box { display: block; }
+  /* 図がプレビューの幅より広いときは、縮めて収める。横に切れるより、
+     小さくても全体が見える方を採る。寄りたいときは拡大窓を開く。 */
+  #box svg { display: block; max-width: 100%; height: auto; }
+
+  /* ここから下は**拡大窓のときだけ**効く（body に zoom が付く）。
+     プレビューに埋めたときは、上の「幅に収める」がそのまま働く。 */
+  body.zoom { line-height: 0; height: 100vh; overflow: hidden; }
+  /* 拡大窓は自分でスクロールする。**外に取り合う相手がいない**ので、
+     二本指スクロールをそのまま移動に使える。 */
+  body.zoom #box { height: 100vh; overflow: auto; padding: 16px; box-sizing: border-box; }
+  /* **`max-width` を外す。** 収めてしまうと拡大できない。
+     大きさは width/height の属性で決める（`transform` だと版組みの大きさが
+     変わらず、スクロールできる範囲が広がらない）。 */
+  body.zoom #box svg { max-width: none; height: auto; margin: 0 auto; }
+  /* つかんで動かせることを、指の形で知らせる。 */
+  body.zoom #box { cursor: grab; }
+  body.zoom #box.grabbing { cursor: grabbing; }
+  /* **文字の上だけは普通の矢印に戻す。** そこから始めたドラッグは
+     移動ではなく選択になるので、指の形のままだと嘘になる。 */
+  body.zoom #box foreignObject { cursor: auto; }
+  /* 描けなかったときの表示。色はアプリ側から渡す。 */
+  #error {
+    display: none;
+    font: 13px -apple-system, sans-serif;
+    line-height: 1.5;
+    padding: 12px;
+    border-radius: 6px;
+    white-space: pre-wrap;
+  }
+</style>
+<script src="mermaid.min.js"></script>
+</head>
+<body>
+<div id="box"></div>
+<div id="error"></div>
+<script>
+// **`securityLevel: 'strict'` を外さないこと。** 本文は他所から来た文書のことがある。
+// 図のラベルに書かれた HTML をそのまま描くと、文書を開いただけで頁の中で動く。
+function configure(theme) {
+  mermaid.initialize({
+    startOnLoad: false,
+    securityLevel: 'strict',
+    theme: theme,
+    flowchart: { useMaxWidth: true }
+  });
+}
+
+// mermaid の SVG は width="100%" で出てくる。そのままだと入れ物の幅に潰れて
+// 実寸が取れないので、viewBox から px を決め直す。
+function fixSize(el) {
+  el.removeAttribute('style');
+  const vb = (el.getAttribute('viewBox') || '').split(/[\s,]+/).map(Number);
+  if (vb.length === 4 && vb[2] > 0 && vb[3] > 0) {
+    el.setAttribute('width', vb[2]);
+    el.setAttribute('height', vb[3]);
+  }
+}
+
+/// 図を描いて、実際に占めた大きさを返す。
+/// 描けなかったときは throw せず、理由を持って返す。**アプリ側で文言にする。**
+async function renderDiagram(code, theme) {
+  configure(theme);
+  const box = document.getElementById('box');
+  const error = document.getElementById('error');
+  box.innerHTML = '';
+  error.style.display = 'none';
+
+  try {
+    const { svg } = await mermaid.render('d' + Math.random().toString(36).slice(2), code);
+    box.innerHTML = svg;
+    const el = box.querySelector('svg');
+    fixSize(el);
+    // 縮めて収めたあとの実寸を返す。枠の高さはこれに合わせる。
+    const r = el.getBoundingClientRect();
+    return { ok: true, width: r.width, height: Math.ceil(r.height) };
+  } catch (e) {
+    // mermaid は失敗しても頁に自前のエラー図を挿すことがある。消しておく。
+    box.innerHTML = '';
+    return { ok: false, reason: String((e && e.message) || e) };
+  }
+}
+
+// ─────────────────────────────────────────────────────────
+// ここから下は拡大窓（D-65 の続き）でだけ使う。
+// **プレビューに埋めたときは呼ばれない。**
+// ─────────────────────────────────────────────────────────
+
+// 図の素の大きさ。viewBox から取る。倍率はここを基準に掛ける。
+let naturalSize = { width: 0, height: 0 };
+let scale = 1;
+// アプリ側へ倍率の変化を知らせる口。Swift 側が差し替える。
+let onScaleChange = null;
+
+const MIN_SCALE = 0.1;
+const MAX_SCALE = 8;
+
+/// 拡大窓として仕立てる。図を素の大きさで置き直し、操作を繋ぐ。
+async function setUpZoom(code, theme) {
+  document.body.classList.add('zoom');
+  const drawn = await renderDiagram(code, theme);
+  if (!drawn.ok) return drawn;
+
+  const svg = document.querySelector('#box svg');
+  const vb = (svg.getAttribute('viewBox') || '').split(/[\s,]+/).map(Number);
+  naturalSize = (vb.length === 4 && vb[2] > 0)
+    ? { width: vb[2], height: vb[3] }
+    : { width: drawn.width, height: drawn.height };
+
+  connectGestures();
+  fitToWindow();
+  return { ok: true, width: naturalSize.width, height: naturalSize.height };
+}
+
+/// 倍率を決めて描き直す。**SVG のままなので、何倍にしても字は潰れない。**
+function setScale(next, anchor) {
+  const svg = document.querySelector('#box svg');
+  if (!svg) return scale;
+  const box = document.getElementById('box');
+
+  const clamped = Math.min(MAX_SCALE, Math.max(MIN_SCALE, next));
+  // 拡大の中心を保つ。指やポインタのある場所が動かないようにする。
+  const point = anchor || { x: box.clientWidth / 2, y: box.clientHeight / 2 };
+  const beforeX = (box.scrollLeft + point.x) / scale;
+  const beforeY = (box.scrollTop + point.y) / scale;
+
+  scale = clamped;
+  svg.setAttribute('width', naturalSize.width * scale);
+  svg.setAttribute('height', naturalSize.height * scale);
+
+  box.scrollLeft = beforeX * scale - point.x;
+  box.scrollTop = beforeY * scale - point.y;
+
+  if (onScaleChange) onScaleChange(scale);
+  return scale;
+}
+
+function zoomBy(factor, anchor) { return setScale(scale * factor, anchor); }
+
+/// 窓に全体が収まる倍率。
+function fitToWindow() {
+  const box = document.getElementById('box');
+  const available = { w: box.clientWidth - 32, h: box.clientHeight - 32 };
+  const fit = Math.min(available.w / naturalSize.width, available.h / naturalSize.height);
+  // **拡大はしない。** 小さな図を引き伸ばすと、ぼやけはしないが間延びする。
+  return setScale(Math.min(fit, 1));
+}
+
+function actualSize() { return setScale(1); }
+
+function currentScale() { return scale; }
+
+function connectGestures() {
+  const box = document.getElementById('box');
+
+  // ⌘ ＋ ホイール で拡大縮小。**素のホイールには触らない。**
+  // 触ると移動（スクロール）ができなくなる。
+  box.addEventListener('wheel', (e) => {
+    if (!e.metaKey && !e.ctrlKey) return;
+    e.preventDefault();
+    const rect = box.getBoundingClientRect();
+    zoomBy(Math.exp(-e.deltaY / 200), { x: e.clientX - rect.left, y: e.clientY - rect.top });
+  }, { passive: false });
+
+  // トラックパッドのピンチ。WebKit は gesture* で送ってくる。
+  let pinchStart = 1;
+  box.addEventListener('gesturestart', (e) => { e.preventDefault(); pinchStart = scale; }, { passive: false });
+  box.addEventListener('gesturechange', (e) => {
+    e.preventDefault();
+    const rect = box.getBoundingClientRect();
+    setScale(pinchStart * e.scale, { x: e.clientX - rect.left, y: e.clientY - rect.top });
+  }, { passive: false });
+  box.addEventListener('gestureend', (e) => e.preventDefault(), { passive: false });
+
+  connectDragToPan(box);
+
+  // 窓の大きさが変わっても、いまの倍率は保つ。勝手に収め直さない。
+}
+
+/// ドラッグで動かす。
+///
+/// **文字の上から始めたドラッグは横取りしない。** 図のラベルは
+/// `<foreignObject>` の中の文字なので、そこを掴んだときは選択に渡す。
+/// 紙をつかんで動かす／言葉をなぞって選ぶ、の使い分け。
+/// 全面を移動にすると、図の中の文字を選べなくなる（D-65）。
+function connectDragToPan(box) {
+  let panning = false;
+  let startX = 0, startY = 0, startLeft = 0, startTop = 0;
+
+  box.addEventListener('mousedown', (e) => {
+    if (e.button !== 0) return;
+    if (e.target.closest && e.target.closest('foreignObject')) return;
+
+    panning = true;
+    startX = e.clientX;
+    startY = e.clientY;
+    startLeft = box.scrollLeft;
+    startTop = box.scrollTop;
+    box.classList.add('grabbing');
+    // 掴んだ先の文字が選ばれてしまうのを止める。
+    e.preventDefault();
+  });
+
+  // **窓の外まで出ても追いかける。** box に付けると、勢いよく動かしたときに
+  // ポインタが外れて動きが止まる。
+  window.addEventListener('mousemove', (e) => {
+    if (!panning) return;
+    box.scrollLeft = startLeft - (e.clientX - startX);
+    box.scrollTop = startTop - (e.clientY - startY);
+    e.preventDefault();
+  });
+
+  window.addEventListener('mouseup', () => {
+    if (!panning) return;
+    panning = false;
+    box.classList.remove('grabbing');
+  });
+}
+
+/// 描けなかったことを、アプリ側から渡した文言で見せる。
+function showError(message, textColor, background) {
+  const error = document.getElementById('error');
+  error.textContent = message;
+  error.style.color = textColor;
+  error.style.background = background;
+  error.style.display = 'block';
+  return Math.ceil(error.getBoundingClientRect().height);
+}
+</script>
+</body>
+</html>
