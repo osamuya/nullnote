@@ -154,6 +154,13 @@ xcodebuild -exportArchive -archivePath "$ARCHIVE" \
 
 echo
 echo "    ✅ ${VERSION}（ビルド ${BUILDNO}）を送りました"
-echo "       App Store Connect の TestFlight タブに出るまで 5〜30 分ほどかかります"
-echo "       処理が終わるとメールが来ます。**Missing Compliance が付いたら** Info.plist の"
+echo
+echo "    このあと（1.2 で実際に通した順序）:"
+echo "    1. TestFlight タブで「処理中 → 終了」を待つ（1.2 は約10分。メールも来る）"
+echo "       **macOS アプリなので TestFlight から配布はしない。**処理の終了を見るだけ"
+echo "    2. 「配信」タブを再読み込みする。開いたままだと古い表示が残る"
+echo "    3. 「ビルド」欄で**手動でビルドを選ぶ**。自動では入らない"
+echo "    4. 保存 → 審査用に追加 → 提出"
+echo
+echo "       **Missing Compliance が付いたら** Info.plist の"
 echo "       ITSAppUsesNonExemptEncryption を確認してください"
