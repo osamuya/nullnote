@@ -9,6 +9,7 @@ enum AppSettings {
     static let titleSyncKey = "syncsTitleWithFileName"
     static let breaksOnNewlineKey = "previewBreaksOnNewline"
     static let indentStyleKey = "editorIndentStyle"
+    static let autoLinksURLsKey = "editorAutoLinksURLs"
     static let ignoresWhitespaceKey = "mergeIgnoresWhitespace"
 
     /// 保存パネルを最初から詳細表示（ファイルブラウザ）で開かせる AppKit のキー。
@@ -45,6 +46,11 @@ enum AppSettings {
             // `MD010` は既定でタブを咎める。見る側のタブ幅設定にも左右されない。
             // タブがよければ設定画面で選べる（D-39）。
             indentStyleKey: IndentStyle.fourSpaces.rawValue,
+
+            // 打った URL を `[URL](URL)` に書き換えるのは**切ってある**（#035）。
+            // 文字列として URL を書きたいときに、黙って書き換わると困る。
+            // プレビューでは、書き換えなくても裸の URL がリンクになる。
+            autoLinksURLsKey: false,
 
             // 空白の量だけの食い違いで印を出さないのは**入れてある**。
             // 印は人の手を止めるものなので、意味の変わらない違いで出したくない。

@@ -9,6 +9,7 @@ struct SettingsView: View {
     @Binding var syncsTitleWithFileName: Bool
     @Binding var breaksOnNewline: Bool
     @Binding var indentStyle: IndentStyle
+    @Binding var autoLinksURLs: Bool
     @Binding var ignoresWhitespace: Bool
 
     var body: some View {
@@ -45,6 +46,21 @@ struct SettingsView: View {
                         .font(.callout)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
+                        .multilineTextAlignment(.leading)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .frame(width: 240, alignment: .leading)
+            }
+
+            LabeledContent("リンク") {
+                VStack(alignment: .leading, spacing: 4) {
+                    Toggle("URL を自動でリンクにする", isOn: $autoLinksURLs)
+                        .multilineTextAlignment(.leading)
+                    Text("https:// で始まる URL のあとに空白か改行を打ったとき、または URL だけを貼り付けたときに、[URL](URL) の形に書き換えます。切ってあると、打ったとおりの文字のまま残します。プレビューでは、どちらでもリンクとして表示されます。")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                        // `LabeledContent` の中は右揃えが受け継がれる。
                         .multilineTextAlignment(.leading)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }

@@ -22,6 +22,8 @@ struct NullnoteApp: App {
     private var breaksOnNewline = false
     @AppStorage(AppSettings.indentStyleKey)
     private var indentStyle: IndentStyle = .fourSpaces
+    @AppStorage(AppSettings.autoLinksURLsKey)
+    private var autoLinksURLs = false
     @AppStorage(AppSettings.ignoresWhitespaceKey)
     private var ignoresWhitespace = true
 
@@ -54,6 +56,7 @@ struct NullnoteApp: App {
                 syncsTitleWithFileName: syncsTitleWithFileName,
                 breaksOnNewline: breaksOnNewline,
                 indentStyle: indentStyle,
+                autoLinksURLs: autoLinksURLs,
                 ignoresWhitespace: ignoresWhitespace
             )
             .tint(control)
@@ -108,6 +111,7 @@ struct NullnoteApp: App {
                 syncsTitleWithFileName: $syncsTitleWithFileName,
                 breaksOnNewline: $breaksOnNewline,
                 indentStyle: $indentStyle,
+                autoLinksURLs: $autoLinksURLs,
                 ignoresWhitespace: $ignoresWhitespace
             )
             .tint(control)

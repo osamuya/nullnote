@@ -49,6 +49,38 @@
         }
       }
     },
+    "URL を自動でリンクにする" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Convert URLs to links automatically"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "URL を自動でリンクにする"
+          }
+        }
+      }
+    },
+    "https:// で始まる URL のあとに空白か改行を打ったとき、または URL だけを貼り付けたときに、[URL](URL) の形に書き換えます。切ってあると、打ったとおりの文字のまま残します。プレビューでは、どちらでもリンクとして表示されます。" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "When you type a space or a line break after a URL that starts with https://, or paste just a URL, it is rewritten as [URL](URL). When this is off, the text stays exactly as you typed it. The preview shows the URL as a link either way."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "https:// で始まる URL のあとに空白か改行を打ったとき、または URL だけを貼り付けたときに、[URL](URL) の形に書き換えます。切ってあると、打ったとおりの文字のまま残します。プレビューでは、どちらでもリンクとして表示されます。"
+          }
+        }
+      }
+    },
     "「%@」の中の画像を表示するために、このフォルダの閲覧を許可してください。" : {
       "localizations" : {
         "en" : {

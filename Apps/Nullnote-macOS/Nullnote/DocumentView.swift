@@ -18,6 +18,8 @@ struct DocumentView: View {
     /// 普通の改行を、プレビューでも改行として見せるか。
     let breaksOnNewline: Bool
     let indentStyle: IndentStyle
+    /// 打った URL・貼った URL を `[URL](URL)` に書き換えるか。
+    let autoLinksURLs: Bool
     /// 合流で、行の途中の空白の量を無視するか。
     let ignoresWhitespace: Bool
 
@@ -580,6 +582,7 @@ struct DocumentView: View {
             commandRequest: editorCommandRequest,
             showsLineNumbers: showsLineNumbers,
             indentStyle: indentStyle,
+            autoLinksURLs: autoLinksURLs,
             contextMenuItems: contextMenuItems
         )
     }

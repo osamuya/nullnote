@@ -12,10 +12,12 @@ import Testing
 @MainActor
 struct URLLinkifyEditorTests {
 
-    func makeTextView(_ text: String) -> FocusReportingTextView {
+    /// `autoLinks` は設定の「URL を自動でリンクにする」。ここで見るのは入れたときの動きなので、既定は入れておく。
+    func makeTextView(_ text: String, autoLinks: Bool = true) -> FocusReportingTextView {
         let scrollView = NSTextView.scrollableTextView()
         let base = scrollView.documentView as! NSTextView
         let textView = FocusReportingTextView(frame: base.frame, textContainer: base.textContainer!)
+        textView.autoLinksURLs = autoLinks
         textView.string = text
         textView.setSelectedRange(NSRange(location: (text as NSString).length, length: 0))
         return textView
@@ -27,6 +29,40 @@ struct URLLinkifyEditorTests {
         pasteboard.setString(contents, forType: .string)
         return pasteboard
     }
+
+    // MARK: - 設定で切ってあるとき（#035）
+
+    @Test("切ってあると、空白を打っても URL のまま")
+    func offOnSpace() {
+        let textView = makeTextView("https://sabanote.com/", autoLinks: false)
+        textView.insertText(" ", replacementRange: textView.selectedRange())
+        #expect(textView.string == "https://sabanote.com/ ")
+    }
+
+    @Test("切ってあると、改行しても URL のまま")
+    func offOnNewline() {
+        let textView = makeTextView("https://sabanote.com/", autoLinks: false)
+        textView.insertNewline(nil)
+        #expect(textView.string == "https://sabanote.com/\n")
+    }
+
+    @Test("切ってあると、URL だけを貼ってもそのまま貼る")
+    func offPaste() {
+        let textView = makeTextView("", autoLinks: false)
+        let handled = textView.pasteAsLinkForTesting(from: makePasteboard("https://sabanote.com/"))
+        #expect(!handled)
+        #expect(textView.string == "")
+    }
+
+    @Test("部品の既定は切ってある")
+    func offByDefault() {
+        let scrollView = NSTextView.scrollableTextView()
+        let base = scrollView.documentView as! NSTextView
+        let textView = FocusReportingTextView(frame: base.frame, textContainer: base.textContainer!)
+        #expect(!textView.autoLinksURLs)
+    }
+
+    // MARK: - 入れてあるとき
 
     @Test("空白を打つとリンクになる")
     func onSpace() {
@@ -110,6 +146,7 @@ struct URLLinkifyEditorTests {
         let scrollView = NSTextView.scrollableTextView()
         let base = scrollView.documentView as! NSTextView
         let textView = FocusReportingTextView(frame: base.frame, textContainer: base.textContainer!)
+        textView.autoLinksURLs = true
         textView.string = "https://sabanote.com/"
         textView.allowsUndo = true
         scrollView.documentView = textView

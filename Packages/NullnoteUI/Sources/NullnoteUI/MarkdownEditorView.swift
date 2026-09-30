@@ -127,6 +127,8 @@ public struct MarkdownEditorView {
     var showsLineNumbers: Bool
     /// リストを Tab で深くするときに入れる1段ぶん。
     var indentStyle: IndentStyle
+    /// 打った URL・貼った URL を `[URL](URL)` に書き換えるか（#035）。
+    var autoLinksURLs: Bool
     /// 本文の右クリックに足す項目。アプリ側から渡す。
     var contextMenuItems: [EditorContextMenuItem]
     /// システムの外観が変わったときに再評価させるためだけに読む。
@@ -144,6 +146,7 @@ public struct MarkdownEditorView {
         commandRequest: EditorCommandRequest? = nil,
         showsLineNumbers: Bool = false,
         indentStyle: IndentStyle = .fourSpaces,
+        autoLinksURLs: Bool = false,
         contextMenuItems: [EditorContextMenuItem] = []
     ) {
         self._text = text
@@ -156,6 +159,7 @@ public struct MarkdownEditorView {
         self.commandRequest = commandRequest
         self.showsLineNumbers = showsLineNumbers
         self.indentStyle = indentStyle
+        self.autoLinksURLs = autoLinksURLs
         self.contextMenuItems = contextMenuItems
     }
 
@@ -617,13 +621,19 @@ final class FocusReportingTextView: NSTextView {
         apply(replacement, to: ranges)
     }
 
+    /// URL を `[URL](URL)` に書き換えるか。設定から降りてくる（#035）。
+    ///
+    /// **既定は切ってある。** 打ったとおりの文字を黙って書き換える動きなので、
+    /// 選んだ人にだけ効かせる。切ってあっても、プレビューでは裸の URL もリンクになる。
+    var autoLinksURLs = false
+
     /// カーソルの手前にある URL を `[URL](URL)` に変える。
     ///
     /// 判断は `MarkdownCore` の `URLLinkify` にあり、ここは本文を書き換えるだけ。
     @discardableResult
     private func linkifyBeforeCaret() -> Bool {
         let selection = selectedRange()
-        guard composition == nil, currentTargets == nil, selection.length == 0 else { return false }
+        guard autoLinksURLs, composition == nil, currentTargets == nil, selection.length == 0 else { return false }
 
         let text = string as NSString
         let lineRange = text.lineRange(for: selection)
@@ -960,7 +970,7 @@ final class FocusReportingTextView: NSTextView {
     /// **前後に何も付いていないときだけ。** 文章ごと貼ったときに囲むと邪魔になる。
     /// 複数選択のときは、いつもどおり全箇所へ貼る（D-36）。
     private func pasteAsLink(from pasteboard: NSPasteboard) -> Bool {
-        guard composition == nil, currentTargets == nil,
+        guard autoLinksURLs, composition == nil, currentTargets == nil,
               let contents = plainText(from: pasteboard),
               let link = URLLinkify.linkify(pasted: contents),
               // **貼る先が `(…)` や `<…>` の中なら、そのまま貼る。**
@@ -1362,6 +1372,7 @@ extension MarkdownEditorView: NSViewRepresentable {
         // 「どこが書き換わったか」を受け取る。差分ハイライトの起点になる。
         textView.textStorage?.delegate = context.coordinator
         textView.indentUnit = indentStyle.unit
+        textView.autoLinksURLs = autoLinksURLs
         textView.extraContextMenuItems = contextMenuItems
         // 改行でリストを継ぐかの判断に使う。コードブロックの中では継がない。
         textView.lineNumber = { [weak coordinator = context.coordinator] offset in
@@ -1453,6 +1464,7 @@ extension MarkdownEditorView: NSViewRepresentable {
         coordinator.highlighter.theme = theme
         // 設定で変えたら、開いている窓にもすぐ効かせる。
         (textView as? FocusReportingTextView)?.indentUnit = indentStyle.unit
+        (textView as? FocusReportingTextView)?.autoLinksURLs = autoLinksURLs
         // 開いているファイルが変わると処理の中身も変わるので、毎回入れ直す。
         (textView as? FocusReportingTextView)?.extraContextMenuItems = contextMenuItems
 
