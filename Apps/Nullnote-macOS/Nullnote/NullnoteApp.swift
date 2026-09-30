@@ -32,6 +32,8 @@ struct NullnoteApp: App {
             FolderAccess.restoreAll()
             // 外観が外れる瞬間を見張る（#023）。`NULLNOTE_TRACE=1` のときだけ動く。
             AppearanceTrace.start()
+            // ⌘N で窓が別の画面へ移る件を見張る（#033）。これも `NULLNOTE_TRACE=1` のときだけ。
+            WindowPlacementTrace.start()
         }
     }
 
