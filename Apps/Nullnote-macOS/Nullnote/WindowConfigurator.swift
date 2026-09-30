@@ -7,21 +7,13 @@ import SwiftUI
 /// 見えないビューを1枚挟むだけで、レイアウトには影響しない。
 struct WindowConfigurator: NSViewRepresentable {
 
-    /// 足あとに出す名前（#033）。空なら何も出さない。
-    var traceName = ""
-
     let configure: (NSWindow) -> Void
 
     func makeNSView(context: Context) -> NSView {
         let view = NSView(frame: .zero)
         // `makeNSView` の時点ではまだウインドウに載っていない。
-        DispatchQueue.main.async { [weak view, traceName] in
-            guard let window = view?.window else {
-                if !traceName.isEmpty {
-                    WindowPlacementTrace.log("\(traceName): 窓に載る前に呼ばれた（ここでは何もしない）")
-                }
-                return
-            }
+        DispatchQueue.main.async { [weak view] in
+            guard let window = view?.window else { return }
             configure(window)
         }
         return view
@@ -70,24 +62,19 @@ extension View {
     /// | プレビュー（`ScrollView`） | 0 pt |
     func straightHeader() -> some View {
         background(
-            WindowConfigurator(traceName: "ヘッダ") { window in
+            WindowConfigurator { window in
                 // 本文をタイトルバーの下へ潜らせない。
                 // 潜らせたままだと、列ごとに下地が違うのでヘッダの帯が途切れて見える。
                 //
                 // **外したら窓の大きさを戻す。** AppKit は中身の大きさを保ったまま、
                 // タイトルバーの分だけ窓を**上へ**伸ばす（実測: 400 → 466、下の辺は動かない）。
-                // ⌘N のタブはまとめた後にここを通るので、押すたびに 88pt ずつ積み上がり、
-                // 真上にあるサブの画面へはみ出して、窓ごと移ったように見えていた（#033）。
+                // SwiftUI はこの指定を、ここが最初に走った**後で**付ける。⌘N のタブでは
+                // 次にここを通るのがタブへまとめた後になり、まとめ先の大きさから伸びる。
+                // 戻さないと押すたびに 88pt ずつ積み上がり、真上にあるサブの画面へ
+                // はみ出して、窓ごと移ったように見えていた（#033・D-66）。
                 if window.styleMask.contains(.fullSizeContentView) {
                     let frame = window.frame
-                    // 伸びた姿を画面に出さない。戻すまでの描画を、次の反映までまとめて止める。
-                    // 止めないと、新しいタブを開くたびに伸びた分が一瞬だけ残像のように見える。
-                    window.disableScreenUpdatesUntilFlush()
                     window.styleMask.remove(.fullSizeContentView)
-                    WindowPlacementTrace.log(
-                        "ヘッダ: 指定を外した（外す前の高さ=\(Int(frame.height))）"
-                            + " \(WindowPlacementTrace.describe(window))"
-                    )
                     if window.frame != frame {
                         window.setFrame(frame, display: true)
                     }
@@ -212,20 +199,16 @@ private struct TabbedWindows: ViewModifier {
 
     func body(content: Content) -> some View {
         content.background(
-            WindowConfigurator(traceName: isNewDocument ? "⌘N のまとめ" : "") { window in
+            WindowConfigurator { window in
                 TabBarKeeper.keepTabBar(on: window)
 
                 // ⌘N だけを前面の窓へ入れる。開いた md は別窓のままにする。
                 guard isNewDocument, !merge.tried else { return }
                 merge.tried = true
-                WindowPlacementTrace.snapshot("⌘N の窓が届いた。まとめる前 \(WindowPlacementTrace.describe(window))")
 
                 // **`tabGroup` は nil にならない。** 単独の窓も1枚だけのタブ群を持つ（実測）。
                 // 2枚以上なら、もうどこかのタブになっている。
-                guard (window.tabGroup?.windows.count ?? 1) <= 1 else {
-                    WindowPlacementTrace.log("⌘N のまとめ: もうタブになっていたので何もしない")
-                    return
-                }
+                guard (window.tabGroup?.windows.count ?? 1) <= 1 else { return }
                 // **`orderedWindows` を使う。** `NSApp.windows` は前後の順を保証しない
                 // （実測: 手前が `tab_b` のときに `tab_a` を拾った）。
                 // 新しい窓はすでに手前なので、自分を除いた先頭が ⌘N を押した窓。
@@ -233,19 +216,10 @@ private struct TabbedWindows: ViewModifier {
                     $0 !== window
                         && $0.isVisible
                         && $0.tabbingIdentifier == window.tabbingIdentifier
-                }) else {
-                    WindowPlacementTrace.log("⌘N のまとめ: まとめ先が見つからない")
-                    return
-                }
-                WindowPlacementTrace.log("⌘N のまとめ: まとめ先 \(WindowPlacementTrace.describe(host))")
+                }) else { return }
 
                 host.addTabbedWindow(window, ordered: .above)
                 window.makeKeyAndOrderFront(nil)
-                WindowPlacementTrace.snapshot("⌘N のまとめ直後")
-                // 位置が落ち着くのは次の周回のことがある。
-                DispatchQueue.main.async {
-                    MainActor.assumeIsolated { WindowPlacementTrace.snapshot("⌘N のまとめの次の周回") }
-                }
             }
             .frame(width: 0, height: 0)
         )
