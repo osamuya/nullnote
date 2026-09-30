@@ -742,9 +742,9 @@ final class FocusReportingTextView: NSTextView {
             super.insertText("\n" + prefix, replacementRange: selectedRange())
         case .end(let clearing):
             // 印だけの行を消して、改行だけ入れる。空行になってリストから抜ける。
-            let caret = selectedRange().location
-            super.insertText("\n", replacementRange: NSRange(location: caret - clearing,
-                                                             length: clearing))
+            // **行頭から数える。** カーソルは行末とは限らない（表の空の行では最初のセルにいる。#036）。
+            let lineStart = (string as NSString).lineRange(for: selectedRange()).location
+            super.insertText("\n", replacementRange: NSRange(location: lineStart, length: clearing))
         case .tableRow(let lines, let caretRow):
             // 改行して行を並べ、**その中の最初のセル**にカーソルを置く。
             // 打ち始める場所がそこなので、末尾に置くと必ず左へ戻ることになる。

@@ -108,6 +108,28 @@ struct LineContinuationEditorTests {
         #expect(textView.string == "| りんご | 100 |\n\n")
     }
 
+    /// 足した空の行では、カーソルは最初のセルにある。そこでもう一度改行して抜けられるか（#036）。
+    @Test("本体の行で2回続けて改行すると、表から抜ける")
+    func endTableAfterTwoNewlines() {
+        let textView = makeTextView("| りんご | 100 |")
+        textView.lineNumber = { _ in 1 }
+        textView.blockStateBeforeLine = { _ in .tableBody(columnCount: 2) }
+        textView.insertNewline(nil)
+        textView.insertNewline(nil)
+        #expect(textView.string == "| りんご | 100 |\n\n")
+        #expect(textView.selectedRange() == NSRange(location: (textView.string as NSString).length, length: 0))
+    }
+
+    @Test("見出しのあとに2回続けて改行すると、区切り行を残して表から抜ける")
+    func endTableAfterHeader() {
+        let textView = makeTextView("| 名前 | 値 |")
+        textView.lineNumber = { offset in offset == 0 ? 0 : 2 }
+        textView.blockStateBeforeLine = { line in line == 0 ? .blank : .tableBody(columnCount: 2) }
+        textView.insertNewline(nil)
+        textView.insertNewline(nil)
+        #expect(textView.string == "| 名前 | 値 |\n|---|---|\n\n")
+    }
+
     @Test("列が3つなら、区切りも空の行も3つになる")
     func threeColumns() {
         let textView = makeTextView("| a | b | c |")

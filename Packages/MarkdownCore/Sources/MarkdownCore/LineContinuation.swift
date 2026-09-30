@@ -7,6 +7,8 @@ public enum LineContinuation: Equatable {
     /// 改行して、この文字列を続ける。インデントと引用の `>` を含む。
     case carry(String)
     /// 中身が空だった。行頭からこの文字数（UTF-16）を消して、改行だけ入れる。
+    ///
+    /// **カーソルが行末にあるとは限らない。** 表の空の行では、セルの中にいても返す（#036）。
     case end(clearing: Int)
     /// コードフェンスを開いた。改行し、**空行を1つ挟んで**閉じフェンスを置く。
     /// カーソルはその空行に残す。
@@ -63,6 +65,14 @@ public enum LineContinuationRule {
         // コードブロックの中の `- foo` や `> foo` は記法ではない。ただの文字。
         // フェンス行そのものも、中にいるなら「閉じ」なので何もしない。
         guard !isInsideCode else { return .plain }
+
+        // 表の本体で、中身が空の行。**カーソルがどこにあっても抜ける。**
+        // 改行で足した空の行は、カーソルが最初のセルに置かれる（行末ではない）。
+        // 行末のときだけ抜けるようにしていたので、足した直後にもう一度改行すると
+        // 行が割れるだけで、`|  |  |` が残り続けた（#036）。
+        if case .tableBody = blockState, isEmptyTableRow(line) {
+            return .end(clearing: line.utf16.count)
+        }
 
         // 表の行。見出しなら区切りごと、本体なら空の行を足す。
         // **行末にいるときだけ。** 途中ならセルを打っている最中。
@@ -151,8 +161,7 @@ public enum LineContinuationRule {
 
         switch state {
         case .tableBody:
-            // 中身が空の行なら、表から抜ける。
-            if row.cells.allSatisfy({ line[$0].isEmpty }) { return .end(clearing: line.utf16.count) }
+            // 中身が空の行は、呼ぶ前に抜けている（`isEmptyTableRow`）。
             return .tableRow(lines: [emptyRow(columns)], caretInFirstCellOf: 0)
 
         case .tableDelimiterExpected:
@@ -168,6 +177,14 @@ public enum LineContinuationRule {
         default:
             return nil
         }
+    }
+
+    /// 表の行で、どのセルにも何も書いていないか。`|  |  |` のようにセルの空白だけなら空とみなす。
+    private static func isEmptyTableRow(_ line: String) -> Bool {
+        guard let row = TableScanner.row(line, line.startIndex..<line.endIndex),
+              !row.cells.isEmpty
+        else { return false }
+        return row.cells.allSatisfy { line[$0].isEmpty }
     }
 
     /// `|---|---|`。この文書で圧倒的に多い書き方に合わせている。

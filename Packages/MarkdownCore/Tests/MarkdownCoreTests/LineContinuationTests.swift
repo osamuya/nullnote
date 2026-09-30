@@ -182,6 +182,28 @@ struct LineContinuationTests {
         #expect(table("|  |  |", state: .tableBody(columnCount: 2)) == .end(clearing: 7))
     }
 
+    /// 改行で足した空の行では、カーソルは最初のセルにある（#036）。
+    @Test("空の行なら、カーソルがセルの中にあっても表から抜ける", arguments: [0, 1, 2, 4])
+    func endTableFromInsideCell(caret: Int) {
+        #expect(LineContinuationRule.decide(
+            line: "|  |  |", caretUTF16Offset: caret, blockState: .tableBody(columnCount: 2)
+        ) == .end(clearing: 7))
+    }
+
+    @Test("何か書いてあるセルの途中なら、抜けない")
+    func notEmptyRowInsideCell() {
+        #expect(LineContinuationRule.decide(
+            line: "| りんご |  |", caretUTF16Offset: 2, blockState: .tableBody(columnCount: 2)
+        ) == .plain)
+    }
+
+    @Test("表の外の空のパイプ行は、抜ける扱いにしない")
+    func emptyRowOutsideTable() {
+        #expect(LineContinuationRule.decide(
+            line: "|  |  |", caretUTF16Offset: 2, blockState: .blank
+        ) == .plain)
+    }
+
     @Test("パイプが無ければ表ではない")
     func notATable() {
         #expect(table("ふつうの段落", state: .blank) == .plain)
