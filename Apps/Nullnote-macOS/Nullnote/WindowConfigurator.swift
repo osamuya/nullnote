@@ -25,6 +25,38 @@ struct WindowConfigurator: NSViewRepresentable {
     }
 }
 
+/// ビューが窓に載った瞬間に一度だけ呼ぶ。
+///
+/// `WindowConfigurator` は1周待ってから走るので、そのときには窓がもう画面に出ている。
+/// こちらは `viewDidMoveToWindow` でその場で呼ぶので、**窓が画面に出る前**に手を入れられる（#034）。
+struct WindowAttachHook: NSViewRepresentable {
+
+    let attached: (NSWindow) -> Void
+
+    func makeNSView(context: Context) -> HookView {
+        let view = HookView()
+        view.attached = attached
+        return view
+    }
+
+    func updateNSView(_ view: HookView, context: Context) {
+        view.attached = attached
+    }
+
+    final class HookView: NSView {
+        var attached: ((NSWindow) -> Void)?
+        private var done = false
+
+        override func viewDidMoveToWindow() {
+            super.viewDidMoveToWindow()
+            // 外されたとき（`window == nil`）と、二度目以降は何もしない。
+            guard !done, let window else { return }
+            done = true
+            attached?(window)
+        }
+    }
+}
+
 extension View {
 
     /// タイトルにプロキシアイコンを持たせる。
@@ -63,28 +95,38 @@ extension View {
     func straightHeader() -> some View {
         background(
             WindowConfigurator { window in
-                // 本文をタイトルバーの下へ潜らせない。
-                // 潜らせたままだと、列ごとに下地が違うのでヘッダの帯が途切れて見える。
-                //
-                // **外したら窓の大きさを戻す。** AppKit は中身の大きさを保ったまま、
-                // タイトルバーの分だけ窓を**上へ**伸ばす（実測: 400 → 466、下の辺は動かない）。
-                // SwiftUI はこの指定を、ここが最初に走った**後で**付ける。⌘N のタブでは
-                // 次にここを通るのがタブへまとめた後になり、まとめ先の大きさから伸びる。
-                // 戻さないと押すたびに 88pt ずつ積み上がり、真上にあるサブの画面へ
-                // はみ出して、窓ごと移ったように見えていた（#033・D-66）。
-                if window.styleMask.contains(.fullSizeContentView) {
-                    let frame = window.frame
-                    window.styleMask.remove(.fullSizeContentView)
-                    if window.frame != frame {
-                        window.setFrame(frame, display: true)
-                    }
-                }
-                if window.titlebarSeparatorStyle != .line {
-                    window.titlebarSeparatorStyle = .line
-                }
+                WindowHeader.straighten(window)
             }
             .frame(width: 0, height: 0)
         )
+    }
+}
+
+/// ヘッダを帯として見せるための、窓の設定。`straightHeader` の中身。
+///
+/// ⌘N の窓では、画面に出る前（`WindowAttachHook`）にも呼ぶ（#034）。
+@MainActor
+enum WindowHeader {
+
+    static func straighten(_ window: NSWindow) {
+        // 本文をタイトルバーの下へ潜らせない。
+        // 潜らせたままだと、列ごとに下地が違うのでヘッダの帯が途切れて見える。
+        //
+        // **外したら窓の大きさを戻す。** AppKit は中身の大きさを保ったまま、
+        // タイトルバーの分だけ窓を**上へ**伸ばす（実測: 400 → 466、下の辺は動かない）。
+        // ⌘N のタブでは、ここを通るのがタブへまとめた後になることがあり、
+        // まとめ先の大きさから伸びる。戻さないと押すたびに 88pt ずつ積み上がり、
+        // 真上にあるサブの画面へはみ出して、窓ごと移ったように見えていた（#033・D-66）。
+        if window.styleMask.contains(.fullSizeContentView) {
+            let frame = window.frame
+            window.styleMask.remove(.fullSizeContentView)
+            if window.frame != frame {
+                window.setFrame(frame, display: true)
+            }
+        }
+        if window.titlebarSeparatorStyle != .line {
+            window.titlebarSeparatorStyle = .line
+        }
     }
 }
 
@@ -198,31 +240,60 @@ private struct TabbedWindows: ViewModifier {
     @State private var merge = MergeOnce()
 
     func body(content: Content) -> some View {
-        content.background(
-            WindowConfigurator { window in
-                TabBarKeeper.keepTabBar(on: window)
+        content
+            // **窓が画面に出る前に**まとめる（#034）。ビューが窓に載った瞬間は、
+            // まだ画面に出ていない（実測: `isVisible == false`）。ここでタブへ入れれば、
+            // 単独の窓として右下にずれて一瞬出る姿を見せずに済む。
+            .background(
+                WindowAttachHook { window in
+                    guard isNewDocument, !window.isVisible else { return }
+                    // タイトルバーの指定も、出る前に外しておく。まとめた後で外すと、
+                    // 並んだタブの上で中身がずれて描き直される。
+                    WindowHeader.straighten(window)
+                    joinFrontWindow(window)
+                }
+                .frame(width: 0, height: 0)
+            )
+            .background(
+                WindowConfigurator { window in
+                    TabBarKeeper.keepTabBar(on: window)
+                    // 出る前にまとめられなかったときの受け皿。出てからまとめる。
+                    guard isNewDocument, joinFrontWindow(window) else { return }
+                    window.makeKeyAndOrderFront(nil)
+                }
+                .frame(width: 0, height: 0)
+            )
+    }
 
-                // ⌘N だけを前面の窓へ入れる。開いた md は別窓のままにする。
-                guard isNewDocument, !merge.tried else { return }
-                merge.tried = true
+    /// ⌘N の窓を、前面の書類の窓のタブへ入れる。**窓につき一度だけ試す。**
+    ///
+    /// 開いた md は別窓のままにする（呼ぶ側が `isNewDocument` で絞る）。
+    /// - Returns: まとめたか。
+    @discardableResult
+    private func joinFrontWindow(_ window: NSWindow) -> Bool {
+        guard !merge.tried else { return false }
+        merge.tried = true
 
-                // **`tabGroup` は nil にならない。** 単独の窓も1枚だけのタブ群を持つ（実測）。
-                // 2枚以上なら、もうどこかのタブになっている。
-                guard (window.tabGroup?.windows.count ?? 1) <= 1 else { return }
-                // **`orderedWindows` を使う。** `NSApp.windows` は前後の順を保証しない
-                // （実測: 手前が `tab_b` のときに `tab_a` を拾った）。
-                // 新しい窓はすでに手前なので、自分を除いた先頭が ⌘N を押した窓。
-                guard let host = NSApp.orderedWindows.first(where: {
-                    $0 !== window
-                        && $0.isVisible
-                        && $0.tabbingIdentifier == window.tabbingIdentifier
-                }) else { return }
+        // **`tabGroup` は nil にならない。** 単独の窓も1枚だけのタブ群を持つ（実測）。
+        // 2枚以上なら、もうどこかのタブになっている。
+        guard (window.tabGroup?.windows.count ?? 1) <= 1 else { return false }
+        // **`orderedWindows` を使う。** `NSApp.windows` は前後の順を保証しない
+        // （実測: 手前が `tab_b` のときに `tab_a` を拾った）。
+        // 自分を除いた、見えている先頭が ⌘N を押した窓。
+        guard let host = NSApp.orderedWindows.first(where: {
+            $0 !== window
+                && $0.isVisible
+                && $0.tabbingIdentifier == window.tabbingIdentifier
+        }) else { return false }
 
-                host.addTabbedWindow(window, ordered: .above)
-                window.makeKeyAndOrderFront(nil)
-            }
-            .frame(width: 0, height: 0)
-        )
+        // 画面に出ていない窓でもタブへ入る。出るのは、入ったあと（実測）。
+        host.addTabbedWindow(window, ordered: .above)
+        // **大きさをまとめ先にそろえる。** 出る前の窓にはまだタブバーが無く、
+        // AppKit は群のタブバーの分だけ窓を下へ伸ばす（実測: 450 → 486）。
+        if window.frame != host.frame {
+            window.setFrame(host.frame, display: false)
+        }
+        return true
     }
 
     /// 一度きりの合図を持つ入れ物。`@State` に置いて、窓が生きているあいだ残す。
