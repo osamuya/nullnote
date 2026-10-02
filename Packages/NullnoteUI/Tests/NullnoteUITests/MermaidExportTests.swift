@@ -225,7 +225,9 @@ struct MermaidExportTests {
     // MARK: - 道具
 
     /// 器を読み込んで図を描く。
-    static func render(_ code: String, width: CGFloat = 600) async throws -> (WKWebView, [String: Any]) {
+    static func render(
+        _ code: String, width: CGFloat = 600, theme: String = "default"
+    ) async throws -> (WKWebView, [String: Any]) {
         let host = try #require(MermaidCoordinator.hostURL)
         let webView = WKWebView(frame: CGRect(x: 0, y: 0, width: width, height: 400))
         let loader = Loader()
@@ -235,8 +237,8 @@ struct MermaidExportTests {
             webView.loadFileURL(host, allowingReadAccessTo: host.deletingLastPathComponent())
         }
         let value = try await webView.callAsyncJavaScript(
-            "return await renderDiagram(code, 'default');",
-            arguments: ["code": code], contentWorld: .page
+            "return await renderDiagram(code, theme);",
+            arguments: ["code": code, "theme": theme], contentWorld: .page
         )
         let drawn = try #require(value as? [String: Any])
         try #require(drawn["ok"] as? Bool == true, "描けない: \(drawn)")

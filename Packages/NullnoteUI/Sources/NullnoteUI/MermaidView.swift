@@ -34,6 +34,8 @@ struct MermaidBlockView: View {
     /// 図が高さを決めたことをプレビューへ伝える口。
     /// **これを呼ばないと、図より下へスクロール同期が届かない。**
     @Environment(\.onDiagramRendered) private var onRendered
+    /// 図のテーマ。設定画面で、ライトとダークのそれぞれに選ぶ。
+    @Environment(\.mermaidThemes) private var mermaidThemes
 
     @State private var height: CGFloat = MermaidBlockView.placeholderHeight
     /// 図の素の大きさ。描けたあとは、高さをここから枠の幅に合わせて決める。
@@ -86,7 +88,7 @@ struct MermaidBlockView: View {
     @ViewBuilder private var enlargeButton: some View {
         if isReady && isHovering {
             Button {
-                MermaidZoomWindow.shared.show(code: code, theme: theme)
+                MermaidZoomWindow.shared.show(code: code, theme: theme, mermaidTheme: mermaidTheme)
             } label: {
                 Image(systemName: "arrow.up.left.and.arrow.down.right")
                     .font(.system(size: 11, weight: .semibold))
@@ -112,7 +114,7 @@ struct MermaidBlockView: View {
     /// mermaid に渡すテーマの名前。**`.system` を素通ししない。**
     /// mermaid は OS の外観を知らないので、こちら側で解いてから渡す。
     @MainActor private var mermaidTheme: String {
-        theme.appearance.resolvedColorScheme == .dark ? "dark" : "default"
+        mermaidThemes.theme(for: theme.appearance.resolvedColorScheme).rawValue
     }
 }
 

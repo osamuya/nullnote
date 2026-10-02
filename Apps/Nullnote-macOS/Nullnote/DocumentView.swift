@@ -22,6 +22,8 @@ struct DocumentView: View {
     let autoLinksURLs: Bool
     /// 合流で、行の途中の空白の量を無視するか。
     let ignoresWhitespace: Bool
+    /// mermaid の図のテーマ。ライトとダークのそれぞれ。
+    let mermaidThemes: MermaidThemes
 
     @State private var showsOutline = false
     /// 目次が開け閉めの最中か。ツールバーの輪を回すために持つ。
@@ -523,6 +525,7 @@ struct DocumentView: View {
                     documentURL: fileURL,
                     breaksOnNewline: breaksOnNewline
                 )
+                .mermaidThemes(mermaidThemes)
             }
         }
     }

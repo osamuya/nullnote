@@ -129,6 +129,23 @@
         }
       }
     },
+    "ダークのとき" : {
+      "comment" : "設定画面。Nullnote がダークのときに使う図のテーマ",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In Dark"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ダークのとき"
+          }
+        }
+      }
+    },
     "テーマ" : {
       "localizations" : {
         "en" : {
@@ -241,6 +258,23 @@
         }
       }
     },
+    "プレビューの図の配色です。拡大して見るときと、画像に書き出すときも同じ配色になります。図の中に %%{init: {'theme': 'forest'}}%% と書いた図は、そちらが優先されます。" : {
+      "comment" : "設定画面。図のテーマの説明",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The color scheme for diagrams in the preview. The enlarged view and exported images use the same scheme. A diagram that contains %%{init: {'theme': 'forest'}}%% uses that theme instead."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "プレビューの図の配色です。拡大して見るときと、画像に書き出すときも同じ配色になります。図の中に %%{init: {'theme': 'forest'}}%% と書いた図は、そちらが優先されます。"
+          }
+        }
+      }
+    },
     "プレビューを左右に並べる" : {
       "localizations" : {
         "en" : {
@@ -285,6 +319,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "プレビューを隠す"
+          }
+        }
+      }
+    },
+    "ライトのとき" : {
+      "comment" : "設定画面。Nullnote がライトのときに使う図のテーマ",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In Light"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ライトのとき"
           }
         }
       }
@@ -413,6 +464,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "同じ語を選ぶ"
+          }
+        }
+      }
+    },
+    "図（mermaid）" : {
+      "comment" : "設定画面。mermaid の図の配色を選ぶ欄の見出し",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diagrams (mermaid)"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "図（mermaid）"
           }
         }
       }

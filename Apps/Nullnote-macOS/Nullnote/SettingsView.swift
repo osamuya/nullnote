@@ -11,6 +11,8 @@ struct SettingsView: View {
     @Binding var indentStyle: IndentStyle
     @Binding var autoLinksURLs: Bool
     @Binding var ignoresWhitespace: Bool
+    @Binding var mermaidLightTheme: MermaidTheme
+    @Binding var mermaidDarkTheme: MermaidTheme
 
     var body: some View {
         Form {
@@ -72,6 +74,29 @@ struct SettingsView: View {
                     Toggle("普通の改行でも改行する", isOn: $breaksOnNewline)
                         .multilineTextAlignment(.leading)
                     Text("Markdown は行末に半角スペース2つを置いたときだけ改行します。入れておくと、そのままの改行もプレビューで改行になります。本文は書き換えません。")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                        // `LabeledContent` の中は右揃えが受け継がれる。
+                        .multilineTextAlignment(.leading)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .frame(width: 240, alignment: .leading)
+            }
+
+            LabeledContent("図（mermaid）") {
+                VStack(alignment: .leading, spacing: 4) {
+                    Picker("ライトのとき", selection: $mermaidLightTheme) {
+                        ForEach(MermaidTheme.allCases) { option in
+                            Text(option.label).tag(option)
+                        }
+                    }
+                    Picker("ダークのとき", selection: $mermaidDarkTheme) {
+                        ForEach(MermaidTheme.allCases) { option in
+                            Text(option.label).tag(option)
+                        }
+                    }
+                    Text("プレビューの図の配色です。拡大して見るときと、画像に書き出すときも同じ配色になります。図の中に %%{init: {'theme': 'forest'}}%% と書いた図は、そちらが優先されます。")
                         .font(.callout)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)

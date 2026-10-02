@@ -26,6 +26,10 @@ struct NullnoteApp: App {
     private var autoLinksURLs = false
     @AppStorage(AppSettings.ignoresWhitespaceKey)
     private var ignoresWhitespace = true
+    @AppStorage(AppSettings.mermaidLightThemeKey)
+    private var mermaidLightTheme: MermaidTheme = .lightDefault
+    @AppStorage(AppSettings.mermaidDarkThemeKey)
+    private var mermaidDarkTheme: MermaidTheme = .darkDefault
 
     init() {
         AppSettings.registerDefaults()
@@ -57,7 +61,8 @@ struct NullnoteApp: App {
                 breaksOnNewline: breaksOnNewline,
                 indentStyle: indentStyle,
                 autoLinksURLs: autoLinksURLs,
-                ignoresWhitespace: ignoresWhitespace
+                ignoresWhitespace: ignoresWhitespace,
+                mermaidThemes: MermaidThemes(light: mermaidLightTheme, dark: mermaidDarkTheme)
             )
             .tint(control)
             // 画像が読めなかったときに、フォルダの閲覧を頼めるようにする。
@@ -112,7 +117,9 @@ struct NullnoteApp: App {
                 breaksOnNewline: $breaksOnNewline,
                 indentStyle: $indentStyle,
                 autoLinksURLs: $autoLinksURLs,
-                ignoresWhitespace: $ignoresWhitespace
+                ignoresWhitespace: $ignoresWhitespace,
+                mermaidLightTheme: $mermaidLightTheme,
+                mermaidDarkTheme: $mermaidDarkTheme
             )
             .tint(control)
         }

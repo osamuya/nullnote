@@ -11,6 +11,8 @@ enum AppSettings {
     static let indentStyleKey = "editorIndentStyle"
     static let autoLinksURLsKey = "editorAutoLinksURLs"
     static let ignoresWhitespaceKey = "mergeIgnoresWhitespace"
+    static let mermaidLightThemeKey = "previewMermaidLightTheme"
+    static let mermaidDarkThemeKey = "previewMermaidDarkTheme"
 
     /// 保存パネルを最初から詳細表示（ファイルブラウザ）で開かせる AppKit のキー。
     ///
@@ -56,6 +58,11 @@ enum AppSettings {
             // 印は人の手を止めるものなので、意味の変わらない違いで出したくない。
             // 行頭のインデントと行末は無視しないので、Markdown の意味は壊れない（D-47）。
             ignoresWhitespaceKey: true,
+
+            // mermaid の図のテーマ。ライトは **neutral**、ダークは **dark**（D-70）。
+            // mermaid の既定（default）は紫・黄緑・黄が混ざり、本文の地から浮く。
+            mermaidLightThemeKey: MermaidTheme.lightDefault.rawValue,
+            mermaidDarkThemeKey: MermaidTheme.darkDefault.rawValue,
         ])
 
         seedSavePanelExpansion()

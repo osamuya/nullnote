@@ -79,6 +79,91 @@
         }
       }
     },
+    "base（クリーム）" : {
+      "comment" : "設定画面。mermaid のテーマの名前。括弧の中は色の印象",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "base (cream)"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "base（クリーム）"
+          }
+        }
+      }
+    },
+    "dark（黒）" : {
+      "comment" : "設定画面。mermaid のテーマの名前。括弧の中は色の印象",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "dark (black)"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "dark（黒）"
+          }
+        }
+      }
+    },
+    "default（紫）" : {
+      "comment" : "設定画面。mermaid のテーマの名前。括弧の中は色の印象",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "default (purple)"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "default（紫）"
+          }
+        }
+      }
+    },
+    "forest（緑）" : {
+      "comment" : "設定画面。mermaid のテーマの名前。括弧の中は色の印象",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "forest (green)"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "forest（緑）"
+          }
+        }
+      }
+    },
+    "neutral（灰色）" : {
+      "comment" : "設定画面。mermaid のテーマの名前。括弧の中は色の印象",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "neutral (gray)"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "neutral（灰色）"
+          }
+        }
+      }
+    },
     "この図は描けません" : {
       "comment" : "mermaid の図が描けなかったときに、図のあった場所へ出す",
       "localizations" : {

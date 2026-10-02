@@ -21,11 +21,13 @@ final class MermaidZoomWindow {
 
     private init() {}
 
-    func show(code: String, theme: MarkdownTheme) {
+    /// - Parameter mermaidTheme: mermaid に渡すテーマの名前。プレビューで使っているものと揃える。
+    func show(code: String, theme: MarkdownTheme, mermaidTheme: String) {
         let controller = DiagramZoomController(paper: theme.background)
         let content = ZoomedDiagramView(
             code: code,
             theme: theme,
+            mermaidTheme: mermaidTheme,
             controller: controller,
             onClose: { [weak self] in self?.close() }
         )
@@ -65,6 +67,7 @@ private struct ZoomedDiagramView: View {
 
     let code: String
     let theme: MarkdownTheme
+    let mermaidTheme: String
     @ObservedObject var controller: DiagramZoomController
     let onClose: () -> Void
 
@@ -72,7 +75,7 @@ private struct ZoomedDiagramView: View {
         VStack(spacing: 0) {
             DiagramZoomWebView(
                 code: code,
-                theme: theme.appearance.resolvedColorScheme == .dark ? "dark" : "default",
+                theme: mermaidTheme,
                 errorMessage: String(localized: "この図は描けません", bundle: .module),
                 textColor: theme.text,
                 background: theme.codeBackground,
