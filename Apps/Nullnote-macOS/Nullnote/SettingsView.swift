@@ -14,6 +14,12 @@ struct SettingsView: View {
     @Binding var mermaidLightTheme: MermaidTheme
     @Binding var mermaidDarkTheme: MermaidTheme
 
+    /// 設定の窓の幅。
+    private static let windowWidth: CGFloat = 460
+    /// 各欄の右側（操作と説明文）の幅。**すべての欄で揃える。**
+    /// 説明文の長い欄が増えたので広げた（240 → 300。2026-10-02）。
+    private static let controlWidth: CGFloat = 300
+
     var body: some View {
         Form {
             LabeledContent("テーマ") {
@@ -24,7 +30,7 @@ struct SettingsView: View {
                 }
                 .pickerStyle(.segmented)
                 .labelsHidden()
-                .frame(width: 240)
+                .frame(width: Self.controlWidth)
             }
 
             LabeledContent("編集画面") {
@@ -32,7 +38,7 @@ struct SettingsView: View {
                     // 札が折り返したとき、2行目が右に寄らないように。
                     // `LabeledContent` の中は右揃えが受け継がれる（説明文と同じ手当て）。
                     .multilineTextAlignment(.leading)
-                    .frame(width: 240, alignment: .leading)
+                    .frame(width: Self.controlWidth, alignment: .leading)
             }
 
             LabeledContent("インデント") {
@@ -51,7 +57,7 @@ struct SettingsView: View {
                         .multilineTextAlignment(.leading)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                .frame(width: 240, alignment: .leading)
+                .frame(width: Self.controlWidth, alignment: .leading)
             }
 
             LabeledContent("リンク") {
@@ -66,7 +72,7 @@ struct SettingsView: View {
                         .multilineTextAlignment(.leading)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                .frame(width: 240, alignment: .leading)
+                .frame(width: Self.controlWidth, alignment: .leading)
             }
 
             LabeledContent("プレビュー") {
@@ -81,7 +87,7 @@ struct SettingsView: View {
                         .multilineTextAlignment(.leading)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                .frame(width: 240, alignment: .leading)
+                .frame(width: Self.controlWidth, alignment: .leading)
             }
 
             LabeledContent("図（mermaid）") {
@@ -104,7 +110,7 @@ struct SettingsView: View {
                         .multilineTextAlignment(.leading)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                .frame(width: 240, alignment: .leading)
+                .frame(width: Self.controlWidth, alignment: .leading)
             }
 
             LabeledContent("合流") {
@@ -118,7 +124,7 @@ struct SettingsView: View {
                         .multilineTextAlignment(.leading)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                .frame(width: 240, alignment: .leading)
+                .frame(width: Self.controlWidth, alignment: .leading)
             }
 
             LabeledContent("ファイル名") {
@@ -134,7 +140,7 @@ struct SettingsView: View {
                         .multilineTextAlignment(.leading)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                .frame(width: 240, alignment: .leading)
+                .frame(width: Self.controlWidth, alignment: .leading)
             }
 
             LabeledContent("文字サイズ") {
@@ -149,11 +155,11 @@ struct SettingsView: View {
                         .foregroundStyle(.secondary)
                         .monospacedDigit()
                 }
-                .frame(width: 240)
+                .frame(width: Self.controlWidth)
             }
         }
         .formStyle(.grouped)
-        .frame(width: 400)
+        .frame(width: Self.windowWidth)
         .fixedSize(horizontal: false, vertical: true)
     }
 }
