@@ -22,7 +22,7 @@ final class MermaidZoomWindow {
     private init() {}
 
     func show(code: String, theme: MarkdownTheme) {
-        let controller = DiagramZoomController()
+        let controller = DiagramZoomController(paper: theme.background)
         let content = ZoomedDiagramView(
             code: code,
             theme: theme,
@@ -109,6 +109,10 @@ private struct ZoomedDiagramView: View {
             Button(String(localized: "等倍", bundle: .module)) { controller.actualSize() }
                 .keyboardShortcut("1", modifiers: .command)
 
+            Divider().frame(height: 16)
+
+            saveMenu
+
             Spacer()
 
             // 操作の案内。**覚えさせない。**見えているところに書いておく。
@@ -121,6 +125,20 @@ private struct ZoomedDiagramView: View {
                 .keyboardShortcut(.cancelAction)
         }
         .padding(12)
+    }
+
+    /// 図を保存する。**拡大窓ではドラッグで持ち出さない。** ドラッグは移動と
+    /// 文字の選択に使っているので、ここではボタンに寄せる（#038）。
+    private var saveMenu: some View {
+        Menu {
+            Button(String(localized: "PNG で保存…", bundle: .module)) { controller.save(.png) }
+            Button(String(localized: "SVG で保存…", bundle: .module)) { controller.save(.svg) }
+        } label: {
+            Label(String(localized: "保存", bundle: .module), systemImage: "square.and.arrow.down")
+        }
+        .menuStyle(.borderlessButton)
+        .fixedSize()
+        .help(Text("図を画像として保存する", bundle: .module))
     }
 
     private func step(systemImage: String, help: Text, action: @escaping () -> Void) -> some View {
@@ -147,6 +165,13 @@ final class DiagramZoomController: ObservableObject {
 
     fileprivate weak var webView: WKWebView?
 
+    /// 保存する図に敷く下地。プレビューで図の後ろに見えている色。
+    private let paper: PlatformColor
+
+    init(paper: PlatformColor) {
+        self.paper = paper
+    }
+
     func zoom(by factor: Double) {
         call("return zoomBy(factor);", ["factor": factor])
     }
@@ -154,6 +179,11 @@ final class DiagramZoomController: ObservableObject {
     func fit() { call("return fitToWindow();", [:]) }
 
     func actualSize() { call("return actualSize();", [:]) }
+
+    func save(_ format: DiagramExportFormat) {
+        guard let webView else { return }
+        DiagramSaving.save(format, from: webView, background: paper)
+    }
 
     fileprivate func noteScale(_ value: Double) { scale = value }
 

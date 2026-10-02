@@ -104,7 +104,14 @@ async function renderDiagram(code, theme) {
     fixSize(el);
     // 縮めて収めたあとの実寸を返す。枠の高さはこれに合わせる。
     const r = el.getBoundingClientRect();
-    return { ok: true, width: r.width, height: Math.ceil(r.height) };
+    // **素の大きさも返す。** 枠の幅が変わったら、アプリ側がこれから高さを決め直す。
+    // 描いたときの高さだけだと、あとで枠が広がったときに図の下が切れる。
+    const vb = viewBoxOf(el);
+    return {
+      ok: true, width: r.width, height: Math.ceil(r.height),
+      naturalWidth: vb ? vb.width : r.width, naturalHeight: vb ? vb.height : r.height,
+      textRegions: textRegions(el),
+    };
   } catch (e) {
     // mermaid は失敗しても頁に自前のエラー図を挿すことがある。消しておく。
     box.innerHTML = '';
@@ -246,6 +253,114 @@ function connectDragToPan(box) {
     panning = false;
     box.classList.remove('grabbing');
   });
+}
+
+// ─────────────────────────────────────────────────────────
+// 図を画像として持ち出す（#038）。プレビューのドラッグと、拡大窓の保存から呼ぶ。
+// ─────────────────────────────────────────────────────────
+
+function viewBoxOf(svg) {
+  const vb = (svg.getAttribute('viewBox') || '').split(/[\s,]+/).map(Number);
+  if (vb.length !== 4 || !(vb[2] > 0) || !(vb[3] > 0)) return null;
+  return { x: vb[0], y: vb[1], width: vb[2], height: vb[3] };
+}
+
+/// 図の中で文字が占めている場所。**図の素の大きさを基準にした座標**で返す。
+///
+/// プレビューでは、文字の上から始めたドラッグは選択に、それ以外は画像の
+/// 持ち出しに使う。押した瞬間に頁へ問い合わせると返事が間に合わないので、
+/// 描き終えたときに一度だけ渡しておく。素の大きさを基準にしておけば、
+/// プレビューの幅が変わって図が縮んでも、アプリ側の掛け算だけで済む。
+function textRegions(svg) {
+  const vb = viewBoxOf(svg);
+  const frame = svg.getBoundingClientRect();
+  if (!vb || frame.width === 0) return { width: 0, height: 0, rects: [] };
+  const k = vb.width / frame.width;
+  const rects = [];
+  for (const el of svg.querySelectorAll('foreignObject, text')) {
+    const r = el.getBoundingClientRect();
+    if (r.width === 0 || r.height === 0) continue;
+    rects.push([(r.left - frame.left) * k, (r.top - frame.top) * k, r.width * k, r.height * k]);
+  }
+  return { width: vb.width, height: vb.height, rects };
+}
+
+/// 書き出す図のまわりに空ける余白。縁ぎりぎりで切ると、枠線が欠けて見える。
+const EXPORT_PADDING = 16;
+/// PNG の倍率。**画面の拡大率には合わせない。** いつも同じ大きさで出す。
+const EXPORT_SCALE = 2;
+/// canvas の大きさの上限。超えると WebKit は黙って空の画像を返す。
+/// 大きな図は倍率を下げて収める。
+const EXPORT_MAX_SIDE = 16384;
+const EXPORT_MAX_AREA = 8192 * 8192;
+
+/// 図を SVG か PNG にする。
+///
+/// **下地を敷く。** 透かすと、ダークの図を白い資料に貼ったときに
+/// 白い文字が消える。色はアプリ側から渡す（プレビューで図の後ろに見えている色）。
+///
+/// PNG は SVG を canvas に描いて作る。**mermaid の文字は `<foreignObject>` の中に
+/// あるが、WebKit はこれを描いても canvas を汚さない**（2026-10-02 に実測。
+/// 日本語のラベルまで描けた）。ここが変わって書き出せなくなったら、
+/// throw ではなく理由を持って返る。
+async function exportDiagram(format, background) {
+  const source = document.querySelector('#box svg');
+  const vb = source && viewBoxOf(source);
+  if (!vb) return { ok: false, reason: 'no diagram' };
+
+  const pad = EXPORT_PADDING;
+  const width = vb.width + pad * 2;
+  const height = vb.height + pad * 2;
+
+  // 拡大窓では width/height に倍率が入っているので、素の大きさで置き直す。
+  const svg = source.cloneNode(true);
+  svg.removeAttribute('style');
+  svg.setAttribute('viewBox', `${vb.x - pad} ${vb.y - pad} ${width} ${height}`);
+  svg.setAttribute('width', width);
+  svg.setAttribute('height', height);
+  // 名前空間は元の図から借りる。**URL をここに書かない**（外へ出ていく記述に見える。
+  // `MermaidBlockTests` が見張っている）。xmlns は XMLSerializer が書き添える。
+  const paper = document.createElementNS(source.namespaceURI, 'rect');
+  paper.setAttribute('x', vb.x - pad);
+  paper.setAttribute('y', vb.y - pad);
+  paper.setAttribute('width', width);
+  paper.setAttribute('height', height);
+  paper.setAttribute('fill', background);
+  svg.insertBefore(paper, svg.firstChild);
+  const xml = new XMLSerializer().serializeToString(svg);
+
+  if (format === 'svg') {
+    return { ok: true, svg: '<?xml version="1.0" encoding="UTF-8"?>\n' + xml, width, height };
+  }
+
+  const scale = Math.min(
+    EXPORT_SCALE,
+    EXPORT_MAX_SIDE / width,
+    EXPORT_MAX_SIDE / height,
+    Math.sqrt(EXPORT_MAX_AREA / (width * height))
+  );
+  try {
+    const image = new Image();
+    await new Promise((resolve, reject) => {
+      image.onload = resolve;
+      image.onerror = () => reject(new Error('image load failed'));
+      image.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(xml);
+    });
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(width * scale);
+    canvas.height = Math.round(height * scale);
+    const context = canvas.getContext('2d');
+    context.fillStyle = background;
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.drawImage(image, 0, 0, canvas.width, canvas.height);
+    const url = canvas.toDataURL('image/png');
+    const comma = url.indexOf(',');
+    // 大きすぎると `data:,` だけが返る。
+    if (comma < 0 || url.length - comma < 16) return { ok: false, reason: 'canvas too large' };
+    return { ok: true, png: url.slice(comma + 1), width, height, scale };
+  } catch (e) {
+    return { ok: false, reason: String((e && e.message) || e) };
+  }
 }
 
 /// 描けなかったことを、アプリ側から渡した文言で見せる。

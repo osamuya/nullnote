@@ -36,6 +36,8 @@ struct MermaidBlockView: View {
     @Environment(\.onDiagramRendered) private var onRendered
 
     @State private var height: CGFloat = MermaidBlockView.placeholderHeight
+    /// 図の素の大きさ。描けたあとは、高さをここから枠の幅に合わせて決める。
+    @State private var naturalSize: CGSize?
     @State private var isReady = false
     @State private var isHovering = false
 
@@ -52,16 +54,22 @@ struct MermaidBlockView: View {
     }
 
     private var diagram: some View {
-        MermaidWebView(
-            code: code,
-            theme: mermaidTheme,
-            errorMessage: String(localized: "この図は描けません", bundle: .module),
-            textColor: theme.text,
-            background: theme.codeBackground,
-            height: $height,
-            isReady: $isReady
-        )
-        .frame(height: height)
+        // **高さを描いたときの値で固定しない。** WebView は幅 400 で生まれ、
+        // 図はその幅に縮めて描かれることがある。あとで枠が広がると図も広がるのに、
+        // 高さが古いままだと下が切れていた（素の幅が 400 より広い図だけ。2026-10-02）。
+        DiagramFrame(naturalSize: naturalSize, fallbackHeight: height) {
+            MermaidWebView(
+                code: code,
+                theme: mermaidTheme,
+                errorMessage: String(localized: "この図は描けません", bundle: .module),
+                textColor: theme.text,
+                background: theme.codeBackground,
+                paper: theme.background,
+                height: $height,
+                naturalSize: $naturalSize,
+                isReady: $isReady
+            )
+        }
         .frame(maxWidth: .infinity, alignment: .leading)
         // 描き終わるまでは器を見せない。高さが決まる前の枠が、
         // 空のコードブロックのように見えてしまう。
@@ -108,6 +116,42 @@ struct MermaidBlockView: View {
     }
 }
 
+/// 図の枠。**枠の幅から高さを決める。**
+///
+/// 図は枠より広ければ幅に合わせて縮み（`max-width: 100%`）、狭ければ素の大きさのまま置かれる。
+/// 頁の側と同じ計算をここでもして、窓の幅を変えても図の下が切れたり、
+/// 下に余白が残ったりしないようにする。素の大きさが分かるまで（描く前と、描けなかったとき）は
+/// `fallbackHeight` を使う。
+struct DiagramFrame: Layout {
+
+    var naturalSize: CGSize?
+    var fallbackHeight: CGFloat
+
+    /// 枠と中身がぴったりだと、丸めの差で中身がはみ出し、WebKit がホイールを飲むことがある。
+    static let slack: CGFloat = 2
+
+    /// 枠の幅に置いたときの高さ。
+    static func height(for natural: CGSize, width: CGFloat) -> CGFloat {
+        guard natural.width > 0, width > 0 else { return natural.height + slack }
+        let shown = min(width, natural.width)
+        return (natural.height * shown / natural.width).rounded(.up) + slack
+    }
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let width = proposal.width ?? naturalSize?.width ?? 0
+        guard let naturalSize, naturalSize.width > 0 else {
+            return CGSize(width: width, height: fallbackHeight)
+        }
+        return CGSize(width: width, height: Self.height(for: naturalSize, width: width))
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        for subview in subviews {
+            subview.place(at: bounds.origin, proposal: ProposedViewSize(bounds.size))
+        }
+    }
+}
+
 /// 作り直しの判断に使う組。
 private struct MermaidIdentity: Hashable {
     let code: String
@@ -126,14 +170,17 @@ struct MermaidWebView: NSViewRepresentable {
     let errorMessage: String
     let textColor: PlatformColor
     let background: PlatformColor
+    /// 書き出す図に敷く下地。プレビューで図の後ろに見えている色。
+    let paper: PlatformColor
     @Binding var height: CGFloat
+    @Binding var naturalSize: CGSize?
     @Binding var isReady: Bool
 
     func makeCoordinator() -> MermaidCoordinator {
         MermaidCoordinator(
             code: code, theme: theme, errorMessage: errorMessage,
             textColor: textColor, background: background,
-            height: $height, isReady: $isReady
+            height: $height, naturalSize: $naturalSize, isReady: $isReady
         )
     }
 
@@ -141,11 +188,17 @@ struct MermaidWebView: NSViewRepresentable {
         let view = MermaidCoordinator.makeWebView(
             delegate: context.coordinator, passesScrollThrough: true
         )
+        if let view = view as? ScrollThroughWebView {
+            view.dragSource = DiagramDragSource(webView: view, background: paper)
+        }
         context.coordinator.load(into: view)
         return view
     }
 
-    func updateNSView(_ nsView: WKWebView, context: Context) {}
+    func updateNSView(_ nsView: WKWebView, context: Context) {
+        // テーマの地の色が変わったら、持ち出す画像の下地も変える。
+        (nsView as? ScrollThroughWebView)?.dragSource?.background = paper
+    }
 }
 
 /// ホイールを自分で握らず、外のスクロールへ渡す `WKWebView`。
@@ -158,9 +211,71 @@ struct MermaidWebView: NSViewRepresentable {
 ///
 /// **埋め込んだ図だけに使う。** 拡大窓は自分でスクロールするので、
 /// ここで素通しさせると動かなくなる。
+///
+/// **図のドラッグもここで受ける（#038）。** 文字の外から始めたドラッグは
+/// PNG の持ち出しに、文字の上から始めたドラッグは今までどおり選択に渡す。
 final class ScrollThroughWebView: WKWebView {
+
+    /// 図の中で文字が占めている場所。描き終わるまでは `nil` で、そのあいだは持ち出さない。
+    var textRegions: DiagramTextRegions?
+    /// 持ち出す画像を作って渡す役。
+    var dragSource: DiagramDragSource?
+
+    /// 持ち出しのために預かった、押したときのイベント。
+    /// 預かっているあいだは WebKit に渡していない。
+    private var heldMouseDown: NSEvent?
+    private var isDragging = false
+
+    /// これだけ動いたらドラッグとみなす。
+    private static let dragThreshold: CGFloat = 3
+
     override func scrollWheel(with event: NSEvent) {
         nextResponder?.scrollWheel(with: event)
+    }
+
+    override func mouseDown(with event: NSEvent) {
+        guard event.clickCount == 1, !event.modifierFlags.contains(.shift),
+              let textRegions, let dragSource,
+              textRegions.allowsExport(at: topLeftPoint(of: event), viewWidth: bounds.width)
+        else {
+            super.mouseDown(with: event)
+            return
+        }
+        heldMouseDown = event
+        isDragging = false
+        // 動かし始めるまでのわずかな間に作っておく。間に合えば、画像そのものも渡せる。
+        dragSource.prepare()
+    }
+
+    override func mouseDragged(with event: NSEvent) {
+        guard let down = heldMouseDown else {
+            super.mouseDragged(with: event)
+            return
+        }
+        guard !isDragging else { return }
+        let dx = event.locationInWindow.x - down.locationInWindow.x
+        let dy = event.locationInWindow.y - down.locationInWindow.y
+        guard hypot(dx, dy) >= Self.dragThreshold else { return }
+        isDragging = true
+        heldMouseDown = nil
+        dragSource?.beginDrag(with: down, from: self)
+    }
+
+    override func mouseUp(with event: NSEvent) {
+        guard let down = heldMouseDown else {
+            super.mouseUp(with: event)
+            return
+        }
+        heldMouseDown = nil
+        // 動かさずに離した。ただのクリックとして WebKit に渡す（選択が外れる、など）。
+        super.mouseDown(with: down)
+        super.mouseUp(with: event)
+    }
+
+    /// 押した場所を、左上が原点の座標で返す。頁の座標と向きを揃える。
+    private func topLeftPoint(of event: NSEvent) -> CGPoint {
+        let point = convert(event.locationInWindow, from: nil)
+        return isFlipped ? point : CGPoint(x: point.x, y: bounds.height - point.y)
     }
 }
 
@@ -174,14 +289,17 @@ struct MermaidWebView: UIViewRepresentable {
     let errorMessage: String
     let textColor: PlatformColor
     let background: PlatformColor
+    /// 書き出す図に敷く下地。プレビューで図の後ろに見えている色。
+    let paper: PlatformColor
     @Binding var height: CGFloat
+    @Binding var naturalSize: CGSize?
     @Binding var isReady: Bool
 
     func makeCoordinator() -> MermaidCoordinator {
         MermaidCoordinator(
             code: code, theme: theme, errorMessage: errorMessage,
             textColor: textColor, background: background,
-            height: $height, isReady: $isReady
+            height: $height, naturalSize: $naturalSize, isReady: $isReady
         )
     }
 
@@ -210,12 +328,14 @@ class MermaidCoordinator: NSObject, WKNavigationDelegate {
     private let textColor: PlatformColor
     private let background: PlatformColor
     @Binding private var height: CGFloat
+    @Binding private var naturalSize: CGSize?
     @Binding private var isReady: Bool
 
     init(
         code: String, theme: String, errorMessage: String,
         textColor: PlatformColor, background: PlatformColor,
-        height: Binding<CGFloat>, isReady: Binding<Bool>
+        height: Binding<CGFloat>, naturalSize: Binding<CGSize?> = .constant(nil),
+        isReady: Binding<Bool>
     ) {
         self.code = code
         self.theme = theme
@@ -223,6 +343,7 @@ class MermaidCoordinator: NSObject, WKNavigationDelegate {
         self.textColor = textColor
         self.background = background
         self._height = height
+        self._naturalSize = naturalSize
         self._isReady = isReady
     }
 
@@ -333,8 +454,17 @@ class MermaidCoordinator: NSObject, WKNavigationDelegate {
                 }
                 // **少しだけ余裕を持たせる。** 枠と中身がぴったりだと、
                 // 丸めの差で中身がはみ出し、WebKit がホイールを飲むことがある。
-                self.height = CGFloat(drawn) + 2
+                self.height = CGFloat(drawn) + DiagramFrame.slack
+                if let width = (dictionary["naturalWidth"] as? NSNumber)?.doubleValue,
+                   let natural = (dictionary["naturalHeight"] as? NSNumber)?.doubleValue,
+                   width > 0, natural > 0 {
+                    self.naturalSize = CGSize(width: width, height: natural)
+                }
                 self.isReady = true
+                #if canImport(AppKit)
+                (webView as? ScrollThroughWebView)?.textRegions =
+                    DiagramTextRegions(dictionary["textRegions"])
+                #endif
                 Trace.log("Mermaid: 高さ確定 \(Int(drawn)) pt")
 
             case let .failure(error):
@@ -360,6 +490,8 @@ class MermaidCoordinator: NSObject, WKNavigationDelegate {
             in: .page
         ) { [weak self] result in
             guard let self else { return }
+            // 前に描けていた図の大きさを捨てる。残すと、知らせの枠がその高さになる。
+            self.naturalSize = nil
             if case let .success(value) = result, let drawn = value as? Double, drawn > 0 {
                 self.height = CGFloat(drawn)
             }

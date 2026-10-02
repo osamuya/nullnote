@@ -45,6 +45,40 @@
         }
       }
     },
+    "PNG で保存…" : {
+      "comment" : "拡大窓の保存メニュー。図を PNG で保存する",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save as PNG…"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PNG で保存…"
+          }
+        }
+      }
+    },
+    "SVG で保存…" : {
+      "comment" : "拡大窓の保存メニュー。図を SVG で保存する",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save as SVG…"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "SVG で保存…"
+          }
+        }
+      }
+    },
     "この図は描けません" : {
       "comment" : "mermaid の図が描けなかったときに、図のあった場所へ出す",
       "localizations" : {
@@ -191,6 +225,23 @@
         }
       }
     },
+    "保存" : {
+      "comment" : "拡大窓。図を保存するメニューの見出し",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "保存"
+          }
+        }
+      }
+    },
     "全体を見る" : {
       "comment" : "拡大窓。図の全体が収まる倍率にする",
       "localizations" : {
@@ -241,7 +292,7 @@
       }
     },
     "図" : {
-      "comment" : "拡大窓のタイトル",
+      "comment" : "拡大窓のタイトル。保存・ドラッグで持ち出した図のファイル名の頭にも使う",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -270,6 +321,40 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "図を大きく見る"
+          }
+        }
+      }
+    },
+    "図を書き出せませんでした" : {
+      "comment" : "図の保存やドラッグに失敗したときの知らせ",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn't export the diagram"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "図を書き出せませんでした"
+          }
+        }
+      }
+    },
+    "図を画像として保存する" : {
+      "comment" : "拡大窓の保存メニューに指を乗せたときの説明",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save the diagram as an image"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "図を画像として保存する"
           }
         }
       }
