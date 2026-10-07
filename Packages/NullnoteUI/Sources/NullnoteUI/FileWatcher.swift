@@ -40,7 +40,9 @@ public final class FileWatcher: @unchecked Sendable {
     /// **`URLResourceValues` ではなく `stat` を使う。** 前者は
     /// `fileResourceIdentifier` の中身が不透明で、比べても差が出なかった
     /// （置き換えても「変わっていない」と判定されて、何も知らせなくなった）。
-    private struct Fingerprint: Equatable {
+    ///
+    /// プレビューの画像が差し替わったかを見分けるのにも使う（`ImageLoader`）。
+    struct Fingerprint: Equatable {
         /// 実体の番号。置き換えられると変わる。
         let inode: UInt64
         let modified: TimeInterval

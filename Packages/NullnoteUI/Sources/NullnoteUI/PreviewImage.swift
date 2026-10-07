@@ -201,7 +201,21 @@ struct PreviewImageView: View {
     var body: some View {
         content
             .task(id: ImageLoadKey(source: source, document: documentURL)) { await load() }
+            // アプリが前面に戻ったら、差し替えられていないか確かめる（#M0047）。
+            //
+            // 画像は別のソフトで直してから戻ってくるのが普通の流れなので、ここで拾える。
+            // **画像ごとにファイルを見張らない。** 1枚につき記述子を1つ握るので、
+            // 画像の多い文書では記述子の上限に近づき、書類の保存まで巻き込みかねない。
+            .onReceive(NotificationCenter.default.publisher(for: Self.didBecomeActive)) { _ in
+                Task { await refresh() }
+            }
     }
+
+    #if canImport(AppKit)
+    private static let didBecomeActive = NSApplication.didBecomeActiveNotification
+    #else
+    private static let didBecomeActive = UIApplication.didBecomeActiveNotification
+    #endif
 
     @ViewBuilder
     private var content: some View {
@@ -291,6 +305,17 @@ struct PreviewImageView: View {
         state = await ImageLoader.shared.load(source, relativeTo: documentURL)
     }
 
+    /// 読み直す。**読み込み中の表示は挟まない。**
+    /// 変わっていなければ覚えている絵がそのまま返るので、前面に戻るたびに
+    /// 画像がちらつくことはない。
+    private func refresh() async {
+        let key = ImageLoadKey(source: source, document: documentURL)
+        let result = await ImageLoader.shared.load(key.source, relativeTo: key.document)
+        // 待っているあいだに別の画像へ書き換えられていたら、古い結果で上書きしない。
+        guard key == ImageLoadKey(source: source, document: documentURL) else { return }
+        state = result
+    }
+
     /// フォルダの閲覧を頼み、許されたら読み直す。
     private func requestAccess() async {
         guard let accessRequester,
@@ -335,7 +360,18 @@ actor ImageLoader {
         }
     }
 
-    private var cache: [URL: PlatformImage] = [:]
+    /// 覚えている画像と、読んだときのファイルの見分け。
+    ///
+    /// **場所だけで覚えない。** 同じ名前のまま中身を差し替えられると、
+    /// アプリを終えるまで古い絵を出し続けていた（#M0047）。
+    /// 読むたびに `stat` で見比べ、違っていれば読み直す。
+    /// 網の向こうの画像は見分けが取れないので nil のまま。
+    private struct Entry {
+        let image: PlatformImage
+        let fingerprint: FileWatcher.Fingerprint?
+    }
+
+    private var cache: [URL: Entry] = [:]
 
     func load(_ source: String, relativeTo document: URL?) async -> PreviewImageView.LoadState {
         guard let resolved = ImageSourceResolver.resolve(source, relativeTo: document) else {
@@ -344,11 +380,16 @@ actor ImageLoader {
 
         switch resolved {
         case .local(let url):
-            if let cached = cache[url] { return .loaded(cached) }
+            if let cached = cache[url],
+               let current = FileWatcher.Fingerprint(path: url.path),
+               current == cached.fingerprint {
+                return .loaded(cached.image)
+            }
+            cache[url] = nil
             return loadLocal(url)
 
         case .remote(let url):
-            if let cached = cache[url] { return .loaded(cached) }
+            if let cached = cache[url] { return .loaded(cached.image) }
             return await loadRemote(url)
         }
     }
@@ -368,10 +409,13 @@ actor ImageLoader {
             return .failed(folderIsReadable ? .notFound : .noPermission)
         }
         guard manager.isReadableFile(atPath: url.path) else { return .failed(.noPermission) }
+        // **読む前に控える。** 読んでいる最中に差し替えられても、
+        // 次に見比べたときに違いが出て読み直せる。
+        let fingerprint = FileWatcher.Fingerprint(path: url.path)
         guard let data = try? Data(contentsOf: url), let image = PlatformImage(data: data) else {
             return .failed(folderIsReadable ? .unreadable : .noPermission)
         }
-        cache[url] = image
+        cache[url] = Entry(image: image, fingerprint: fingerprint)
         return .loaded(image)
     }
 
@@ -382,7 +426,7 @@ actor ImageLoader {
         guard (response as? HTTPURLResponse).map({ (200..<300).contains($0.statusCode) }) ?? true,
               let image = PlatformImage(data: data)
         else { return .failed(.unreadable) }
-        cache[url] = image
+        cache[url] = Entry(image: image, fingerprint: nil)
         return .loaded(image)
     }
 }
