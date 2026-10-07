@@ -131,6 +131,13 @@ public struct MarkdownEditorView {
     var autoLinksURLs: Bool
     /// 本文の右クリックに足す項目。アプリ側から渡す。
     var contextMenuItems: [EditorContextMenuItem]
+    /// プレビューで選ばれたところ。色を付けるだけで、選択は動かさない（#M0045）。
+    var selectionMarks: [NSRange]
+    /// 色を付けたところが見えていなければ、そこまで送る依頼。
+    var markReveal: SelectionLink.EditorReveal?
+    /// 選択が変わったら知らせる。選んだ範囲と、最初の範囲の始まりの行を渡す。
+    /// **利用者が選んだときだけ**呼ぶ（入力の焦点がこのビューにあるとき）。
+    var onSelectionChange: (([NSRange], Int) -> Void)?
     /// システムの外観が変わったときに再評価させるためだけに読む。
     /// `.system` を実際の外観に解決している以上、OS 側の変化を拾う必要がある。
     @Environment(\.colorScheme) private var systemColorScheme
@@ -147,7 +154,10 @@ public struct MarkdownEditorView {
         showsLineNumbers: Bool = false,
         indentStyle: IndentStyle = .fourSpaces,
         autoLinksURLs: Bool = false,
-        contextMenuItems: [EditorContextMenuItem] = []
+        contextMenuItems: [EditorContextMenuItem] = [],
+        selectionMarks: [NSRange] = [],
+        markReveal: SelectionLink.EditorReveal? = nil,
+        onSelectionChange: (([NSRange], Int) -> Void)? = nil
     ) {
         self._text = text
         self.theme = theme
@@ -161,6 +171,9 @@ public struct MarkdownEditorView {
         self.indentStyle = indentStyle
         self.autoLinksURLs = autoLinksURLs
         self.contextMenuItems = contextMenuItems
+        self.selectionMarks = selectionMarks
+        self.markReveal = markReveal
+        self.onSelectionChange = onSelectionChange
     }
 
     public func makeCoordinator() -> Coordinator {
@@ -204,6 +217,17 @@ public struct MarkdownEditorView {
         var appliedCommandRequest: EditorCommandRequest?
         /// いま塗ってある検索のヒット。ハイライトのたびに上へ重ねる。
         var searchHighlight: SearchHighlight?
+        /// 選択が変わったら知らせる先（#M0045）。
+        var onSelectionChange: (([NSRange], Int) -> Void)?
+        /// いま色を付けてあるプレビューの選択。
+        var appliedSelectionMarks: [NSRange] = []
+        /// 最後に処理した「色のところまで送って」の依頼。
+        var appliedMarkReveal: SelectionLink.EditorReveal?
+        /// 選択の知らせを間引く。**ドラッグ中も追従させるが、毎回は知らせない。**
+        let selectionReporter = Coalescer(delay: 0.05)
+        /// 色のところまで送っている最中。このあいだのスクロールはプレビューに伝えない。
+        /// 伝えるとプレビューが編集画面の上端に合わせて動き、選んだ文字が見えなくなる。
+        var isRevealingMark = false
         /// 直前の打鍵で書き換わった範囲。差分ハイライトの起点にする。
         ///
         /// テキストビューの delegate（`textDidChange`）は「どこが変わったか」を
@@ -1514,6 +1538,14 @@ extension MarkdownEditorView: NSViewRepresentable {
             coordinator.appliedCommandRequest = request
             coordinator.run(request.command)
         }
+        coordinator.onSelectionChange = onSelectionChange
+        if textChanged || coordinator.appliedSelectionMarks != selectionMarks {
+            coordinator.applySelectionMarks(selectionMarks, to: textView)
+        }
+        if let request = markReveal, request != coordinator.appliedMarkReveal {
+            coordinator.appliedMarkReveal = request
+            coordinator.revealMark(request.range, in: textView)
+        }
         updateGutter(on: scrollView, textView: textView, coordinator: coordinator)
     }
 
@@ -1584,13 +1616,69 @@ extension MarkdownEditorView.Coordinator: NSTextViewDelegate {
 
     @objc func editorDidScroll(_ notification: Notification) {
         guard let textView else { return }
-        reportTopLine(utf16Offset: textView.topVisibleCharacterIndex)
+        if !isRevealingMark {
+            reportTopLine(utf16Offset: textView.topVisibleCharacterIndex)
+        }
         gutterTextView?.redrawLineNumbers()
     }
 
     /// カーソルが動いたら、強調する行番号を描き直す。
     public func textViewDidChangeSelection(_ notification: Notification) {
         gutterTextView?.redrawLineNumbers()
+        scheduleSelectionReport()
+    }
+}
+
+// MARK: - プレビューとの選択の行き来（#M0045）
+
+extension MarkdownEditorView.Coordinator {
+
+    /// 選択が変わったことを、少し間引いてから知らせる。
+    ///
+    /// **利用者が選んだときだけ知らせる。** 本文の差し替えや検索の送りでも選択は動くが、
+    /// そのとき入力の焦点はこのビューに無いか、本文が変わって色ごと消える。
+    func scheduleSelectionReport() {
+        guard onSelectionChange != nil else { return }
+        selectionReporter.schedule { [weak self] in self?.reportSelection() }
+    }
+
+    private func reportSelection() {
+        guard let textView, let onSelectionChange,
+              textView.window?.firstResponder === textView,
+              // 変換中は選択が下書きの範囲を指している。確定するまで待つ。
+              !textView.hasMarkedText()
+        else { return }
+        let ranges = textView.selectedRanges.map(\.rangeValue)
+        let line = ranges.first.map { lineNumber(atUTF16Offset: $0.location) } ?? 1
+        onSelectionChange(ranges, line)
+    }
+
+    /// プレビューで選ばれたところに色を付ける。
+    ///
+    /// **一時属性で付ける。** 本文の属性にすると、ハイライタが貼り直すたびに
+    /// 剥がれるうえ、取り消しの履歴や保存に紛れ込む余地ができる。
+    /// 色は選択と同じ（`selectedTextBackgroundColor`）。並べて見たときに、
+    /// 選んだ側と同じ印だと分かるようにする。
+    func applySelectionMarks(_ marks: [NSRange], to textView: NSTextView) {
+        appliedSelectionMarks = marks
+        guard let layoutManager = textView.layoutManager else { return }
+        let length = textView.textStorage?.length ?? 0
+        layoutManager.removeTemporaryAttribute(
+            .backgroundColor, forCharacterRange: NSRange(location: 0, length: length)
+        )
+        for range in marks where range.length > 0 && NSMaxRange(range) <= length {
+            layoutManager.addTemporaryAttribute(
+                .backgroundColor, value: NSColor.selectedTextBackgroundColor, forCharacterRange: range
+            )
+        }
+    }
+
+    /// 色を付けたところが見えていなければ、見えるところまで送る。
+    func revealMark(_ range: NSRange, in textView: NSTextView) {
+        guard NSMaxRange(range) <= textView.textStorage?.length ?? 0 else { return }
+        isRevealingMark = true
+        textView.scrollRangeToVisible(range)
+        isRevealingMark = false
     }
 }
 

@@ -33,6 +33,8 @@ struct DocumentView: View {
     @State private var topVisibleLine = 1
     /// 目次から「ここへ移動して」と伝えるための依頼。
     @State private var scrollRequest: EditorScrollRequest?
+    /// 編集画面とプレビューの選択の行き来。片方で選ぶと、もう片方に色を付ける（#M0045）。
+    @State private var selectionLink = SelectionLink()
 
     /// 検索の帯を出しているか。
     @State private var showsSearch = false
@@ -197,9 +199,13 @@ struct DocumentView: View {
         // 本文が変わったらヒットを数え直す。**移動はしない。**
         // 打鍵のたびに画面が飛ぶのを避けるため、送るのは操作したときだけ。
         .onChange(of: document.text) { _, source in
+            // 選択の行き来の色は、本文が変わったら消す。プレビューは少し遅れて
+            // 組み直すので、残すとずれた場所に色が付く。
+            selectionLink.clear()
             guard showsSearch else { return }
             search.refresh(in: source)
         }
+        .onChange(of: showsPreview) { _, _ in selectionLink.clear() }
         // 検索語が変わったら数え直して、そのヒットを見せる。
         // 検索欄は畳んだ状態でも居続けるので、監視はこちら（本体）に置く。
         .onChange(of: search.query) { _, _ in
@@ -523,7 +529,12 @@ struct DocumentView: View {
                     theme: theme,
                     anchorLine: topVisibleLine,
                     documentURL: fileURL,
-                    breaksOnNewline: breaksOnNewline
+                    breaksOnNewline: breaksOnNewline,
+                    selectionMarks: selectionLink.previewMarks,
+                    selectionReveal: selectionLink.previewReveal,
+                    onSelectionChange: PreviewSelectionHandler { range in
+                        selectionLink.previewSelectionChanged(range)
+                    }
                 )
                 .mermaidThemes(mermaidThemes)
             }
@@ -586,7 +597,13 @@ struct DocumentView: View {
             showsLineNumbers: showsLineNumbers,
             indentStyle: indentStyle,
             autoLinksURLs: autoLinksURLs,
-            contextMenuItems: contextMenuItems
+            contextMenuItems: contextMenuItems,
+            // プレビューを閉じているときは行き来させない。色を付ける先が無い。
+            selectionMarks: showsPreview ? selectionLink.editorMarks : [],
+            markReveal: showsPreview ? selectionLink.editorReveal : nil,
+            onSelectionChange: showsPreview
+                ? { ranges, line in selectionLink.editorSelectionChanged(ranges, line: line) }
+                : nil
         )
     }
 }

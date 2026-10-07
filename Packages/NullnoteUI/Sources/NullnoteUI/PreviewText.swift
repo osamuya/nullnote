@@ -20,6 +20,13 @@ struct PreviewText: View {
     var color: PlatformColor
     var alignment: TextAlignment = .leading
 
+    #if canImport(AppKit)
+    /// 編集画面で選ばれたところ（本文の位置）。重なる文字に色を付ける（#M0045）。
+    @Environment(\.previewSelectionMarks) private var selectionMarks
+    /// ここで選ばれたら、本文の位置に直して知らせる先。
+    @Environment(\.previewSelectionHandler) private var selectionHandler
+    #endif
+
     init(
         _ text: AttributedString,
         theme: MarkdownTheme,
@@ -41,7 +48,8 @@ struct PreviewText: View {
         // 実際に中身が変わったときだけ変換する（`updateNSView` を参照）。
         PreviewTextRepresentable(
             text: text, theme: theme, baseFont: font, baseColor: color,
-            alignment: alignment.textAlignment
+            alignment: alignment.textAlignment,
+            selectionMarks: selectionMarks, selectionHandler: selectionHandler
         )
         // AppKit のビューはベースラインを持たない。教えないと
         // `HStack(alignment: .firstTextBaseline)` で並べたときにずれる。
@@ -52,6 +60,39 @@ struct PreviewText: View {
             .foregroundStyle(Color(platform: color))
             .frame(maxWidth: .infinity, alignment: alignment == .center ? .center : (alignment == .trailing ? .trailing : .leading))
         #endif
+    }
+}
+
+// MARK: - 編集画面との選択の行き来（#M0045）
+
+/// プレビューで選ばれたことを知らせる先。範囲は本文の位置。`nil` は選択が無くなったとき。
+public struct PreviewSelectionHandler: Sendable {
+    let report: @MainActor @Sendable (NSRange?) -> Void
+
+    public init(_ report: @escaping @MainActor @Sendable (NSRange?) -> Void) {
+        self.report = report
+    }
+}
+
+private struct PreviewSelectionMarksKey: EnvironmentKey {
+    static let defaultValue: [NSRange] = []
+}
+
+private struct PreviewSelectionHandlerKey: EnvironmentKey {
+    static let defaultValue: PreviewSelectionHandler? = nil
+}
+
+extension EnvironmentValues {
+    /// 編集画面で選ばれたところ。プレビューの文字に色を付ける。
+    var previewSelectionMarks: [NSRange] {
+        get { self[PreviewSelectionMarksKey.self] }
+        set { self[PreviewSelectionMarksKey.self] = newValue }
+    }
+
+    /// プレビューで選ばれたことを知らせる先。
+    var previewSelectionHandler: PreviewSelectionHandler? {
+        get { self[PreviewSelectionHandlerKey.self] }
+        set { self[PreviewSelectionHandlerKey.self] = newValue }
     }
 }
 
@@ -90,6 +131,8 @@ enum PreviewAttributes {
             var font = baseFont
             var color = baseColor
             var attributes: [NSAttributedString.Key: Any] = [.paragraphStyle: paragraph]
+            /// 頭に足した、本文に無い文字の数。
+            var extra = 0
 
             if intent.contains(.code) {
                 font = .editorMonospaced(size: baseFont.pointSize)
@@ -99,7 +142,12 @@ enum PreviewAttributes {
                 attributes[.backgroundColor] = theme.inlineCodeBackground
                 // 左の余白を作るための、幅ゼロの文字を頭に足す（後述）。
                 piece = Self.leadingSpacer + piece
+                extra = (Self.leadingSpacer as NSString).length
                 codeRanges.append(NSRange(location: result.length, length: (piece as NSString).length))
+            }
+            // 本文のどこから来たか。選択を編集画面と行き来させるのに使う（#M0045）。
+            if let span = run[PreviewSourceAttribute.self] {
+                attributes[.previewSource] = PreviewSourceRun(span: span, extra: extra)
             }
             font = font.addingTraits(
                 bold: intent.contains(.stronglyEmphasized),
@@ -181,6 +229,7 @@ enum PreviewAttributes {
 /// プレビューで `.backgroundColor` を使うのはインラインコードだけ
 /// （コードブロックと表の見出しは SwiftUI 側で敷いている）。
 /// ここが増えたら、色で見分けるのではなく専用の属性を足すこと。
+/// 編集画面との選択の行き来の色は一時属性で付けるので、そちらで見分ける。
 final class InlineCodeLayoutManager: NSLayoutManager {
 
     /// 角丸と余白の寸法を決めるために持つ。設定されるまでは既定の描き方に任せる。
@@ -201,7 +250,11 @@ final class InlineCodeLayoutManager: NSLayoutManager {
         forCharacterRange charRange: NSRange,
         color: NSColor
     ) {
-        guard let theme else {
+        // 編集画面との選択の行き来の色（一時属性。#M0045）は、札にせずふつうに塗る。
+        let isSelectionMark = temporaryAttribute(
+            .backgroundColor, atCharacterIndex: charRange.location, effectiveRange: nil
+        ) != nil
+        guard let theme, !isSelectionMark else {
             return super.fillBackgroundRectArray(rectArray, count: count, forCharacterRange: charRange, color: color)
         }
 
@@ -280,6 +333,9 @@ private struct PreviewTextRepresentable: NSViewRepresentable {
     let baseColor: PlatformColor
     /// 表の列の揃え。**表示にだけ効かせる。** 測定は常に `.natural` で行う。
     let alignment: NSTextAlignment
+    /// 編集画面で選ばれたところ（本文の位置）。
+    let selectionMarks: [NSRange]
+    let selectionHandler: PreviewSelectionHandler?
 
     /// 変換結果と、大きさを測るための道具を持つ。
     ///
@@ -287,7 +343,8 @@ private struct PreviewTextRepresentable: NSViewRepresentable {
     /// 同じレイアウトを測定にも使うと、測るたびにコンテナの幅を書き換えることになり、
     /// 表示側の折り返し幅が測定時の値に引きずられる。
     /// 表示側は `widthTracksTextView` に任せ、AppKit が自分で幅を追従させる。
-    final class Coordinator {
+    @MainActor
+    final class Coordinator: NSObject, NSTextViewDelegate {
         var appliedText: AttributedString?
         var appliedFontSize: CGFloat = 0
         /// 解決したあとの外観で比べる。`.system` のままでも OS 側が変われば貼り直す。
@@ -299,7 +356,61 @@ private struct PreviewTextRepresentable: NSViewRepresentable {
         let measuringContainer = NSTextContainer(
             size: NSSize(width: 0, height: CGFloat.greatestFiniteMagnitude))
 
-        init() {
+        // MARK: 編集画面との選択の行き来（#M0045）
+
+        weak var textView: LinkHoverTextView?
+        /// この文字が本文のどこから来たか。文字を貼り直すたびに作り直す。
+        var sourceIndex = PreviewSourceIndex(runs: [])
+        /// いま色を付けてある範囲（このビューの中の位置）。
+        var paintedRanges: [NSRange] = []
+        var selectionHandler: PreviewSelectionHandler?
+        /// 文字を貼り直している最中。このときの選択の変化は利用者の操作ではない。
+        var isApplyingText = false
+        private let selectionReporter = Coalescer(delay: 0.05)
+
+        /// 編集画面で選ばれたところのうち、この文字に重なる部分に色を付ける。
+        func paint(_ marks: [NSRange]) {
+            guard let textView, let layoutManager = textView.layoutManager,
+                  let length = textView.textStorage?.length else { return }
+            var ranges: [NSRange] = []
+            if let bounds = sourceIndex.sourceBounds {
+                let relevant = marks.filter { NSIntersectionRange($0, bounds).length > 0 }
+                if !relevant.isEmpty {
+                    ranges = sourceIndex.previewRanges(forSource: relevant)
+                        .filter { NSMaxRange($0) <= length }
+                }
+            }
+            guard ranges != paintedRanges else { return }
+            layoutManager.removeTemporaryAttribute(
+                .backgroundColor, forCharacterRange: NSRange(location: 0, length: length)
+            )
+            for range in ranges {
+                // 選択と同じ色。選んだ側と同じ印だと分かるようにする。
+                layoutManager.addTemporaryAttribute(
+                    .backgroundColor, value: NSColor.selectedTextBackgroundColor, forCharacterRange: range
+                )
+            }
+            paintedRanges = ranges
+        }
+
+        /// 選択が変わったら、少し間引いてから本文の位置に直して知らせる。
+        func textViewDidChangeSelection(_ notification: Notification) {
+            guard !isApplyingText, selectionHandler != nil else { return }
+            selectionReporter.schedule { [weak self] in self?.reportSelection() }
+        }
+
+        private func reportSelection() {
+            // **利用者が選んだときだけ。** 入力の焦点が無いのに選択が動くのは、
+            // 文字の貼り直しなど、こちらの都合による変化。
+            guard let textView, let selectionHandler,
+                  textView.window?.firstResponder === textView
+            else { return }
+            let range = textView.selectedRange()
+            selectionHandler.report(range.length > 0 ? sourceIndex.sourceRange(forPreview: range) : nil)
+        }
+
+        override init() {
+            super.init()
             measuringContainer.widthTracksTextView = false
             measuringContainer.lineFragmentPadding = 0
             // 遅延レイアウトだと測定時に推定値が返ることがある。
@@ -364,10 +475,29 @@ private struct PreviewTextRepresentable: NSViewRepresentable {
 
     /// 作り直しが要るか。
     private func needsRebuild(_ coordinator: Coordinator) -> Bool {
-        coordinator.appliedText != text
-            || coordinator.appliedFontSize != theme.fontSize
+        coordinator.appliedText != text || styleChanged(coordinator)
+    }
+
+    private func styleChanged(_ coordinator: Coordinator) -> Bool {
+        coordinator.appliedFontSize != theme.fontSize
             || coordinator.appliedAppearanceName != theme.appearance.platformAppearance.name
             || coordinator.appliedAlignment != alignment
+    }
+
+    /// 違うのは本文の位置だけか。
+    ///
+    /// **このときは貼り直さない。** 文書の頭で1文字打つと、それより後ろのブロックは
+    /// どれも位置だけがずれる。貼り直すと、見えているブロックが全部組み直しになる
+    /// （#M0045 で位置を持たせる前は、中身が同じブロックは何もしていなかった）。
+    private func onlySourceMoved(_ coordinator: Coordinator) -> Bool {
+        guard let applied = coordinator.appliedText, !styleChanged(coordinator) else { return false }
+        return Self.withoutSource(applied) == Self.withoutSource(text)
+    }
+
+    private static func withoutSource(_ text: AttributedString) -> AttributedString {
+        var copy = text
+        copy[PreviewSourceAttribute.self] = nil
+        return copy
     }
 
     private func remember(in coordinator: Coordinator) {
@@ -398,22 +528,53 @@ private struct PreviewTextRepresentable: NSViewRepresentable {
         textView.isHorizontallyResizable = false
         textView.autoresizingMask = [NSView.AutoresizingMask.width]
         apply(theme, to: textView)
-        textView.textStorage?.setAttributedString(attributed)
-        context.coordinator.measuringStorage.setAttributedString(measuring)
-        context.coordinator.invalidateMeasurements()
-        remember(in: context.coordinator)
+        let coordinator = context.coordinator
+        textView.delegate = coordinator
+        coordinator.textView = textView
+        coordinator.selectionHandler = selectionHandler
+        setText(on: textView, coordinator: coordinator)
+        coordinator.measuringStorage.setAttributedString(measuring)
+        coordinator.invalidateMeasurements()
+        remember(in: coordinator)
+        coordinator.paint(selectionMarks)
         return textView
     }
 
     func updateNSView(_ textView: LinkHoverTextView, context: Context) {
-        guard needsRebuild(context.coordinator) else { return }
+        let coordinator = context.coordinator
+        coordinator.selectionHandler = selectionHandler
+        guard needsRebuild(coordinator) else {
+            coordinator.paint(selectionMarks)
+            return
+        }
+        if onlySourceMoved(coordinator) {
+            coordinator.appliedText = text
+            coordinator.sourceIndex = PreviewSourceIndex(attributed)
+            coordinator.paint(selectionMarks)
+            return
+        }
         // 文字サイズが変わると角丸と余白の寸法も変わる。渡し直す。
         (textView.layoutManager as? InlineCodeLayoutManager)?.theme = theme
         apply(theme, to: textView)
-        textView.textStorage?.setAttributedString(attributed)
-        context.coordinator.measuringStorage.setAttributedString(measuring)
-        context.coordinator.invalidateMeasurements()
-        remember(in: context.coordinator)
+        setText(on: textView, coordinator: coordinator)
+        coordinator.measuringStorage.setAttributedString(measuring)
+        coordinator.invalidateMeasurements()
+        remember(in: coordinator)
+        coordinator.paint(selectionMarks)
+    }
+
+    /// 文字を貼る。本文との対応表も作り直す。
+    private func setText(on textView: LinkHoverTextView, coordinator: Coordinator) {
+        let string = attributed
+        coordinator.isApplyingText = true
+        textView.textStorage?.setAttributedString(string)
+        coordinator.isApplyingText = false
+        coordinator.sourceIndex = PreviewSourceIndex(string)
+        // 前の文字に付けた色は、位置が合わなくなるので剥がしてから塗り直させる。
+        textView.layoutManager?.removeTemporaryAttribute(
+            .backgroundColor, forCharacterRange: NSRange(location: 0, length: string.length)
+        )
+        coordinator.paintedRanges = []
     }
 
     /// 本文の量に合わせて大きさを返す。

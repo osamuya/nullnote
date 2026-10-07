@@ -182,13 +182,23 @@ struct PreviewBuilder {
     /// 断片の中の位置でしかない。**元の本文の行に直す**ために足す。
     /// エディタとのスクロール同期がここに乗っている。
     private var lineOffset = 0
+    /// 本文。プレビューの文字が本文のどこから来たかを確かめるのに使う（#M0045）。
+    private let source: NSString
+    private let positions: SourcePositionConverter
+
+    private init(theme: MarkdownTheme, breaksOnNewline: Bool, source: String) {
+        self.theme = theme
+        self.breaksOnNewline = breaksOnNewline
+        self.source = source as NSString
+        self.positions = SourcePositionConverter(source)
+    }
 
     static func build(
         _ source: String,
         theme: MarkdownTheme,
         breaksOnNewline: Bool = false
     ) -> [PreviewBlock] {
-        var builder = PreviewBuilder(theme: theme, breaksOnNewline: breaksOnNewline)
+        var builder = PreviewBuilder(theme: theme, breaksOnNewline: breaksOnNewline, source: source)
         return builder.blocks(splittingConflictsIn: source)
     }
 
@@ -448,8 +458,12 @@ struct PreviewBuilder {
     }
 
     private func inlineFragment(_ markup: Markup, intent: InlinePresentationIntent) -> AttributedString {
-        func styled(_ string: String, adding extra: InlinePresentationIntent = []) -> AttributedString {
+        func styled(
+            _ string: String, adding extra: InlinePresentationIntent = [], source: SourceSpan? = nil
+        ) -> AttributedString {
             var fragment = AttributedString(string)
+            // 選択を編集画面と行き来させるために、本文のどこから来たかを持たせる。
+            fragment[PreviewSourceAttribute.self] = source ?? span(of: markup, rendered: nil)
             let combined = intent.union(extra)
             if !combined.isEmpty {
                 fragment.inlinePresentationIntent = combined
@@ -469,7 +483,7 @@ struct PreviewBuilder {
 
         switch markup {
         case let text as Markdown.Text:
-            return styled(text.string)
+            return styled(text.string, source: span(of: markup, rendered: text.string))
 
         case is Emphasis:
             return inline(markup, intent: intent.union(.emphasized))
@@ -481,7 +495,7 @@ struct PreviewBuilder {
             return inline(markup, intent: intent.union(.strikethrough))
 
         case let code as InlineCode:
-            return styled(code.code, adding: .code)
+            return styled(code.code, adding: .code, source: span(ofCode: code))
 
         case let link as Markdown.Link:
             var fragment = inline(link, intent: intent)
@@ -510,12 +524,45 @@ struct PreviewBuilder {
         case let html as InlineHTML:
             // 本文の途中に挟んだコメントも出さない。
             if isHTMLComment(html.rawHTML) { return AttributedString() }
-            return styled(html.rawHTML, adding: .code)
+            return styled(html.rawHTML, adding: .code, source: span(of: markup, rendered: html.rawHTML))
 
         default:
             guard markup.childCount > 0 else { return styled(markup.format()) }
             return inline(markup, intent: intent)
         }
+    }
+
+    // MARK: 本文の位置
+
+    /// その要素が本文のどこにあるか。
+    ///
+    /// - Parameter rendered: プレビューに出す文字。本文のその範囲と同じなら、
+    ///   1文字ずつ対応させる。nil か違うときは、範囲を丸ごと対応させる。
+    private func span(of markup: Markup, rendered: String?) -> SourceSpan? {
+        guard let range = markup.range,
+              let start = positions.offset(
+                line: range.lowerBound.line + lineOffset, column: range.lowerBound.column),
+              let end = positions.offset(
+                line: range.upperBound.line + lineOffset, column: range.upperBound.column),
+              end >= start, end <= source.length
+        else { return nil }
+
+        let exact = rendered.map {
+            source.substring(with: NSRange(location: start, length: end - start)) == $0
+        } ?? false
+        return SourceSpan(start: start, end: end, isExact: exact)
+    }
+
+    /// インラインコードの中身が本文のどこにあるか。範囲は前後のバッククォートを含むので、
+    /// 中身を探して、そこから1文字ずつ対応させる。
+    private func span(ofCode code: InlineCode) -> SourceSpan? {
+        guard let whole = span(of: code, rendered: nil) else { return nil }
+        let found = source.range(
+            of: code.code, range: NSRange(location: whole.start, length: whole.end - whole.start)
+        )
+        // 中の改行は空白に畳まれるので、見つからないことがある。そのときは丸ごと。
+        guard found.location != NSNotFound, !code.code.isEmpty else { return whole }
+        return SourceSpan(start: found.location, end: NSMaxRange(found), isExact: true)
     }
 
     // MARK: 裸の URL

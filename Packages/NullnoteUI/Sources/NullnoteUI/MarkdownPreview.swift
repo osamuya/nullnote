@@ -18,6 +18,12 @@ public struct MarkdownPreview: View {
     private let documentURL: URL?
     /// 普通の改行を、そのまま改行として描くか（設定で切り替える。D-33）。
     private let breaksOnNewline: Bool
+    /// 編集画面で選ばれたところ（本文の位置）。同じ文字に色を付ける（#M0045）。
+    private let selectionMarks: [NSRange]
+    /// 色を付けたところが見えていなければ、そこまで送る依頼。
+    private let selectionReveal: SelectionLink.PreviewReveal?
+    /// ここで文字が選ばれたら、本文の位置に直して知らせる先。
+    private let onSelectionChange: PreviewSelectionHandler?
 
     @State private var blocks: [PreviewBlock] = []
     /// 図が高さを決めた回数。**変わるたびにスクロール同期を送り直す。**
@@ -30,13 +36,19 @@ public struct MarkdownPreview: View {
         theme: MarkdownTheme,
         anchorLine: Int? = nil,
         documentURL: URL? = nil,
-        breaksOnNewline: Bool = false
+        breaksOnNewline: Bool = false,
+        selectionMarks: [NSRange] = [],
+        selectionReveal: SelectionLink.PreviewReveal? = nil,
+        onSelectionChange: PreviewSelectionHandler? = nil
     ) {
         self.source = source
         self.theme = theme
         self.anchorLine = anchorLine
         self.documentURL = documentURL
         self.breaksOnNewline = breaksOnNewline
+        self.selectionMarks = selectionMarks
+        self.selectionReveal = selectionReveal
+        self.onSelectionChange = onSelectionChange
     }
 
     private static let horizontalPadding: CGFloat = 20
@@ -59,6 +71,8 @@ public struct MarkdownPreview: View {
                 // 拡大表示は段落をまたいで送れる。文書ぜんぶの画像を配る。
                 .environment(\.previewImageList, blocks.allImages)
                 .environment(\.onDiagramRendered) { diagramRenderCount += 1 }
+                .environment(\.previewSelectionMarks, selectionMarks)
+                .environment(\.previewSelectionHandler, onSelectionChange)
             }
             .onChange(of: anchorLine) { _, line in
                 scroll(to: line, using: proxy)
@@ -66,6 +80,10 @@ public struct MarkdownPreview: View {
             .onChange(of: blocks.count) { _, _ in
                 // 解析し直した直後は id が振り直されるので、位置を取り直す。
                 scroll(to: anchorLine, using: proxy)
+            }
+            .onChange(of: selectionReveal) { _, request in
+                guard let request else { return }
+                reveal(line: request.line, using: proxy)
             }
             .onChange(of: diagramRenderCount) { _, count in
                 Trace.log("プレビュー: 図の合図 \(count) 回目")
@@ -136,6 +154,16 @@ public struct MarkdownPreview: View {
         }
         Trace.log("プレビュー同期: 行 \(line) → ブロック \(id) を上端へ")
         proxy.scrollTo(id, anchor: .top)
+    }
+
+    /// 編集画面で選んだところのブロックを、見えていなければ見えるところまで送る。
+    ///
+    /// **上端には合わせない。** 位置を指さずに送ると、見えるようになるだけ動く。
+    /// すでに見えていれば動かない。
+    private func reveal(line: Int, using proxy: ScrollViewProxy) {
+        guard let id = blockID(containing: line) else { return }
+        Trace.log("プレビューの選択: 行 \(line) → ブロック \(id) を見えるところへ")
+        proxy.scrollTo(id)
     }
 
     private func blockID(containing line: Int) -> Int? {
