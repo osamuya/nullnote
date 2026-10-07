@@ -2,7 +2,7 @@ import Foundation
 import Testing
 @testable import NullnoteUI
 
-/// 開いているファイルの場所を、貼り付けられる文字列にする（#025）。
+/// 開いているファイルの場所を、貼り付けられる文字列にする（#M0028）。
 @Suite("パスの文字列")
 struct FilePathTextTests {
 

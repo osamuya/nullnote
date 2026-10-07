@@ -108,7 +108,7 @@ struct LineContinuationEditorTests {
         #expect(textView.string == "| りんご | 100 |\n\n")
     }
 
-    /// 足した空の行では、カーソルは最初のセルにある。そこでもう一度改行して抜けられるか（#036）。
+    /// 足した空の行では、カーソルは最初のセルにある。そこでもう一度改行して抜けられるか（#M0042）。
     @Test("本体の行で2回続けて改行すると、表から抜ける")
     func endTableAfterTwoNewlines() {
         let textView = makeTextView("| りんご | 100 |")

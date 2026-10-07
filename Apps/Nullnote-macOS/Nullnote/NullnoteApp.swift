@@ -36,7 +36,7 @@ struct NullnoteApp: App {
         // 前に許可をもらったフォルダを、また読めるようにする。
         MainActor.assumeIsolated {
             FolderAccess.restoreAll()
-            // 外観が外れる瞬間を見張る（#023）。`NULLNOTE_TRACE=1` のときだけ動く。
+            // 外観が外れる瞬間を見張る（#M0025）。`NULLNOTE_TRACE=1` のときだけ動く。
             AppearanceTrace.start()
         }
     }
@@ -177,7 +177,7 @@ private struct RevealInFinderButton: View {
     }
 }
 
-/// 開いているファイルの場所をコピーする（#025）。
+/// 開いているファイルの場所をコピーする（#M0028）。
 ///
 /// **タイトルの右クリックには足せない。** あれは macOS が作るメニューで、
 /// 項目を差し込む口が無い（D-45）。本文の右クリックと、ここに置く。

@@ -55,7 +55,7 @@ struct DocumentView: View {
     /// 基準を張った相手。**`knownURL` とは別に持つ。**
     ///
     /// あちらは改名に気づくためのもので、`.task` の最後で毎回いまの値になる。
-    /// こちらは「どのファイルに対して基準を置いたか」だけを覚える（#024）。
+    /// こちらは「どのファイルに対して基準を置いたか」だけを覚える（#M0026）。
     @State private var baselineURL: URL?
     /// いま見ているファイル。改名に気づくために、前の値を覚えておく。
     @State private var knownURL: URL?
@@ -86,7 +86,7 @@ struct DocumentView: View {
     }
 
     var body: some View {
-        // 設定の値が落ちていないかを見る（#023）。`NULLNOTE_TRACE=1` のときだけ。
+        // 設定の値が落ちていないかを見る（#M0025）。`NULLNOTE_TRACE=1` のときだけ。
         AppearanceTrace.note(appearance)
         return VStack(spacing: 0) {
             // **目次の有無で `mainArea` の居場所を変えないこと。**
@@ -218,7 +218,7 @@ struct DocumentView: View {
             // ディスクに無いうちに基準の判断へ混ざる。
             // **ここは毎回走る。** ファイルが変わったときだけではなく、
             // ビューが現れ直すたびに通る。基準を動かすかどうかは
-            // `startWatching` の中で決める（#024）。
+            // `startWatching` の中で決める（#M0026）。
             startWatching()
             syncTitleIfRenamed()
             // 次の改名は、いまの名前との差で判断する。
@@ -246,7 +246,7 @@ struct DocumentView: View {
     /// **ファイルが変わったときだけでなく、ビューが現れ直すたびにも走る**。
     /// 呼ばれるたびに基準を置き直すと、未保存の編集が「外が最後に見た版」に化ける。
     /// すると `ExternalChangeResolver` が `基準 == 編集画面` と見て `.reload` を返し、
-    /// 次に外から書かれたときに、こちらの編集が印も出さずに消える（#024）。
+    /// 次に外から書かれたときに、こちらの編集が印も出さずに消える（#M0026）。
     ///
     /// **置き直す値は `document.text` ではなくディスクから取る。**
     /// 基準の意味は「外の世界が最後に見たはずの内容」であって、編集画面の中身ではない。
@@ -626,7 +626,7 @@ struct FileCommands {
     /// 書類のあるフォルダを Finder で開き、そのファイルを選んだ状態にする。
     let revealInFinder: () -> Void
     /// 絶対パスを貼り板に載せる。**Nullnote に「プロジェクト」は無いので、
-    /// 相対パスは作らない**（何を基準にするか決められない。#025）。
+    /// 相対パスは作らない**（何を基準にするか決められない。#M0028）。
     let copyPath: () -> Void
     /// そのファイルが入っているフォルダのパスを貼り板に載せる。
     let copyFolderPath: () -> Void

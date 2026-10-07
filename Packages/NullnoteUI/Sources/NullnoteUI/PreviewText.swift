@@ -218,7 +218,7 @@ final class InlineCodeLayoutManager: NSLayoutManager {
 
             // **折り返した行では、渡される矩形が行の端まで伸びている。**
             // 札が次の行へ続くとき、AppKit は残りの余白まで背景として渡してくる。
-            // 空白の部分にまで枠が出るのはこれ（#027）。行の実寸まで詰める。
+            // 空白の部分にまで枠が出るのはこれ（#M0031）。行の実寸まで詰める。
             if let limit = usedMaxX(at: rect.midY, in: lines) {
                 rect.size.width = max(0, min(rect.maxX, limit) - rect.minX)
             }

@@ -9,10 +9,10 @@
 | 知りたいこと | 見るところ |
 |---|---|
 | いまの版・出す段取り・公開の経緯 | `docs/03-release-plan.md` |
-| 残っている要望と不具合 | `docs/運用上の修正点・改良点.md` |
+| 残っている要望と不具合 | `CLAUDE.local.md` が示す場所 |
 | 版の番号そのもの | `Apps/Nullnote-macOS/Version.xcconfig` |
 
-**着手する前に `docs/運用上の修正点・改良点.md` を読むこと。**
+**着手する前に、`CLAUDE.local.md` が示す要望と不具合の一覧を読むこと。**
 
 ## `.md` を書き換えるときは `mdmerge` を通す
 
@@ -116,6 +116,6 @@ osascript -e 'tell application id "com.sabanote.Nullnote.debug" to quit'
 
 - 判断は `docs/02-decision-log.md` に D-番号 で足す（新しいものが上）。
   **捨てた案とその理由まで書く。**
-- 要望と不具合は `docs/運用上の修正点・改良点.md`。終わったら「終了」へ移し、
+- 要望と不具合は `CLAUDE.local.md` が示す一覧。終わったら「完了」へ移し、
   取り消し線を引いて D-番号 を添える
 - リポジトリ全体の構成は `docs/00-repository-guide.md`

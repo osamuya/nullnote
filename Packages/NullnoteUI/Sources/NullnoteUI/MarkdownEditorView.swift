@@ -127,7 +127,7 @@ public struct MarkdownEditorView {
     var showsLineNumbers: Bool
     /// リストを Tab で深くするときに入れる1段ぶん。
     var indentStyle: IndentStyle
-    /// 打った URL・貼った URL を `[URL](URL)` に書き換えるか（#035）。
+    /// 打った URL・貼った URL を `[URL](URL)` に書き換えるか（#M0041）。
     var autoLinksURLs: Bool
     /// 本文の右クリックに足す項目。アプリ側から渡す。
     var contextMenuItems: [EditorContextMenuItem]
@@ -621,7 +621,7 @@ final class FocusReportingTextView: NSTextView {
         apply(replacement, to: ranges)
     }
 
-    /// URL を `[URL](URL)` に書き換えるか。設定から降りてくる（#035）。
+    /// URL を `[URL](URL)` に書き換えるか。設定から降りてくる（#M0041）。
     ///
     /// **既定は切ってある。** 打ったとおりの文字を黙って書き換える動きなので、
     /// 選んだ人にだけ効かせる。切ってあっても、プレビューでは裸の URL もリンクになる。
@@ -742,7 +742,7 @@ final class FocusReportingTextView: NSTextView {
             super.insertText("\n" + prefix, replacementRange: selectedRange())
         case .end(let clearing):
             // 印だけの行を消して、改行だけ入れる。空行になってリストから抜ける。
-            // **行頭から数える。** カーソルは行末とは限らない（表の空の行では最初のセルにいる。#036）。
+            // **行頭から数える。** カーソルは行末とは限らない（表の空の行では最初のセルにいる。#M0042）。
             let lineStart = (string as NSString).lineRange(for: selectedRange()).location
             super.insertText("\n", replacementRange: NSRange(location: lineStart, length: clearing))
         case .tableRow(let lines, let caretRow):

@@ -3,7 +3,7 @@ import ImageIO
 import UniformTypeIdentifiers
 import WebKit
 
-// mermaid の図を画像として持ち出す（#038）。
+// mermaid の図を画像として持ち出す（#M0044）。
 //
 // - プレビューの図は、**文字の外から**ドラッグすると PNG を持ち出せる。
 //   文字の上から始めたドラッグは、今までどおり選択になる（拡大窓の移動と同じ使い分け。D-65）。

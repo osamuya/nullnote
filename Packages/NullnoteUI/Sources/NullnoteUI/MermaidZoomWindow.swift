@@ -131,7 +131,7 @@ private struct ZoomedDiagramView: View {
     }
 
     /// 図を保存する。**拡大窓ではドラッグで持ち出さない。** ドラッグは移動と
-    /// 文字の選択に使っているので、ここではボタンに寄せる（#038）。
+    /// 文字の選択に使っているので、ここではボタンに寄せる（#M0044）。
     private var saveMenu: some View {
         Menu {
             Button(String(localized: "PNG で保存…", bundle: .module)) { controller.save(.png) }

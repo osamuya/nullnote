@@ -182,7 +182,7 @@ struct LineContinuationTests {
         #expect(table("|  |  |", state: .tableBody(columnCount: 2)) == .end(clearing: 7))
     }
 
-    /// 改行で足した空の行では、カーソルは最初のセルにある（#036）。
+    /// 改行で足した空の行では、カーソルは最初のセルにある（#M0042）。
     @Test("空の行なら、カーソルがセルの中にあっても表から抜ける", arguments: [0, 1, 2, 4])
     func endTableFromInsideCell(caret: Int) {
         #expect(LineContinuationRule.decide(

@@ -68,7 +68,7 @@ public enum ThreeWayMerge {
     }
 
     /// - Parameter whitespace: 空白の違いをどう扱うか。
-    ///   既定は**行の途中の空白の量を無視する**（`#020` / D-47）。
+    ///   既定は**行の途中の空白の量を無視する**（`#M0021` / D-47）。
     ///   **本文は書き換えない。比べ方だけが変わる。**
     public static func merge(
         base: String, ours: String, theirs: String,

@@ -30,7 +30,7 @@ struct URLLinkifyEditorTests {
         return pasteboard
     }
 
-    // MARK: - 設定で切ってあるとき（#035）
+    // MARK: - 設定で切ってあるとき（#M0041）
 
     @Test("切ってあると、空白を打っても URL のまま")
     func offOnSpace() {

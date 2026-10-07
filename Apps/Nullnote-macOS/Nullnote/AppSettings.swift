@@ -49,7 +49,7 @@ enum AppSettings {
             // タブがよければ設定画面で選べる（D-39）。
             indentStyleKey: IndentStyle.fourSpaces.rawValue,
 
-            // 打った URL を `[URL](URL)` に書き換えるのは**切ってある**（#035）。
+            // 打った URL を `[URL](URL)` に書き換えるのは**切ってある**（#M0041）。
             // 文字列として URL を書きたいときに、黙って書き換わると困る。
             // プレビューでは、書き換えなくても裸の URL がリンクになる。
             autoLinksURLsKey: false,

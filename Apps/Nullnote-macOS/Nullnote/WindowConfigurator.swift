@@ -28,7 +28,7 @@ struct WindowConfigurator: NSViewRepresentable {
 /// ビューが窓に載った瞬間に一度だけ呼ぶ。
 ///
 /// `WindowConfigurator` は1周待ってから走るので、そのときには窓がもう画面に出ている。
-/// こちらは `viewDidMoveToWindow` でその場で呼ぶので、**窓が画面に出る前**に手を入れられる（#034）。
+/// こちらは `viewDidMoveToWindow` でその場で呼ぶので、**窓が画面に出る前**に手を入れられる（#M0040）。
 struct WindowAttachHook: NSViewRepresentable {
 
     let attached: (NSWindow) -> Void
@@ -104,7 +104,7 @@ extension View {
 
 /// ヘッダを帯として見せるための、窓の設定。`straightHeader` の中身。
 ///
-/// ⌘N の窓では、画面に出る前（`WindowAttachHook`）にも呼ぶ（#034）。
+/// ⌘N の窓では、画面に出る前（`WindowAttachHook`）にも呼ぶ（#M0040）。
 @MainActor
 enum WindowHeader {
 
@@ -116,7 +116,7 @@ enum WindowHeader {
         // タイトルバーの分だけ窓を**上へ**伸ばす（実測: 400 → 466、下の辺は動かない）。
         // ⌘N のタブでは、ここを通るのがタブへまとめた後になることがあり、
         // まとめ先の大きさから伸びる。戻さないと押すたびに 88pt ずつ積み上がり、
-        // 真上にあるサブの画面へはみ出して、窓ごと移ったように見えていた（#033・D-66）。
+        // 真上にあるサブの画面へはみ出して、窓ごと移ったように見えていた（#M0039・D-66）。
         if window.styleMask.contains(.fullSizeContentView) {
             let frame = window.frame
             window.styleMask.remove(.fullSizeContentView)
@@ -140,7 +140,7 @@ enum WindowHeader {
 /// あの中身が走るのは、**SwiftUI がビューを更新したときだけ**。
 /// タブを**ドラッグ**で分けたときは窓の大きさと位置が変わり、そのついでに更新が走るので
 /// 出ていた。ところが**「タブを新しいウインドウに移動」で分けたときは何も変わらない**ので
-/// 更新が届かず、タブバーの無い窓が残っていた（#026）。
+/// 更新が届かず、タブバーの無い窓が残っていた（#M0029）。
 ///
 /// そこで、窓の動きを AppKit 側から受けて確かめ直す。
 ///
@@ -241,7 +241,7 @@ private struct TabbedWindows: ViewModifier {
 
     func body(content: Content) -> some View {
         content
-            // **窓が画面に出る前に**まとめる（#034）。ビューが窓に載った瞬間は、
+            // **窓が画面に出る前に**まとめる（#M0040）。ビューが窓に載った瞬間は、
             // まだ画面に出ていない（実測: `isVisible == false`）。ここでタブへ入れれば、
             // 単独の窓として右下にずれて一瞬出る姿を見せずに済む。
             .background(
