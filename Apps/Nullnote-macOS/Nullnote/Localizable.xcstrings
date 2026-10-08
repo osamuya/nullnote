@@ -6,7 +6,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Reveal in Finder"
+            "value" : "Show in Finder"
           }
         },
         "ja" : {
@@ -22,7 +22,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Reveal in Finder"
+            "value" : "Show in Finder"
           }
         },
         "ja" : {
@@ -135,7 +135,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "In Dark"
+            "value" : "In Dark Mode"
           }
         },
         "ja" : {
@@ -329,7 +329,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "In Light"
+            "value" : "In Light Mode"
           }
         },
         "ja" : {
@@ -345,7 +345,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "What Tab inserts for one level in a list. ⇧Tab moves it back. Indentation that's already written is kept as it is, whatever this setting."
+            "value" : "What Tab inserts for one level in a list. ⇧Tab moves it back. Indentation that's already written is kept as is, regardless of this setting."
           }
         },
         "ja" : {
@@ -474,7 +474,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Diagrams (mermaid)"
+            "value" : "Diagrams (Mermaid)"
           }
         },
         "ja" : {

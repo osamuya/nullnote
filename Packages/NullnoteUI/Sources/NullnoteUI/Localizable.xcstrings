@@ -283,7 +283,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Drag or two fingers to pan. Pinch or ⌘-scroll to zoom."
+            "value" : "Drag or swipe with two fingers to pan. Pinch or ⌘-scroll to zoom."
           }
         },
         "ja" : {
@@ -344,7 +344,7 @@
         }
       }
     },
-    "前のヒットへ（⌘⇧G）" : {
+    "前のヒットへ（⇧⌘G）" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -355,7 +355,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "前のヒットへ（⌘⇧G）"
+            "value" : "前のヒットへ（⇧⌘G）"
           }
         }
       }

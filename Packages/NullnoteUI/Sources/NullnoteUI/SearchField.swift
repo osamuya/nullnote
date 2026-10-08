@@ -60,7 +60,7 @@ public struct MarkdownSearchField: View {
                 // （54pt にしていたときは 10pt ぶん余っていた）。
                 .frame(minWidth: 44, alignment: .leading)
 
-            step(systemImage: "chevron.up", help: Text("前のヒットへ（⌘⇧G）", bundle: .module), action: onPrevious)
+            step(systemImage: "chevron.up", help: Text("前のヒットへ（⇧⌘G）", bundle: .module), action: onPrevious)
             step(systemImage: "chevron.down", help: Text("次のヒットへ（⌘G）", bundle: .module), action: onNext)
 
             Button(action: onClose) {
@@ -102,7 +102,7 @@ public struct MarkdownSearchField: View {
                 .focused(focus)
                 // 入力の確定（return）で次のヒットへ。
                 // `onKeyPress` で return を横取りすると、日本語入力の変換確定まで
-                // 奪ってしまう。前へ戻るのは ⌘⇧G とボタンに任せる。
+                // 奪ってしまう。前へ戻るのは ⇧⌘G とボタンに任せる。
                 .onSubmit(onNext)
                 .accessibilityLabel(Text("検索", bundle: .module))
                 .focusFromAppKit(generation: focusGeneration)
