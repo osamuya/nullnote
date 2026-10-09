@@ -15,6 +15,12 @@
             "value" : "%@ — Click to enlarge"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ — Cliquez pour agrandir"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -61,6 +67,24 @@
             }
           }
         },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld ligne"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld lignes"
+                }
+              }
+            }
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -82,6 +106,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Save as PNG…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enregistrer en PNG…"
           }
         },
         "ja" : {
@@ -107,6 +137,12 @@
             "value" : "Save as SVG…"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enregistrer en SVG…"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -128,6 +164,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "base (cream)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "base (crème)"
           }
         },
         "ja" : {
@@ -153,6 +195,12 @@
             "value" : "dark (black)"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "dark (noir)"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -174,6 +222,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "default (purple)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "default (violet)"
           }
         },
         "ja" : {
@@ -199,6 +253,12 @@
             "value" : "forest (green)"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "forest (vert)"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -220,6 +280,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "neutral (gray)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "neutral (gris)"
           }
         },
         "ja" : {
@@ -245,6 +311,12 @@
             "value" : "This diagram couldn't be drawn"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible d’afficher ce diagramme"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -265,6 +337,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Allow access to the folder that contains this image"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autoriser l’accès au dossier contenant cette image"
           }
         },
         "ja" : {
@@ -289,6 +367,12 @@
             "value" : "System"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Système"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -309,6 +393,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "2 Spaces"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "2 espaces"
           }
         },
         "ja" : {
@@ -333,6 +423,12 @@
             "value" : "4 Spaces"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "4 espaces"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -355,6 +451,12 @@
             "value" : "Tab"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tabulation"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -375,6 +477,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dark"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sombre"
           }
         },
         "ja" : {
@@ -400,6 +508,12 @@
             "value" : "Drag or swipe with two fingers to pan. Pinch or ⌘-scroll to zoom."
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Glisser ou balayer pour déplacer. Pincer ou ⌘-défiler pour zoomer."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -420,6 +534,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Light"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clair"
           }
         },
         "ja" : {
@@ -445,6 +565,12 @@
             "value" : "Save"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enregistrer"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -466,6 +592,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Fit to Window"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajuster à la fenêtre"
           }
         },
         "ja" : {
@@ -490,6 +622,12 @@
             "value" : "Previous Match (⇧⌘G)"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Résultat précédent (⇧⌘G)"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -510,6 +648,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Previous Image (←)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Image précédente (←)"
           }
         },
         "ja" : {
@@ -535,6 +679,12 @@
             "value" : "Diagram"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diagramme"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -556,6 +706,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Enlarge Diagram"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Agrandir le diagramme"
           }
         },
         "ja" : {
@@ -581,6 +737,12 @@
             "value" : "Couldn't export the diagram"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossible d’exporter le diagramme"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -602,6 +764,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Save the diagram as an image"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enregistrer le diagramme en tant qu’image"
           }
         },
         "ja" : {
@@ -626,6 +794,12 @@
             "value" : "Invalid location"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Emplacement non valide"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -646,6 +820,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Click to enlarge"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cliquez pour agrandir"
           }
         },
         "ja" : {
@@ -670,6 +850,12 @@
             "value" : "Zoom In"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Agrandir"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -690,6 +876,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Search"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rechercher"
           }
         },
         "ja" : {
@@ -714,6 +906,12 @@
             "value" : "Close Search"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fermer la recherche"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -734,6 +932,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Close Search (esc)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fermer la recherche (esc)"
           }
         },
         "ja" : {
@@ -758,6 +962,12 @@
             "value" : "Clear Search"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Effacer la recherche"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -778,6 +988,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Next Match (⌘G)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Résultat suivant (⌘G)"
           }
         },
         "ja" : {
@@ -802,6 +1018,12 @@
             "value" : "Next Image (→)"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Image suivante (→)"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -819,6 +1041,12 @@
           }
         },
         "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Image"
+          }
+        },
+        "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Image"
@@ -846,6 +1074,12 @@
             "value" : "Loading image…"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chargement de l’image…"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -869,6 +1103,12 @@
             "value" : "Actual Size"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Taille réelle"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -889,6 +1129,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Zoom Out"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Réduire"
           }
         },
         "ja" : {
@@ -914,6 +1160,12 @@
             "value" : "Not found"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Introuvable"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -934,6 +1186,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "No headings"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucun titre"
           }
         },
         "ja" : {
@@ -958,6 +1216,12 @@
             "value" : "Allow Access…"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autoriser l’accès…"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -978,6 +1242,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Couldn't be loaded"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chargement impossible"
           }
         },
         "ja" : {
@@ -1002,6 +1272,12 @@
             "value" : "No permission to read"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aucune autorisation de lecture"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1024,6 +1300,12 @@
             "value" : "Close"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fermer"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1044,6 +1326,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "(Empty in this version)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "(Vide dans cette version)"
           }
         },
         "ja" : {

@@ -61,7 +61,7 @@ struct LocalizationSourceTests {
     /// 足した文字列に訳が無ければ、その言語の画面にそこだけ日本語が出る。
     /// 訳の値に日本語が混じっているもの（写しただけで訳し忘れたもの）も止める。
     /// 言語を足したら、ここにも足す（`Info.plist` の `CFBundleLocalizations` と揃える）。
-    @Test("カタログのすべての文字列に各言語の訳がある", arguments: ["en", "de"])
+    @Test("カタログのすべての文字列に各言語の訳がある", arguments: ["en", "de", "fr"])
     func catalogHasTranslation(language: String) throws {
         let url = Self.packageRoot.appendingPathComponent("Sources/NullnoteUI/Localizable.xcstrings")
         let json = try JSONSerialization.jsonObject(with: Data(contentsOf: url)) as? [String: Any]

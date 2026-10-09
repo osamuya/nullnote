@@ -15,6 +15,12 @@
             "value" : "Show in Finder"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher dans le Finder"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -35,6 +41,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Show in Finder"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher dans le Finder"
           }
         },
         "ja" : {
@@ -59,6 +71,12 @@
             "value" : "Markdown breaks a line only where it ends with two spaces. With this on, plain line breaks also break in the preview. Your text isn't changed."
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Markdown ne passe à la ligne que lorsqu’une ligne se termine par deux espaces. Si cette option est activée, les retours à la ligne simples sont aussi respectés dans l’aperçu. Votre texte n’est pas modifié."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -79,6 +97,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Convert URLs to links automatically"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Convertir automatiquement les URL en liens"
           }
         },
         "ja" : {
@@ -103,6 +127,12 @@
             "value" : "When you type a space or a line break after a URL that starts with https://, or paste just a URL, it is rewritten as [URL](URL). When this is off, the text stays exactly as you typed it. The preview shows the URL as a link either way."
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lorsque vous tapez une espace ou un retour à la ligne après une URL commençant par https://, ou que vous collez uniquement une URL, celle-ci est réécrite sous la forme [URL](URL). Si cette option est désactivée, le texte reste exactement tel que vous l’avez tapé. Dans l’aperçu, l’URL s’affiche comme un lien dans les deux cas."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -123,6 +153,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "To show the images in “%@”, allow access to this folder."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pour afficher les images de « %@ », autorisez l’accès à ce dossier."
           }
         },
         "ja" : {
@@ -147,6 +183,12 @@
             "value" : "Indentation"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Indentation"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -164,6 +206,12 @@
           }
         },
         "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Code"
+          }
+        },
+        "fr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Code"
@@ -192,6 +240,12 @@
             "value" : "In Dark Mode"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En mode sombre"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -212,6 +266,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Theme"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thème"
           }
         },
         "ja" : {
@@ -236,6 +296,12 @@
             "value" : "File Name"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fichier"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -256,6 +322,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Copy File Name"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copier le nom du fichier"
           }
         },
         "ja" : {
@@ -280,6 +352,12 @@
             "value" : "When you rename the file, the first heading is changed to the same name. If there's no heading, one is added."
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lorsque vous renommez le fichier, le premier titre prend le même nom. S’il n’y a pas de titre, un titre est ajouté."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -300,6 +378,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Copy Folder Path"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copier le chemin du dossier"
           }
         },
         "ja" : {
@@ -324,6 +408,12 @@
             "value" : "Copy Path"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copier le chemin"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -344,6 +434,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Preview"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aperçu"
           }
         },
         "ja" : {
@@ -369,6 +465,12 @@
             "value" : "The color scheme for diagrams in the preview. The enlarged view and exported images use the same scheme. A diagram that contains %%{init: {'theme': 'forest'}}%% uses that theme instead."
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le jeu de couleurs des diagrammes dans l’aperçu. La vue agrandie et les images exportées utilisent le même jeu de couleurs. Un diagramme qui contient %%{init: {'theme': 'forest'}}%% utilise plutôt ce thème."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -389,6 +491,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Show Preview Side by Side"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher l’aperçu côte à côte"
           }
         },
         "ja" : {
@@ -413,6 +521,12 @@
             "value" : "Show Preview"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher l’aperçu"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -433,6 +547,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Hide Preview"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Masquer l’aperçu"
           }
         },
         "ja" : {
@@ -458,6 +578,12 @@
             "value" : "In Light Mode"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En mode clair"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -478,6 +604,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "What Tab inserts for one level in a list. ⇧Tab moves it back. Indentation that's already written is kept as is, regardless of this setting."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce que Tab insère pour un niveau dans une liste. ⇧Tab revient d’un niveau. L’indentation déjà présente est conservée telle quelle, quel que soit ce réglage."
           }
         },
         "ja" : {
@@ -502,6 +634,12 @@
             "value" : "Link"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Liens"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -522,6 +660,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sync with first heading"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Synchroniser avec le premier titre"
           }
         },
         "ja" : {
@@ -546,6 +690,12 @@
             "value" : "Find Previous"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rechercher le précédent"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -566,6 +716,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Strikethrough"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Barré"
           }
         },
         "ja" : {
@@ -590,6 +746,12 @@
             "value" : "Merging"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fusion"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -612,6 +774,12 @@
             "value" : "Select All Occurrences"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sélectionner toutes les occurrences"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -632,6 +800,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Select Next Occurrence"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sélectionner l’occurrence suivante"
           }
         },
         "ja" : {
@@ -657,6 +831,12 @@
             "value" : "Diagrams (Mermaid)"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diagrammes (Mermaid)"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -677,6 +857,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "When another app edits the same file, lines that differ only in the number of spaces within them aren't treated as conflicts. Indentation at the start of a line and spaces at the end are still compared, since they change the meaning."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lorsqu’une autre app modifie le même fichier, les lignes qui ne diffèrent que par le nombre d’espaces à l’intérieur ne sont pas traitées comme des conflits. L’indentation en début de ligne et les espaces en fin de ligne restent comparés, car ils changent le sens."
           }
         },
         "ja" : {
@@ -701,6 +887,12 @@
             "value" : "Bold"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gras"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -721,6 +913,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bigger"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plus grand"
           }
         },
         "ja" : {
@@ -745,6 +943,12 @@
             "value" : "Smaller"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plus petit"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -765,6 +969,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Font Size"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Police"
           }
         },
         "ja" : {
@@ -789,6 +999,12 @@
             "value" : "Actual Size"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Taille réelle"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -809,6 +1025,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Find in Document (⌘F)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rechercher dans le document (⌘F)"
           }
         },
         "ja" : {
@@ -833,6 +1055,12 @@
             "value" : "Italic"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Italique"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -853,6 +1081,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Preserve single line breaks"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Conserver les retours à la ligne simples"
           }
         },
         "ja" : {
@@ -877,6 +1111,12 @@
             "value" : "Search"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rechercher"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -897,6 +1137,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Find…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rechercher…"
           }
         },
         "ja" : {
@@ -921,6 +1167,12 @@
             "value" : "Close Search"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fermer la recherche"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -941,6 +1193,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Find Next"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rechercher le suivant"
           }
         },
         "ja" : {
@@ -965,6 +1223,12 @@
             "value" : "Outline"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plan"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -985,6 +1249,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Show Outline"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher le plan"
           }
         },
         "ja" : {
@@ -1009,6 +1279,12 @@
             "value" : "Hide Outline"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Masquer le plan"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1029,6 +1305,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ignore whitespace-only changes"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ignorer les différences d’espacement"
           }
         },
         "ja" : {
@@ -1053,6 +1335,12 @@
             "value" : "Editor"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Éditeur"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1073,6 +1361,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Show line numbers"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher les numéros de ligne"
           }
         },
         "ja" : {
@@ -1097,6 +1391,12 @@
             "value" : "To rename the file to match its heading, allow writing to “%@”."
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pour renommer le fichier d’après son titre, autorisez l’écriture dans « %@ »."
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1119,6 +1419,12 @@
             "value" : "Show Outline"
           }
         },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Afficher le plan"
+          }
+        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1139,6 +1445,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Allow"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autoriser"
           }
         },
         "ja" : {
