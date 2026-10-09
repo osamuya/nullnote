@@ -26,6 +26,24 @@
             "state" : "translated",
             "value" : "%@ — 押すと大きく表示します"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ — 클릭하여 확대"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ — 点按以放大"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ — 按一下以放大"
+          }
         }
       }
     },
@@ -90,6 +108,42 @@
             "state" : "translated",
             "value" : "%lld 行"
           }
+        },
+        "ko" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld줄"
+                }
+              }
+            }
+          }
+        },
+        "zh-Hans" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld 行"
+                }
+              }
+            }
+          }
+        },
+        "zh-Hant" : {
+          "variations" : {
+            "plural" : {
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld 行"
+                }
+              }
+            }
+          }
         }
       }
     },
@@ -118,6 +172,24 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "PNG で保存…"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PNG로 저장…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "存储为 PNG…"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "儲存為 PNG…"
           }
         }
       }
@@ -148,6 +220,24 @@
             "state" : "translated",
             "value" : "SVG で保存…"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "SVG로 저장…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "存储为 SVG…"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "儲存為 SVG…"
+          }
         }
       }
     },
@@ -176,6 +266,24 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "base（クリーム）"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "base(크림)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "base（奶油色）"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "base（奶油色）"
           }
         }
       }
@@ -206,6 +314,24 @@
             "state" : "translated",
             "value" : "dark（黒）"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "dark(검정)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "dark（黑色）"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "dark（黑色）"
+          }
         }
       }
     },
@@ -234,6 +360,24 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "default（紫）"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "default(보라)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "default（紫色）"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "default（紫色）"
           }
         }
       }
@@ -264,6 +408,24 @@
             "state" : "translated",
             "value" : "forest（緑）"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "forest(초록)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "forest（绿色）"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "forest（綠色）"
+          }
         }
       }
     },
@@ -289,6 +451,24 @@
           }
         },
         "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "neutral（灰色）"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "neutral(회색)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "neutral（灰色）"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "neutral（灰色）"
@@ -322,6 +502,24 @@
             "state" : "translated",
             "value" : "この図は描けません"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 다이어그램을 그릴 수 없습니다"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法绘制此图表"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "無法繪製此圖表"
+          }
         }
       }
     },
@@ -349,6 +547,24 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "この画像があるフォルダの閲覧を許可します"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 이미지가 있는 폴더에 대한 접근 허용"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "允许访问此图像所在的文件夹"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "允許取用此影像所在的檔案夾"
           }
         }
       }
@@ -378,6 +594,24 @@
             "state" : "translated",
             "value" : "システム"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "시스템"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "系统"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "系統"
+          }
         }
       }
     },
@@ -405,6 +639,24 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "スペース2"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "공백 2개"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "2 个空格"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "2 個空格"
           }
         }
       }
@@ -434,6 +686,24 @@
             "state" : "translated",
             "value" : "スペース4"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "공백 4개"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "4 个空格"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "4 個空格"
+          }
         }
       }
     },
@@ -462,6 +732,24 @@
             "state" : "translated",
             "value" : "タブ"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "탭"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tab"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tab"
+          }
         }
       }
     },
@@ -489,6 +777,24 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "ダーク"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "다크"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "深色"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "深色"
           }
         }
       }
@@ -519,6 +825,24 @@
             "state" : "translated",
             "value" : "ドラッグか二本指で移動。ピンチ、⌘＋ホイールで拡大"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "드래그하거나 두 손가락으로 쓸어 이동. 핀치 또는 ⌘-스크롤로 확대/축소."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "拖移或双指轻扫以移动。捏合或 ⌘+滚动以缩放。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "拖移或雙指滑動以移動。雙指開合或 ⌘+捲動以縮放。"
+          }
         }
       }
     },
@@ -546,6 +870,24 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "ライト"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "라이트"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "浅色"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "淺色"
           }
         }
       }
@@ -576,6 +918,24 @@
             "state" : "translated",
             "value" : "保存"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "저장"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "存储"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "儲存"
+          }
         }
       }
     },
@@ -605,6 +965,24 @@
             "state" : "translated",
             "value" : "全体を見る"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "윈도우에 맞추기"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "适合窗口"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "符合視窗"
+          }
         }
       }
     },
@@ -633,6 +1011,24 @@
             "state" : "translated",
             "value" : "前のヒットへ（⇧⌘G）"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이전 결과(⇧⌘G)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "上一个结果（⇧⌘G）"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "上一個結果（⇧⌘G）"
+          }
         }
       }
     },
@@ -660,6 +1056,24 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "前の画像へ（←）"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이전 이미지(←)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "上一张图像（←）"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "上一張影像（←）"
           }
         }
       }
@@ -690,6 +1104,24 @@
             "state" : "translated",
             "value" : "図"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "다이어그램"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "图表"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "圖表"
+          }
         }
       }
     },
@@ -718,6 +1150,24 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "図を大きく見る"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "다이어그램 확대"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "放大图表"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "放大圖表"
           }
         }
       }
@@ -748,6 +1198,24 @@
             "state" : "translated",
             "value" : "図を書き出せませんでした"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "다이어그램을 내보낼 수 없습니다"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法导出图表"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "無法輸出圖表"
+          }
         }
       }
     },
@@ -777,6 +1245,24 @@
             "state" : "translated",
             "value" : "図を画像として保存する"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "다이어그램을 이미지로 저장"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "将图表存储为图像"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "將圖表儲存為影像"
+          }
         }
       }
     },
@@ -804,6 +1290,24 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "場所が分かりません"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "유효하지 않은 위치"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "位置无效"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "位置無效"
           }
         }
       }
@@ -833,6 +1337,24 @@
             "state" : "translated",
             "value" : "押すと大きく表示します"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "클릭하여 확대"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "点按以放大"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "按一下以放大"
+          }
         }
       }
     },
@@ -860,6 +1382,24 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "拡大"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "확대"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "放大"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "放大"
           }
         }
       }
@@ -889,6 +1429,24 @@
             "state" : "translated",
             "value" : "検索"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "검색"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "搜索"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "搜尋"
+          }
         }
       }
     },
@@ -916,6 +1474,24 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "検索を閉じる"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "검색 닫기"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "关闭搜索"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "關閉搜尋"
           }
         }
       }
@@ -945,6 +1521,24 @@
             "state" : "translated",
             "value" : "検索を閉じる（esc）"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "검색 닫기(esc)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "关闭搜索（esc）"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "關閉搜尋（esc）"
+          }
         }
       }
     },
@@ -972,6 +1566,24 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "検索語を消す"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "검색어 지우기"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "清除搜索"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "清除搜尋"
           }
         }
       }
@@ -1001,6 +1613,24 @@
             "state" : "translated",
             "value" : "次のヒットへ（⌘G）"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "다음 결과(⌘G)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "下一个结果（⌘G）"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "下一個結果（⌘G）"
+          }
         }
       }
     },
@@ -1028,6 +1658,24 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "次の画像へ（→）"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "다음 이미지(→)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "下一张图像（→）"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "下一張影像（→）"
           }
         }
       }
@@ -1057,6 +1705,24 @@
             "state" : "translated",
             "value" : "画像"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이미지"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "图像"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "影像"
+          }
         }
       }
     },
@@ -1084,6 +1750,24 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "画像を読み込み中…"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이미지 로드 중…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在载入图像…"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在載入影像…"
           }
         }
       }
@@ -1114,6 +1798,24 @@
             "state" : "translated",
             "value" : "等倍"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "실제 크기"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "实际大小"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "實際大小"
+          }
         }
       }
     },
@@ -1138,6 +1840,24 @@
           }
         },
         "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "縮小"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "축소"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "缩小"
+          }
+        },
+        "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "縮小"
@@ -1171,6 +1891,24 @@
             "state" : "translated",
             "value" : "見つかりません"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "찾을 수 없음"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未找到"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "找不到"
+          }
         }
       }
     },
@@ -1198,6 +1936,24 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "見出しがありません"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "제목 없음"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "没有标题"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "沒有標題"
           }
         }
       }
@@ -1227,6 +1983,24 @@
             "state" : "translated",
             "value" : "許可する…"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "접근 허용…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "允许访问…"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "允許取用…"
+          }
         }
       }
     },
@@ -1254,6 +2028,24 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "読み込めません"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "로드할 수 없음"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法载入"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "無法載入"
           }
         }
       }
@@ -1283,6 +2075,24 @@
             "state" : "translated",
             "value" : "読む許可がありません"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "읽기 권한 없음"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "没有读取权限"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "沒有讀取權限"
+          }
         }
       }
     },
@@ -1311,6 +2121,24 @@
             "state" : "translated",
             "value" : "閉じる"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "닫기"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "关闭"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "關閉"
+          }
         }
       }
     },
@@ -1338,6 +2166,24 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "（この版では空）"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "(이 버전에서는 비어 있음)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "（此版本中为空）"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "（此版本中為空）"
           }
         }
       }

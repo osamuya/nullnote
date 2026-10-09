@@ -46,6 +46,14 @@ struct LocalizationSourceTests {
         #expect(result.offenders.map(\.line) == [1, 5, 9])
     }
 
+    @Test("中国語の訳は、漢字だけなら通し、仮名が残っていれば止める")
+    func kanaCheckFitsChinese() {
+        #expect(!Self.containsKana("斜体"))
+        #expect(!Self.containsKana("显示大纲（⌘F）"))
+        #expect(Self.containsKana("図を大きく見る"))
+        #expect(Self.containsKana("インデント"))
+    }
+
     /// 元の言語（ja）を書かないと、日本語のシステムでも英語が出る（3.0.1。実際に踏んだ）。
     /// 鍵が日本語なので書かなくてよさそうに見えるが、書かないと `ja.lproj` が作られない。
     @Test("カタログのすべての文字列に ja を書いてある")
@@ -60,8 +68,9 @@ struct LocalizationSourceTests {
 
     /// 足した文字列に訳が無ければ、その言語の画面にそこだけ日本語が出る。
     /// 訳の値に日本語が混じっているもの（写しただけで訳し忘れたもの）も止める。
+    /// 中国語は漢字で書くので、仮名が混じっているかだけを見る（`containsKana`）。
     /// 言語を足したら、ここにも足す（`Info.plist` の `CFBundleLocalizations` と揃える）。
-    @Test("カタログのすべての文字列に各言語の訳がある", arguments: ["en", "de", "fr"])
+    @Test("カタログのすべての文字列に各言語の訳がある", arguments: ["en", "de", "fr", "ko", "zh-Hans", "zh-Hant"])
     func catalogHasTranslation(language: String) throws {
         let url = Self.packageRoot.appendingPathComponent("Sources/NullnoteUI/Localizable.xcstrings")
         let json = try JSONSerialization.jsonObject(with: Data(contentsOf: url)) as? [String: Any]
@@ -72,7 +81,8 @@ struct LocalizationSourceTests {
             let localization = (entry["localizations"] as? [String: Any])?[language]
             let values = localization.map(Self.values(in:)) ?? []
             if values.isEmpty { missing.append(key) }
-            if values.contains(where: Self.containsJapanese) { japanese.append(key) }
+            let isJapanese = language.hasPrefix("zh") ? Self.containsKana : Self.containsJapanese
+            if values.contains(where: isJapanese) { japanese.append(key) }
         }
         #expect(!strings.isEmpty)
         #expect(missing.isEmpty, "\(language) が無い: \(missing.sorted())")
@@ -146,6 +156,11 @@ struct LocalizationSourceTests {
     }
 
     /// ひらがな・カタカナ・漢字。記号（「」…—）だけの文字列は訳す対象にならないので数えない。
+    /// 平仮名・片仮名。漢字で書く言語の訳に、日本語が写したまま残っていないかを見る。
+    static func containsKana(_ text: String) -> Bool {
+        text.unicodeScalars.contains { (0x3040...0x30FF).contains($0.value) }
+    }
+
     static func containsJapanese(_ text: String) -> Bool {
         text.unicodeScalars.contains { scalar in
             (0x3040...0x30FF).contains(scalar.value) || (0x4E00...0x9FFF).contains(scalar.value)

@@ -71,6 +71,7 @@
 	英語は、文字列カタログ（アプリと NullnoteUI）に全件の訳を用意してから戻した
 	（2026-09-11。docs/12-make-multilingual.md の9段目）。
 	ドイツ語も同じ順で足した（2026-10-09。#003-2）。フランス語も同じ（2026-10-09。#003-3）。
+	中国語は簡体字と繁体字の両方を足した（2026-10-09。#003-4）。韓国語も同じ（2026-10-09。#003-5）。
 	言語を足すときも、先にカタログを用意すること。判断の記録は D-54。
 	-->
 	<key>CFBundleDevelopmentRegion</key>
@@ -81,6 +82,9 @@
 		<string>en</string>
 		<string>de</string>
 		<string>fr</string>
+		<string>ko</string>
+		<string>zh-Hans</string>
+		<string>zh-Hant</string>
 	</array>
 
 	<key>NSHumanReadableCopyright</key>

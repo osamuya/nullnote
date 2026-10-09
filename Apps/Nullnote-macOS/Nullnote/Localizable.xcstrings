@@ -26,6 +26,24 @@
             "state" : "translated",
             "value" : "Finder で表示"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Finder에서 보기"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在访达中显示"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在 Finder 中顯示"
+          }
         }
       }
     },
@@ -53,6 +71,24 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Finder で表示する"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Finder에서 보기"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在访达中显示"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在 Finder 中顯示"
           }
         }
       }
@@ -82,6 +118,24 @@
             "state" : "translated",
             "value" : "Markdown は行末に半角スペース2つを置いたときだけ改行します。入れておくと、そのままの改行もプレビューで改行になります。本文は書き換えません。"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Markdown은 줄 끝에 공백 두 개가 있을 때만 줄을 바꿉니다. 이 옵션을 켜면 일반 줄 바꿈도 미리보기에서 줄이 바뀝니다. 본문은 변경되지 않습니다."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Markdown 只在行尾有两个空格时才换行。开启后，普通的换行在预览中也会换行。不会改动你的文本。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Markdown 只在行尾有兩個空格時才換行。開啟後，一般的換行在預覽中也會換行。不會更動你的文字。"
+          }
         }
       }
     },
@@ -109,6 +163,24 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "URL を自動でリンクにする"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "URL을 자동으로 링크로 변환"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自动将 URL 转换为链接"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自動將 URL 轉換為連結"
           }
         }
       }
@@ -138,6 +210,24 @@
             "state" : "translated",
             "value" : "https:// で始まる URL のあとに空白か改行を打ったとき、または URL だけを貼り付けたときに、[URL](URL) の形に書き換えます。切ってあると、打ったとおりの文字のまま残します。プレビューでは、どちらでもリンクとして表示されます。"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "https:// 형식의 URL 뒤에 공백이나 줄 바꿈을 입력하거나 URL만 붙여넣으면 [URL](URL) 형태로 바꿉니다. 이 옵션을 끄면 입력한 그대로 남습니다. 미리보기에서는 어느 쪽이든 링크로 표시됩니다."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在以 https:// 开头的 URL 后输入空格或换行，或者只粘贴一个 URL 时，会改写为 [URL](URL) 的形式。关闭后，文本会保持你输入时的原样。无论是否开启，预览中都会将 URL 显示为链接。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在以 https:// 開頭的 URL 後輸入空格或換行，或只貼上一個 URL 時，會改寫為 [URL](URL) 的形式。關閉後，文字會保持你輸入時的原樣。無論是否開啟，預覽中都會將 URL 顯示為連結。"
+          }
         }
       }
     },
@@ -165,6 +255,24 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "「%@」の中の画像を表示するために、このフォルダの閲覧を許可してください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "‘%@’ 안의 이미지를 표시하려면 이 폴더에 대한 접근을 허용하십시오."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "若要显示“%@”中的图像，请允许访问此文件夹。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "若要顯示「%@」中的影像，請允許取用此檔案夾。"
           }
         }
       }
@@ -194,6 +302,24 @@
             "state" : "translated",
             "value" : "インデント"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "들여쓰기"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "缩进"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "縮排"
+          }
         }
       }
     },
@@ -221,6 +347,24 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "コード"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "코드"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "代码"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "程式碼"
           }
         }
       }
@@ -251,6 +395,24 @@
             "state" : "translated",
             "value" : "ダークのとき"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "다크 모드일 때"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "深色模式时"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "深色模式時"
+          }
         }
       }
     },
@@ -278,6 +440,24 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "テーマ"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "테마"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "主题"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "主題"
           }
         }
       }
@@ -307,6 +487,24 @@
             "state" : "translated",
             "value" : "ファイル名"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "파일 이름"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "文件名"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "檔案名稱"
+          }
         }
       }
     },
@@ -334,6 +532,24 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "ファイル名をコピー"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "파일 이름 복사"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "拷贝文件名"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "拷貝檔案名稱"
           }
         }
       }
@@ -363,6 +579,24 @@
             "state" : "translated",
             "value" : "ファイル名を変えたとき、本文の先頭の見出しも同じ名前にします。見出しが無ければ足します。"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "파일 이름을 변경하면 본문의 첫 번째 제목도 같은 이름으로 바꿉니다. 제목이 없으면 추가합니다."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重命名文件时，正文的第一个标题也会改为相同的名称。如果没有标题，会添加一个。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重新命名檔案時，內文的第一個標題也會改為相同的名稱。如果沒有標題，會加入一個。"
+          }
         }
       }
     },
@@ -390,6 +624,24 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "フォルダのパスをコピー"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "폴더 경로 복사"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "拷贝文件夹路径"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "拷貝檔案夾路徑"
           }
         }
       }
@@ -419,6 +671,24 @@
             "state" : "translated",
             "value" : "フルパスをコピー"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "경로 복사"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "拷贝路径"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "拷貝路徑"
+          }
         }
       }
     },
@@ -446,6 +716,24 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "プレビュー"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "미리보기"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "预览"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "預覽"
           }
         }
       }
@@ -476,6 +764,24 @@
             "state" : "translated",
             "value" : "プレビューの図の配色です。拡大して見るときと、画像に書き出すときも同じ配色になります。図の中に %%{init: {'theme': 'forest'}}%% と書いた図は、そちらが優先されます。"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "미리보기에서 다이어그램의 색상 구성입니다. 확대해서 볼 때와 이미지로 내보낼 때도 같은 색상 구성을 사용합니다. 다이어그램 안에 %%{init: {'theme': 'forest'}}%%라고 쓴 경우에는 그 설정이 우선합니다."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "预览中图表的配色。放大查看和导出为图像时也使用相同的配色。图表中写有 %%{init: {'theme': 'forest'}}%% 时，以其为准。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "預覽中圖表的配色。放大檢視和輸出為影像時也使用相同的配色。圖表中寫有 %%{init: {'theme': 'forest'}}%% 時，以其為準。"
+          }
         }
       }
     },
@@ -503,6 +809,24 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "プレビューを左右に並べる"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "미리보기를 나란히 보기"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "并排显示预览"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "並排顯示預覽"
           }
         }
       }
@@ -532,6 +856,24 @@
             "state" : "translated",
             "value" : "プレビューを表示"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "미리보기 보기"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "显示预览"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "顯示預覽"
+          }
         }
       }
     },
@@ -559,6 +901,24 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "プレビューを隠す"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "미리보기 가리기"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "隐藏预览"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "隱藏預覽"
           }
         }
       }
@@ -589,6 +949,24 @@
             "state" : "translated",
             "value" : "ライトのとき"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "라이트 모드일 때"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "浅色模式时"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "淺色模式時"
+          }
         }
       }
     },
@@ -616,6 +994,24 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "リストの行で Tab を押したときに、1段ぶんとして入れるものです。⇧Tab で戻します。すでに書かれているインデントは、この設定に関係なくそのまま保たれます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "목록 행에서 Tab을 눌렀을 때 한 단계로 삽입되는 내용입니다. ⇧Tab으로 되돌립니다. 이미 작성된 들여쓰기는 이 설정과 관계없이 그대로 유지됩니다."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在列表行中按 Tab 时插入的一级缩进。按 ⇧Tab 退回。已有的缩进不受此设置影响，保持原样。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在列表行中按 Tab 時插入的一層縮排。按 ⇧Tab 退回。已有的縮排不受此設定影響，維持原樣。"
           }
         }
       }
@@ -645,6 +1041,24 @@
             "state" : "translated",
             "value" : "リンク"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "링크"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "链接"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "連結"
+          }
         }
       }
     },
@@ -672,6 +1086,24 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "先頭の見出しと同期"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "첫 번째 제목과 동기화"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "与第一个标题同步"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "與第一個標題同步"
           }
         }
       }
@@ -701,6 +1133,24 @@
             "state" : "translated",
             "value" : "前を検索"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이전 찾기"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "查找上一个"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "尋找上一個"
+          }
         }
       }
     },
@@ -728,6 +1178,24 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "取り消し線"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "취소선"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "删除线"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "刪除線"
           }
         }
       }
@@ -757,6 +1225,24 @@
             "state" : "translated",
             "value" : "合流"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "병합"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "合并"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "合併"
+          }
         }
       }
     },
@@ -785,6 +1271,24 @@
             "state" : "translated",
             "value" : "同じ語を全部選ぶ"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "같은 단어 모두 선택"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选择所有相同项"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "選取所有相同項目"
+          }
         }
       }
     },
@@ -812,6 +1316,24 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "同じ語を選ぶ"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "다음 같은 단어 선택"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选择下一个相同项"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "選取下一個相同項目"
           }
         }
       }
@@ -842,6 +1364,24 @@
             "state" : "translated",
             "value" : "図（mermaid）"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "다이어그램(Mermaid)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "图表（Mermaid）"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "圖表（Mermaid）"
+          }
         }
       }
     },
@@ -869,6 +1409,24 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "外の道具が同じファイルを直したとき、行の途中の空白の数だけが違うところは、食い違いとして扱いません。行頭のインデントと行末の空白は、意味が変わるのでそのまま比べます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "다른 앱이 같은 파일을 수정했을 때, 줄 중간의 공백 개수만 다른 부분은 충돌로 취급하지 않습니다. 줄 앞의 들여쓰기와 줄 끝의 공백은 의미가 달라지므로 그대로 비교합니다."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "其他 App 编辑同一个文件时，仅行内空格数量不同的地方不视为冲突。行首的缩进和行尾的空格会改变含义，因此仍会比较。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "其他 App 編輯同一個檔案時，僅行內空格數量不同的地方不視為衝突。行首的縮排和行尾的空格會改變含義，因此仍會比較。"
           }
         }
       }
@@ -898,6 +1456,24 @@
             "state" : "translated",
             "value" : "太字"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "볼드체"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "粗体"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "粗體"
+          }
         }
       }
     },
@@ -925,6 +1501,24 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "文字を大きく"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "크게"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "变大"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "放大"
           }
         }
       }
@@ -954,6 +1548,24 @@
             "state" : "translated",
             "value" : "文字を小さく"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "작게"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "变小"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "縮小"
+          }
         }
       }
     },
@@ -981,6 +1593,24 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "文字サイズ"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "글자 크기"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "字体大小"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "字體大小"
           }
         }
       }
@@ -1010,6 +1640,24 @@
             "state" : "translated",
             "value" : "文字サイズを戻す"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "실제 크기"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "实际大小"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "實際大小"
+          }
         }
       }
     },
@@ -1037,6 +1685,24 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "文書内を検索（⌘F）"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "문서에서 찾기(⌘F)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在文稿中查找（⌘F）"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在文件中尋找（⌘F）"
           }
         }
       }
@@ -1066,6 +1732,24 @@
             "state" : "translated",
             "value" : "斜体"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이탤릭체"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "斜体"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "斜體"
+          }
         }
       }
     },
@@ -1093,6 +1777,24 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "普通の改行でも改行する"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "단일 줄 바꿈 유지"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "保留单个换行"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "保留單一換行"
           }
         }
       }
@@ -1122,6 +1824,24 @@
             "state" : "translated",
             "value" : "検索"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "검색"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "搜索"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "搜尋"
+          }
         }
       }
     },
@@ -1149,6 +1869,24 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "検索…"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "찾기…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "查找…"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "尋找…"
           }
         }
       }
@@ -1178,6 +1916,24 @@
             "state" : "translated",
             "value" : "検索を閉じる"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "검색 닫기"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "关闭搜索"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "關閉搜尋"
+          }
         }
       }
     },
@@ -1205,6 +1961,24 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "次を検索"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "다음 찾기"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "查找下一个"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "尋找下一個"
           }
         }
       }
@@ -1234,6 +2008,24 @@
             "state" : "translated",
             "value" : "目次"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "개요"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "大纲"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "大綱"
+          }
         }
       }
     },
@@ -1261,6 +2053,24 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "目次を表示"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "개요 보기"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "显示大纲"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "顯示大綱"
           }
         }
       }
@@ -1290,6 +2100,24 @@
             "state" : "translated",
             "value" : "目次を隠す"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "개요 가리기"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "隐藏大纲"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "隱藏大綱"
+          }
         }
       }
     },
@@ -1317,6 +2145,24 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "空白の違いだけのところは印を出さない"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "공백만 다른 변경 사항 무시"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "忽略仅空格不同的更改"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "忽略僅空格不同的變更"
           }
         }
       }
@@ -1346,6 +2192,24 @@
             "state" : "translated",
             "value" : "編集画面"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "편집기"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "编辑器"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "編輯器"
+          }
         }
       }
     },
@@ -1373,6 +2237,24 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "行番号を表示"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "줄 번호 보기"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "显示行号"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "顯示行號"
           }
         }
       }
@@ -1402,6 +2284,24 @@
             "state" : "translated",
             "value" : "見出しに合わせてファイル名を付け直すために、「%@」への書き込みを許可してください。"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "제목에 맞춰 파일 이름을 변경하려면 ‘%@’에 쓰기를 허용하십시오."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "若要按标题重命名文件，请允许写入“%@”。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "若要依標題重新命名檔案，請允許寫入「%@」。"
+          }
         }
       }
     },
@@ -1430,6 +2330,24 @@
             "state" : "translated",
             "value" : "見出しの目次を表示"
           }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "개요 보기"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "显示大纲"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "顯示大綱"
+          }
         }
       }
     },
@@ -1457,6 +2375,24 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "許可"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "허용"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "允许"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "允許"
           }
         }
       }

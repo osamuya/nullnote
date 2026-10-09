@@ -103,6 +103,9 @@
 				de,
 				fr,
 				ja,
+				ko,
+				"zh-Hans",
+				"zh-Hant",
 			);
 			mainGroup = AA00000000000000000000A2;
 			minimizedProjectReferenceProxies = 1;
