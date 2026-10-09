@@ -54,7 +54,7 @@ struct NullnoteApp: App {
             DocumentView(
                 document: file.$document,
                 fileURL: file.fileURL,
-                fontSize: fontSize,
+                fontSize: $fontSize,
                 appearance: appearance,
                 showsLineNumbers: showsLineNumbers,
                 syncsTitleWithFileName: syncsTitleWithFileName,

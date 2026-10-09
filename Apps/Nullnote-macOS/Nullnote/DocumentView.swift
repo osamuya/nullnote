@@ -10,7 +10,8 @@ struct DocumentView: View {
     @Binding var document: MarkdownDocument
     /// 書類のファイル。新規で未保存のときは nil。
     let fileURL: URL?
-    let fontSize: Double
+    /// 文字サイズ。すべての窓で共有する設定の値。フッターからも変えられる（#005）。
+    @Binding var fontSize: Double
     let appearance: MarkdownAppearance
     let showsLineNumbers: Bool
     /// ファイル名を変えたとき、本文の先頭の見出しも合わせるか。
@@ -105,7 +106,9 @@ struct DocumentView: View {
                 mainArea
             }
             // 目次もプレビューも含めた窓の一番下に置く。
-            MarkdownStatusBar(source: document.text, theme: theme)
+            MarkdownStatusBar(source: document.text, theme: theme) { size in
+                fontSize = Double(size)
+            }
         }
         .frame(minWidth: 480, minHeight: 320)
         // ウインドウ全体（ツールバーやスプリッタも含む）を設定に合わせる。

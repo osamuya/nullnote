@@ -11,10 +11,13 @@ public struct MarkdownStatusBar: View {
 
     let source: String
     let theme: MarkdownTheme
+    /// 文字サイズを選んだときに呼ぶ。nil なら、文字サイズは表示するだけ。
+    let selectFontSize: ((CGFloat) -> Void)?
 
-    public init(source: String, theme: MarkdownTheme) {
+    public init(source: String, theme: MarkdownTheme, selectFontSize: ((CGFloat) -> Void)? = nil) {
         self.source = source
         self.theme = theme
+        self.selectFontSize = selectFontSize
     }
 
     public var body: some View {
@@ -22,7 +25,7 @@ public struct MarkdownStatusBar: View {
             Spacer(minLength: 0)
             item(String(localized: theme.appearance.label))
             divider
-            item("\(Int(theme.fontSize)) pt")
+            fontSizeItem
             divider
             // 数は `.formatted()` せずに差し込む。`String(localized:)` が桁区切りを入れる
             // （2026-09-11 に実測。1234 → "1,234 行"）。数を書式指定子（%lld）のまま
@@ -49,17 +52,82 @@ public struct MarkdownStatusBar: View {
                 }
         }
         // 読み上げでは1つの情報のまとまりとして扱う。
-        .accessibilityElement(children: .combine)
+        // 文字サイズを選べるときは、そのメニューに届くように中身を残す（`.combine` だと押せない）。
+        .accessibilityElement(children: selectFontSize == nil ? .combine : .contain)
     }
 
     private func item(_ text: String) -> some View {
         Text(text).lineLimit(1)
     }
 
+    private var fontSizeLabel: String { "\(Int(theme.fontSize)) pt" }
+
+    /// 文字サイズ。押すと、設定画面のスライダーと同じ範囲を 1pt 刻みで並べたメニューが開く（#005）。
+    ///
+    /// **見た目はほかの項目と同じ文字のまま。** 印（▼）は付けず、指を乗せたときだけ
+    /// 下地を薄く敷いて、押せることを知らせる。
+    @ViewBuilder
+    private var fontSizeItem: some View {
+        #if os(macOS)
+        if let selectFontSize {
+            FontSizeMenu(label: fontSizeLabel, current: Int(theme.fontSize), select: selectFontSize)
+        } else {
+            item(fontSizeLabel)
+        }
+        #else
+        item(fontSizeLabel)
+        #endif
+    }
+
     private var divider: some View {
         Text(verbatim: "·").padding(.horizontal, 8).opacity(0.6)
     }
 }
+
+#if os(macOS)
+/// フッターの文字サイズのメニュー。
+private struct FontSizeMenu: View {
+
+    let label: String
+    let current: Int
+    let select: (CGFloat) -> Void
+
+    @State private var isHovered = false
+
+    private static let sizes = Int(MarkdownTheme.minimumFontSize)...Int(MarkdownTheme.maximumFontSize)
+
+    var body: some View {
+        Menu {
+            ForEach(Self.sizes, id: \.self) { size in
+                Toggle(isOn: Binding(get: { size == current }, set: { _ in select(CGFloat(size)) })) {
+                    Text(verbatim: "\(size) pt")
+                }
+            }
+            Divider()
+            Button(String(localized: "文字サイズを戻す", bundle: .module)) {
+                select(MarkdownTheme.defaultFontSize)
+            }
+        } label: {
+            Text(label).lineLimit(1)
+        }
+        // 枠なしのメニュー（`.borderlessButton`）は、ラベルの文字の大きさと色を自前で決めてしまい、
+        // ほかの項目より大きく、アクセントの色で出る（実測）。ラベルをそのまま描かせる。
+        .menuStyle(.button)
+        .buttonStyle(.plain)
+        .menuIndicator(.hidden)
+        .fixedSize()
+        .padding(.horizontal, 4)
+        .background(
+            RoundedRectangle(cornerRadius: 4)
+                .fill(Color.primary.opacity(isHovered ? 0.08 : 0))
+        )
+        // 下地のぶん左右に広げたので、ほかの項目との間隔が変わらないよう打ち消す。
+        .padding(.horizontal, -4)
+        .onHover { isHovered = $0 }
+        .help(Text("文字サイズ", bundle: .module))
+    }
+}
+#endif
 
 /// 本文の大きさの数え方。
 ///
