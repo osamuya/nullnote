@@ -70,6 +70,7 @@
 	その言語の利用者が日本語の画面に当たる（#021）。
 	英語は、文字列カタログ（アプリと NullnoteUI）に全件の訳を用意してから戻した
 	（2026-09-11。docs/12-make-multilingual.md の9段目）。
+	ドイツ語も同じ順で足した（2026-10-09。#003-2）。
 	言語を足すときも、先にカタログを用意すること。判断の記録は D-54。
 	-->
 	<key>CFBundleDevelopmentRegion</key>
@@ -78,6 +79,7 @@
 	<array>
 		<string>ja</string>
 		<string>en</string>
+		<string>de</string>
 	</array>
 
 	<key>NSHumanReadableCopyright</key>

@@ -3,6 +3,12 @@
   "strings" : {
     "%@ — 押すと大きく表示します" : {
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ – Zum Vergrößern klicken"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -19,6 +25,24 @@
     },
     "%lld 行" : {
       "localizations" : {
+        "de" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld Zeile"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld Zeilen"
+                }
+              }
+            }
+          }
+        },
         "en" : {
           "variations" : {
             "plural" : {
@@ -48,6 +72,12 @@
     "PNG で保存…" : {
       "comment" : "拡大窓の保存メニュー。図を PNG で保存する",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Als PNG sichern …"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -65,6 +95,12 @@
     "SVG で保存…" : {
       "comment" : "拡大窓の保存メニュー。図を SVG で保存する",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Als SVG sichern …"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -82,6 +118,12 @@
     "base（クリーム）" : {
       "comment" : "設定画面。mermaid のテーマの名前。括弧の中は色の印象",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "base (Creme)"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -99,6 +141,12 @@
     "dark（黒）" : {
       "comment" : "設定画面。mermaid のテーマの名前。括弧の中は色の印象",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "dark (Schwarz)"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -116,6 +164,12 @@
     "default（紫）" : {
       "comment" : "設定画面。mermaid のテーマの名前。括弧の中は色の印象",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "default (Violett)"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -133,6 +187,12 @@
     "forest（緑）" : {
       "comment" : "設定画面。mermaid のテーマの名前。括弧の中は色の印象",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "forest (Grün)"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -150,6 +210,12 @@
     "neutral（灰色）" : {
       "comment" : "設定画面。mermaid のテーマの名前。括弧の中は色の印象",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "neutral (Grau)"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -167,6 +233,12 @@
     "この図は描けません" : {
       "comment" : "mermaid の図が描けなかったときに、図のあった場所へ出す",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dieses Diagramm kann nicht dargestellt werden"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -183,6 +255,12 @@
     },
     "この画像があるフォルダの閲覧を許可します" : {
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zugriff auf den Ordner mit diesem Bild erlauben"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -199,6 +277,12 @@
     },
     "システム" : {
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "System"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -215,6 +299,12 @@
     },
     "スペース2" : {
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "2 Leerzeichen"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -231,6 +321,12 @@
     },
     "スペース4" : {
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "4 Leerzeichen"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -247,6 +343,12 @@
     },
     "タブ" : {
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tab"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -263,6 +365,12 @@
     },
     "ダーク" : {
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dunkel"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -280,6 +388,12 @@
     "ドラッグか二本指で移動。ピンチ、⌘＋ホイールで拡大" : {
       "comment" : "拡大窓の下に出す操作の案内",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ziehen oder wischen zum Verschieben. Pinch oder ⌘-Scrollen zum Zoomen."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -296,6 +410,12 @@
     },
     "ライト" : {
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hell"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -313,6 +433,12 @@
     "保存" : {
       "comment" : "拡大窓。図を保存するメニューの見出し",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sichern"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -330,6 +456,12 @@
     "全体を見る" : {
       "comment" : "拡大窓。図の全体が収まる倍率にする",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Einpassen"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -346,6 +478,12 @@
     },
     "前のヒットへ（⇧⌘G）" : {
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vorheriger Treffer (⇧⌘G)"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -362,6 +500,12 @@
     },
     "前の画像へ（←）" : {
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vorheriges Bild (←)"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -379,6 +523,12 @@
     "図" : {
       "comment" : "拡大窓のタイトル。保存・ドラッグで持ち出した図のファイル名の頭にも使う",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diagramm"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -396,6 +546,12 @@
     "図を大きく見る" : {
       "comment" : "図の角に出す札。押すと拡大窓が開く",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diagramm vergrößern"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -413,6 +569,12 @@
     "図を書き出せませんでした" : {
       "comment" : "図の保存やドラッグに失敗したときの知らせ",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Diagramm konnte nicht exportiert werden"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -430,6 +592,12 @@
     "図を画像として保存する" : {
       "comment" : "拡大窓の保存メニューに指を乗せたときの説明",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diagramm als Bild sichern"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -446,6 +614,12 @@
     },
     "場所が分かりません" : {
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ungültiger Ort"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -462,6 +636,12 @@
     },
     "押すと大きく表示します" : {
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zum Vergrößern klicken"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -478,6 +658,12 @@
     },
     "拡大" : {
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vergrößern"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -494,6 +680,12 @@
     },
     "検索" : {
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suchen"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -510,6 +702,12 @@
     },
     "検索を閉じる" : {
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suche schließen"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -526,6 +724,12 @@
     },
     "検索を閉じる（esc）" : {
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suche schließen (esc)"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -542,6 +746,12 @@
     },
     "検索語を消す" : {
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suchbegriff löschen"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -558,6 +768,12 @@
     },
     "次のヒットへ（⌘G）" : {
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nächster Treffer (⌘G)"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -574,6 +790,12 @@
     },
     "次の画像へ（→）" : {
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nächstes Bild (→)"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -590,6 +812,12 @@
     },
     "画像" : {
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bild"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -606,6 +834,12 @@
     },
     "画像を読み込み中…" : {
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bild wird geladen …"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -623,6 +857,12 @@
     "等倍" : {
       "comment" : "拡大窓。倍率を 100% にする",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Originalgröße"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -639,6 +879,12 @@
     },
     "縮小" : {
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verkleinern"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -656,6 +902,12 @@
     "見つかりません" : {
       "comment" : "2か所で使う（検索欄の件数／画像が読めない理由）。どちらにも合う言葉にすること",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nicht gefunden"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -672,6 +924,12 @@
     },
     "見出しがありません" : {
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keine Überschriften"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -688,6 +946,12 @@
     },
     "許可する…" : {
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zugriff erlauben …"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -704,6 +968,12 @@
     },
     "読み込めません" : {
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Konnte nicht geladen werden"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -720,6 +990,12 @@
     },
     "読む許可がありません" : {
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keine Leseberechtigung"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -736,6 +1012,12 @@
     },
     "閉じる" : {
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schließen"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -752,6 +1034,12 @@
     },
     "（この版では空）" : {
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "(In dieser Version leer)"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",

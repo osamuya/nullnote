@@ -3,6 +3,12 @@
   "strings" : {
     "Finder で表示" : {
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Im Finder zeigen"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -19,6 +25,12 @@
     },
     "Finder で表示する" : {
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Im Finder zeigen"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -35,6 +47,12 @@
     },
     "Markdown は行末に半角スペース2つを置いたときだけ改行します。入れておくと、そのままの改行もプレビューで改行になります。本文は書き換えません。" : {
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Markdown bricht eine Zeile nur um, wenn sie mit zwei Leerzeichen endet. Ist diese Option aktiv, werden auch einfache Zeilenumbrüche in der Vorschau umgebrochen. Dein Text wird nicht verändert."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -51,6 +69,12 @@
     },
     "URL を自動でリンクにする" : {
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "URLs automatisch in Links umwandeln"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -67,6 +91,12 @@
     },
     "https:// で始まる URL のあとに空白か改行を打ったとき、または URL だけを貼り付けたときに、[URL](URL) の形に書き換えます。切ってあると、打ったとおりの文字のまま残します。プレビューでは、どちらでもリンクとして表示されます。" : {
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wenn du nach einer URL, die mit https:// beginnt, ein Leerzeichen oder einen Zeilenumbruch eingibst oder nur eine URL einfügst, wird sie zu [URL](URL) umgeschrieben. Ist diese Option aus, bleibt der Text genau so, wie du ihn eingegeben hast. Die Vorschau zeigt die URL in beiden Fällen als Link an."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -83,6 +113,12 @@
     },
     "「%@」の中の画像を表示するために、このフォルダの閲覧を許可してください。" : {
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erlaube den Zugriff auf diesen Ordner, um die Bilder in „%@“ anzuzeigen."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -99,6 +135,12 @@
     },
     "インデント" : {
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Einrückung"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -115,6 +157,12 @@
     },
     "コード" : {
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Code"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -132,6 +180,12 @@
     "ダークのとき" : {
       "comment" : "設定画面。Nullnote がダークのときに使う図のテーマ",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Im dunklen Modus"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -148,6 +202,12 @@
     },
     "テーマ" : {
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Design"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -164,6 +224,12 @@
     },
     "ファイル名" : {
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dateiname"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -180,6 +246,12 @@
     },
     "ファイル名をコピー" : {
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dateinamen kopieren"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -196,6 +268,12 @@
     },
     "ファイル名を変えたとき、本文の先頭の見出しも同じ名前にします。見出しが無ければ足します。" : {
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wenn du die Datei umbenennst, erhält die erste Überschrift denselben Namen. Gibt es keine Überschrift, wird eine hinzugefügt."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -212,6 +290,12 @@
     },
     "フォルダのパスをコピー" : {
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ordnerpfad kopieren"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -228,6 +312,12 @@
     },
     "フルパスをコピー" : {
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pfad kopieren"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -244,6 +334,12 @@
     },
     "プレビュー" : {
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vorschau"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -261,6 +357,12 @@
     "プレビューの図の配色です。拡大して見るときと、画像に書き出すときも同じ配色になります。図の中に %%{init: {'theme': 'forest'}}%% と書いた図は、そちらが優先されます。" : {
       "comment" : "設定画面。図のテーマの説明",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Farbschema für Diagramme in der Vorschau. Die vergrößerte Ansicht und exportierte Bilder verwenden dasselbe Schema. Ein Diagramm, das %%{init: {'theme': 'forest'}}%% enthält, verwendet stattdessen dieses Design."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -277,6 +379,12 @@
     },
     "プレビューを左右に並べる" : {
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vorschau daneben anzeigen"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -293,6 +401,12 @@
     },
     "プレビューを表示" : {
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vorschau einblenden"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -309,6 +423,12 @@
     },
     "プレビューを隠す" : {
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vorschau ausblenden"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -326,6 +446,12 @@
     "ライトのとき" : {
       "comment" : "設定画面。Nullnote がライトのときに使う図のテーマ",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Im hellen Modus"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -342,6 +468,12 @@
     },
     "リストの行で Tab を押したときに、1段ぶんとして入れるものです。⇧Tab で戻します。すでに書かれているインデントは、この設定に関係なくそのまま保たれます。" : {
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Was Tab in einer Liste für eine Ebene einfügt. ⇧Tab rückt wieder aus. Bereits vorhandene Einrückungen bleiben unabhängig von dieser Einstellung erhalten."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -358,6 +490,12 @@
     },
     "リンク" : {
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Link"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -374,6 +512,12 @@
     },
     "先頭の見出しと同期" : {
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mit erster Überschrift synchronisieren"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -390,6 +534,12 @@
     },
     "前を検索" : {
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rückwärts suchen"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -406,6 +556,12 @@
     },
     "取り消し線" : {
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Durchgestrichen"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -422,6 +578,12 @@
     },
     "合流" : {
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Konflikte"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -438,6 +600,12 @@
     },
     "同じ語を全部選ぶ" : {
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle Vorkommen auswählen"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -454,6 +622,12 @@
     },
     "同じ語を選ぶ" : {
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nächstes Vorkommen auswählen"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -471,6 +645,12 @@
     "図（mermaid）" : {
       "comment" : "設定画面。mermaid の図の配色を選ぶ欄の見出し",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diagramme (Mermaid)"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -487,6 +667,12 @@
     },
     "外の道具が同じファイルを直したとき、行の途中の空白の数だけが違うところは、食い違いとして扱いません。行頭のインデントと行末の空白は、意味が変わるのでそのまま比べます。" : {
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wenn eine andere App dieselbe Datei bearbeitet, werden Zeilen, die sich nur in der Anzahl der Leerzeichen innerhalb der Zeile unterscheiden, nicht als Konflikt behandelt. Einrückungen am Zeilenanfang und Leerzeichen am Zeilenende werden weiterhin verglichen, da sie die Bedeutung ändern."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -503,6 +689,12 @@
     },
     "太字" : {
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fett"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -519,6 +711,12 @@
     },
     "文字を大きく" : {
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Größer"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -535,6 +733,12 @@
     },
     "文字を小さく" : {
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kleiner"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -551,6 +755,12 @@
     },
     "文字サイズ" : {
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schriftgröße"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -567,6 +777,12 @@
     },
     "文字サイズを戻す" : {
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Originalgröße"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -583,6 +799,12 @@
     },
     "文書内を検索（⌘F）" : {
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Im Dokument suchen (⌘F)"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -599,6 +821,12 @@
     },
     "斜体" : {
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kursiv"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -615,6 +843,12 @@
     },
     "普通の改行でも改行する" : {
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Einfache Zeilenumbrüche beibehalten"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -631,6 +865,12 @@
     },
     "検索" : {
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suchen"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -647,6 +887,12 @@
     },
     "検索…" : {
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suchen …"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -663,6 +909,12 @@
     },
     "検索を閉じる" : {
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suche schließen"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -679,6 +931,12 @@
     },
     "次を検索" : {
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weitersuchen"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -695,6 +953,12 @@
     },
     "目次" : {
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gliederung"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -711,6 +975,12 @@
     },
     "目次を表示" : {
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gliederung einblenden"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -727,6 +997,12 @@
     },
     "目次を隠す" : {
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gliederung ausblenden"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -743,6 +1019,12 @@
     },
     "空白の違いだけのところは印を出さない" : {
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Änderungen nur an Leerzeichen ignorieren"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -759,6 +1041,12 @@
     },
     "編集画面" : {
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Editor"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -775,6 +1063,12 @@
     },
     "行番号を表示" : {
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zeilennummern anzeigen"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -791,6 +1085,12 @@
     },
     "見出しに合わせてファイル名を付け直すために、「%@」への書き込みを許可してください。" : {
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erlaube das Schreiben in „%@“, damit die Datei passend zur Überschrift umbenannt werden kann."
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -807,6 +1107,12 @@
     },
     "見出しの目次を表示" : {
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gliederung einblenden"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
@@ -823,6 +1129,12 @@
     },
     "許可" : {
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erlauben"
+          }
+        },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
