@@ -106,6 +106,11 @@ struct NullnoteApp: App {
                 }
                 .keyboardShortcut("0", modifiers: .command)
             }
+            // 既定の「Nullnote ヘルプ」は「ヘルプは利用できません」を出すだけなので差し替える。
+            // 検索欄は macOS が付けるので、項目を差し替えても残る。
+            CommandGroup(replacing: .help) {
+                HelpButton()
+            }
         }
 
         Settings {
@@ -252,5 +257,28 @@ private struct TogglePreviewButton: View {
         }
         .keyboardShortcut("p", modifiers: [.command, .shift])
         .disabled(visibility == nil)
+    }
+}
+
+/// sabanote.com のヘルプをブラウザで開く（#M0037、D-73）。
+///
+/// **本文はアプリに持たない。** アプリを出し直さなくても直せるように、
+/// sabanote.com の1ページだけを正とする。
+private struct HelpButton: View {
+
+    var body: some View {
+        // 名前とショートカット（⌘?）は macOS の既定の項目に合わせる。
+        Button("Nullnote ヘルプ") { NSWorkspace.shared.open(Self.url) }
+            .keyboardShortcut("?", modifiers: .command)
+    }
+
+    /// アプリの表示言語でヘルプを開く URL。
+    ///
+    /// サイトは日本語と英語しか持たないので、日本語のとき以外は英語にする。
+    /// `?setlang=` を付けるのは、アプリだけ言語を変えている人（「言語と地域」の
+    /// アプリごとの設定）にも、ブラウザの言語ではなくアプリと同じ言語で出すため。
+    static var url: URL {
+        let language = Bundle.main.preferredLocalizations.first == "ja" ? "ja" : "en"
+        return URL(string: "https://sabanote.com/nullnote-help/?setlang=\(language)")!
     }
 }
