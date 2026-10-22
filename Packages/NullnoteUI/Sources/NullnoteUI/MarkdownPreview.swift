@@ -16,8 +16,8 @@ public struct MarkdownPreview: View {
     private let anchorLine: Int?
     /// 文書のファイル。画像の相対パスの基準にする。
     private let documentURL: URL?
-    /// 普通の改行を、そのまま改行として描くか（設定で切り替える。D-33）。
-    private let breaksOnNewline: Bool
+    /// 普通の改行をどう読むか（設定で切り替える。D-33・D-74）。
+    private let newlineStyle: NewlineStyle
     /// 編集画面で選ばれたところ（本文の位置）。同じ文字に色を付ける（#M0045）。
     private let selectionMarks: [NSRange]
     /// 色を付けたところが見えていなければ、そこまで送る依頼。
@@ -36,7 +36,7 @@ public struct MarkdownPreview: View {
         theme: MarkdownTheme,
         anchorLine: Int? = nil,
         documentURL: URL? = nil,
-        breaksOnNewline: Bool = false,
+        newlineStyle: NewlineStyle = .markdown,
         selectionMarks: [NSRange] = [],
         selectionReveal: SelectionLink.PreviewReveal? = nil,
         onSelectionChange: PreviewSelectionHandler? = nil
@@ -45,7 +45,7 @@ public struct MarkdownPreview: View {
         self.theme = theme
         self.anchorLine = anchorLine
         self.documentURL = documentURL
-        self.breaksOnNewline = breaksOnNewline
+        self.newlineStyle = newlineStyle
         self.selectionMarks = selectionMarks
         self.selectionReveal = selectionReveal
         self.onSelectionChange = onSelectionChange
@@ -98,7 +98,7 @@ public struct MarkdownPreview: View {
         .markdownColorScheme(theme.appearance)
         // インラインコードのフォントと色は解析時に焼き込まれるので、
         // 文字サイズや外観が変わったときも組み直す。
-        .task(id: ReloadKey(theme: theme, source: source, breaksOnNewline: breaksOnNewline)) {
+        .task(id: ReloadKey(theme: theme, source: source, newlineStyle: newlineStyle)) {
             await reload()
         }
     }
@@ -175,13 +175,13 @@ public struct MarkdownPreview: View {
         let fontSize: CGFloat
         let appearance: MarkdownAppearance
         /// 改行の扱いも解析時に畳み込むので、切り替えたら組み直す。
-        let breaksOnNewline: Bool
+        let newlineStyle: NewlineStyle
 
-        init(theme: MarkdownTheme, source: String, breaksOnNewline: Bool) {
+        init(theme: MarkdownTheme, source: String, newlineStyle: NewlineStyle) {
             self.source = source
             self.fontSize = theme.fontSize
             self.appearance = theme.appearance
-            self.breaksOnNewline = breaksOnNewline
+            self.newlineStyle = newlineStyle
         }
     }
 
@@ -197,7 +197,7 @@ public struct MarkdownPreview: View {
             try? await Task.sleep(for: .milliseconds(150))
             guard !Task.isCancelled else { return }
         }
-        blocks = PreviewBuilder.build(source, theme: theme, breaksOnNewline: breaksOnNewline)
+        blocks = PreviewBuilder.build(source, theme: theme, newlineStyle: newlineStyle)
     }
 }
 

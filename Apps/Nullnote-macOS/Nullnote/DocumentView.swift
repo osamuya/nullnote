@@ -16,8 +16,8 @@ struct DocumentView: View {
     let showsLineNumbers: Bool
     /// ファイル名を変えたとき、本文の先頭の見出しも合わせるか。
     let syncsTitleWithFileName: Bool
-    /// 普通の改行を、プレビューでも改行として見せるか。
-    let breaksOnNewline: Bool
+    /// 普通の改行を、プレビューでどう読むか（D-74）。
+    let newlineStyle: NewlineStyle
     let indentStyle: IndentStyle
     /// 打った URL・貼った URL を `[URL](URL)` に書き換えるか。
     let autoLinksURLs: Bool
@@ -532,7 +532,7 @@ struct DocumentView: View {
                     theme: theme,
                     anchorLine: topVisibleLine,
                     documentURL: fileURL,
-                    breaksOnNewline: breaksOnNewline,
+                    newlineStyle: newlineStyle,
                     selectionMarks: selectionLink.previewMarks,
                     selectionReveal: selectionLink.previewReveal,
                     onSelectionChange: PreviewSelectionHandler { range in

@@ -93,48 +93,48 @@
         }
       }
     },
-    "Markdown は行末に半角スペース2つを置いたときだけ改行します。入れておくと、そのままの改行もプレビューで改行になります。本文は書き換えません。" : {
+    "Markdown は行末に半角スペース2つを置いたときだけ改行し、そのままの改行は前の行につなげます。「改行で段落を分ける」は、改行1つで段落を終える書き方（日本語の文章など）に合わせたものです。どれを選んでも本文は書き換えません。" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Markdown bricht eine Zeile nur um, wenn sie mit zwei Leerzeichen endet. Ist diese Option aktiv, werden auch einfache Zeilenumbrüche in der Vorschau umgebrochen. Dein Text wird nicht verändert."
+            "value" : "Markdown bricht eine Zeile nur um, wenn sie mit zwei Leerzeichen endet, und hängt einfache Zeilenumbrüche an die vorherige Zeile an. „Neuer Absatz“ passt zu Texten, in denen ein einfacher Zeilenumbruch einen Absatz beendet (etwa im Japanischen). Dein Text wird in keinem Fall verändert."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Markdown breaks a line only where it ends with two spaces. With this on, plain line breaks also break in the preview. Your text isn't changed."
+            "value" : "Markdown breaks a line only where it ends with two spaces, and joins a plain line break onto the previous line. “Start a new paragraph” suits writing where a single line break ends a paragraph (as in Japanese). Whichever you choose, your text isn’t changed."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Markdown ne passe à la ligne que lorsqu’une ligne se termine par deux espaces. Si cette option est activée, les retours à la ligne simples sont aussi respectés dans l’aperçu. Votre texte n’est pas modifié."
+            "value" : "Markdown ne passe à la ligne que lorsqu’une ligne se termine par deux espaces, et rattache les retours à la ligne simples à la ligne précédente. « Nouveau paragraphe » convient aux textes où un simple retour à la ligne termine un paragraphe (comme en japonais). Votre texte n’est jamais modifié."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Markdown は行末に半角スペース2つを置いたときだけ改行します。入れておくと、そのままの改行もプレビューで改行になります。本文は書き換えません。"
+            "value" : "Markdown は行末に半角スペース2つを置いたときだけ改行し、そのままの改行は前の行につなげます。「改行で段落を分ける」は、改行1つで段落を終える書き方（日本語の文章など）に合わせたものです。どれを選んでも本文は書き換えません。"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Markdown은 줄 끝에 공백 두 개가 있을 때만 줄을 바꿉니다. 이 옵션을 켜면 일반 줄 바꿈도 미리보기에서 줄이 바뀝니다. 본문은 변경되지 않습니다."
+            "value" : "Markdown은 줄 끝에 공백 두 개가 있을 때만 줄을 바꾸고, 일반 줄 바꿈은 앞 줄에 이어 붙입니다. ‘새 문단으로 나누기’는 줄 바꿈 하나로 문단을 끝내는 글(일본어 문장 등)에 맞춘 것입니다. 어느 것을 골라도 본문은 변경되지 않습니다."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Markdown 只在行尾有两个空格时才换行。开启后，普通的换行在预览中也会换行。不会改动你的文本。"
+            "value" : "Markdown 只在行尾有两个空格时才换行，普通的换行会接到上一行。“分段”适合用一个换行结束段落的写法（如日语文章）。无论选择哪一项，都不会改动你的文本。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Markdown 只在行尾有兩個空格時才換行。開啟後，一般的換行在預覽中也會換行。不會更動你的文字。"
+            "value" : "Markdown 只在行尾有兩個空格時才換行，一般的換行會接到上一行。「分段」適合以一個換行結束段落的寫法（如日文文章）。無論選擇哪一項，都不會更動你的文字。"
           }
         }
       }
@@ -1523,6 +1523,52 @@
         }
       }
     },
+    "改行の扱い" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zeilenumbrüche"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Line breaks"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retours à la ligne"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "改行の扱い"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "줄 바꿈 처리"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "换行方式"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "換行方式"
+          }
+        }
+      }
+    },
     "文字を大きく" : {
       "localizations" : {
         "de" : {
@@ -1795,52 +1841,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "斜體"
-          }
-        }
-      }
-    },
-    "普通の改行でも改行する" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Einfache Zeilenumbrüche beibehalten"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Preserve single line breaks"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Conserver les retours à la ligne simples"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "普通の改行でも改行する"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "단일 줄 바꿈 유지"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "保留单个换行"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "保留單一換行"
           }
         }
       }

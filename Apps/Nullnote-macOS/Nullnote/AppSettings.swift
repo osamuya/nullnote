@@ -7,7 +7,9 @@ enum AppSettings {
     static let appearanceKey = "editorAppearance"
     static let lineNumbersKey = "editorShowsLineNumbers"
     static let titleSyncKey = "syncsTitleWithFileName"
-    static let breaksOnNewlineKey = "previewBreaksOnNewline"
+    static let newlineStyleKey = "previewNewlineStyle"
+    /// 1.3 までの「普通の改行でも改行する」。`newlineStyleKey` に引き継いだら消す（D-74）。
+    private static let legacyBreaksOnNewlineKey = "previewBreaksOnNewline"
     static let indentStyleKey = "editorIndentStyle"
     static let autoLinksURLsKey = "editorAutoLinksURLs"
     static let ignoresWhitespaceKey = "mergeIgnoresWhitespace"
@@ -39,9 +41,10 @@ enum AppSettings {
             // 本文を黙って書き換える動きなので、選んだ人にだけ効かせる。
             titleSyncKey: false,
 
-            // 普通の改行をプレビューでも改行にするのは**切ってある**。
-            // Markdown の決まりから外れる見え方なので、選んだ人にだけ効かせる。
-            breaksOnNewlineKey: false,
+            // 普通の改行は **Markdown どおり**前の行につなげる。
+            // 折り返す・段落を分けるは Markdown の決まりから外れる見え方なので、選んだ人にだけ効かせる。
+            // 他のツールで開いたときと見え方が揃う（D-74）。
+            newlineStyleKey: NewlineStyle.markdown.rawValue,
 
             // Tab でリストを深くするときの1段ぶん。**スペース4つを既定にする。**
             // Markdown のファイルとしてはスペースが多数派で、`markdownlint` の
@@ -65,7 +68,22 @@ enum AppSettings {
             mermaidDarkThemeKey: MermaidTheme.darkDefault.rawValue,
         ])
 
+        migrateBreaksOnNewline()
         seedSavePanelExpansion()
+    }
+
+    /// 1.3 までのチェックボックスの値を、改行の扱いの3択に引き継ぐ（D-74）。
+    ///
+    /// 入れていた人は「改行で折り返す」、外していた人は「Markdown どおり」（既定のまま）。
+    /// **どちらの人も見え方は変わらない。** 引き継いだら古いキーは消す。
+    private static func migrateBreaksOnNewline() {
+        let defaults = UserDefaults.standard
+        guard defaults.object(forKey: legacyBreaksOnNewlineKey) != nil else { return }
+        if defaults.bool(forKey: legacyBreaksOnNewlineKey),
+           defaults.object(forKey: newlineStyleKey) == nil {
+            defaults.set(NewlineStyle.lineBreak.rawValue, forKey: newlineStyleKey)
+        }
+        defaults.removeObject(forKey: legacyBreaksOnNewlineKey)
     }
 
     /// 保存パネルを、初回起動のときだけ詳細表示にしておく。

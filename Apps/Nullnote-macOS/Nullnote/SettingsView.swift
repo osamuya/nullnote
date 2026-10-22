@@ -7,7 +7,7 @@ struct SettingsView: View {
     @Binding var appearance: MarkdownAppearance
     @Binding var showsLineNumbers: Bool
     @Binding var syncsTitleWithFileName: Bool
-    @Binding var breaksOnNewline: Bool
+    @Binding var newlineStyle: NewlineStyle
     @Binding var indentStyle: IndentStyle
     @Binding var autoLinksURLs: Bool
     @Binding var ignoresWhitespace: Bool
@@ -77,9 +77,13 @@ struct SettingsView: View {
 
             LabeledContent("プレビュー") {
                 VStack(alignment: .leading, spacing: 4) {
-                    Toggle("普通の改行でも改行する", isOn: $breaksOnNewline)
-                        .multilineTextAlignment(.leading)
-                    Text("Markdown は行末に半角スペース2つを置いたときだけ改行します。入れておくと、そのままの改行もプレビューで改行になります。本文は書き換えません。")
+                    Picker("改行の扱い", selection: $newlineStyle) {
+                        ForEach(NewlineStyle.allCases) { option in
+                            Text(option.label).tag(option)
+                        }
+                    }
+                    .fixedSize()
+                    Text("Markdown は行末に半角スペース2つを置いたときだけ改行し、そのままの改行は前の行につなげます。「改行で段落を分ける」は、改行1つで段落を終える書き方（日本語の文章など）に合わせたものです。どれを選んでも本文は書き換えません。")
                         .font(.callout)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)

@@ -170,9 +170,9 @@ extension Array where Element == PreviewBlock {
 struct PreviewBuilder {
 
     private let theme: MarkdownTheme
-    /// 普通の改行（行末に半角スペース2つが無いもの）を、改行として描くか。
-    /// 既定は false ＝ CommonMark どおり、ひと続きの行として畳む。
-    private let breaksOnNewline: Bool
+    /// 普通の改行（行末に半角スペース2つが無いもの）をどう読むか（D-33・D-74）。
+    /// 既定は CommonMark どおり、ひと続きの行として畳む。
+    private let newlineStyle: NewlineStyle
     private var counter = 0
     /// 行番号を持たないノードに与える値。直前に分かっている行を引き継ぐ。
     private var lastKnownLine = 1
@@ -186,9 +186,9 @@ struct PreviewBuilder {
     private let source: NSString
     private let positions: SourcePositionConverter
 
-    private init(theme: MarkdownTheme, breaksOnNewline: Bool, source: String) {
+    private init(theme: MarkdownTheme, newlineStyle: NewlineStyle, source: String) {
         self.theme = theme
-        self.breaksOnNewline = breaksOnNewline
+        self.newlineStyle = newlineStyle
         self.source = source as NSString
         self.positions = SourcePositionConverter(source)
     }
@@ -196,9 +196,9 @@ struct PreviewBuilder {
     static func build(
         _ source: String,
         theme: MarkdownTheme,
-        breaksOnNewline: Bool = false
+        newlineStyle: NewlineStyle = .markdown
     ) -> [PreviewBlock] {
-        var builder = PreviewBuilder(theme: theme, breaksOnNewline: breaksOnNewline, source: source)
+        var builder = PreviewBuilder(theme: theme, newlineStyle: newlineStyle, source: source)
         return builder.blocks(splittingConflictsIn: source)
     }
 
@@ -248,7 +248,56 @@ struct PreviewBuilder {
     // MARK: ブロック
 
     private mutating func blocks(in markup: Markup) -> [PreviewBlock] {
-        markup.children.compactMap { block(from: $0) }
+        // 段落を分けるのは文書の一番外だけ。リスト・引用の中まで分けると、項目の形が崩れる（D-74）。
+        let splitsLines = newlineStyle == .paragraph && markup is Document
+        return markup.children.flatMap { child -> [PreviewBlock] in
+            if splitsLines, let paragraph = child as? Paragraph {
+                return blocks(splittingLinesOf: paragraph)
+            }
+            return block(from: child).map { [$0] } ?? []
+        }
+    }
+
+    /// 段落を行ごとに別のブロックにする（「改行で段落を分ける」。D-74）。
+    ///
+    /// 改行1つで段落を終える書き方（日本語の文章など）では、空行が無いので
+    /// 文書がまるごと1つの段落になる。分けないと段落の余白が付かず、
+    /// スクロールの追従も段落の頭にしか合わない。
+    /// 行末の半角スペース2つの改行も同じく分ける。どちらも段落のつもりで混ざっている。
+    ///
+    /// 画像だけで出来た段落は、分けずに1つの絵のまとまりのまま（D-27）。
+    private mutating func blocks(splittingLinesOf paragraph: Paragraph) -> [PreviewBlock] {
+        var lines: [[Markup]] = [[]]
+        for child in paragraph.children {
+            if child is SoftBreak || child is LineBreak {
+                lines.append([])
+            } else {
+                lines[lines.count - 1].append(child)
+            }
+        }
+        lines.removeAll(where: \.isEmpty)
+        guard lines.count > 1, imagesOnly(in: paragraph).isEmpty else {
+            return block(from: paragraph).map { [$0] } ?? []
+        }
+
+        var result: [PreviewBlock] = []
+        for children in lines {
+            let line = children.first?.range.map { $0.lowerBound.line + lineOffset } ?? lastKnownLine
+            lastKnownLine = line
+
+            let content: PreviewBlock.Content
+            let images = imagesOnly(in: children)
+            if !images.isEmpty {
+                content = .images(images)
+            } else {
+                let text = inlineText(children)
+                if text.characters.allSatisfy(\.isWhitespace) { continue }
+                content = .paragraph(text)
+            }
+            counter += 1
+            result.append(PreviewBlock(id: counter, sourceLine: line, content: content))
+        }
+        return result
     }
 
     private mutating func block(from markup: Markup) -> PreviewBlock? {
@@ -269,8 +318,12 @@ struct PreviewBuilder {
     ///
     /// 空行を挟まずに画像を並べると1つの段落になるので、**複数を受け取る**。
     private mutating func imagesOnly(in paragraph: Paragraph) -> [PreviewImageRef] {
+        imagesOnly(in: Array(paragraph.children))
+    }
+
+    private mutating func imagesOnly(in children: [Markup]) -> [PreviewImageRef] {
         var found: [PreviewImageRef] = []
-        for child in paragraph.children {
+        for child in children {
             switch child {
             case let image as Markdown.Image:
                 counter += 1
@@ -439,7 +492,15 @@ struct PreviewBuilder {
     }
 
     private func inlineText(_ markup: Markup) -> AttributedString {
-        var result = inline(markup)
+        inlineText(Array(markup.children))
+    }
+
+    /// 段落の一部（行ごとに分けたとき）を畳む。
+    private func inlineText(_ children: [Markup]) -> AttributedString {
+        var result = AttributedString()
+        for child in children {
+            result.append(inlineFragment(child, intent: []))
+        }
         linkifyBareURLs(in: &result)
         return result
     }
@@ -527,8 +588,9 @@ struct PreviewBuilder {
 
         case is SoftBreak:
             // 単なる改行。CommonMark では前後がつながって1行になる。
-            // 設定を入れている人にだけ、書いたとおりの位置で折る（D-33）。
-            return styled(breaksOnNewline ? "\n" : " ")
+            // 折り返す・段落を分けるを選んだ人にだけ、書いたとおりの位置で折る（D-33）。
+            // 段落を分けるときも、リスト・引用の中はここで折る（D-74）。
+            return styled(newlineStyle == .markdown ? " " : "\n")
 
         case is LineBreak:
             return styled("\n")

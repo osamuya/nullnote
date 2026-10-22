@@ -18,8 +18,8 @@ struct NullnoteApp: App {
     @AppStorage(AppSettings.titleSyncKey)
     private var syncsTitleWithFileName = false
 
-    @AppStorage(AppSettings.breaksOnNewlineKey)
-    private var breaksOnNewline = false
+    @AppStorage(AppSettings.newlineStyleKey)
+    private var newlineStyle: NewlineStyle = .markdown
     @AppStorage(AppSettings.indentStyleKey)
     private var indentStyle: IndentStyle = .fourSpaces
     @AppStorage(AppSettings.autoLinksURLsKey)
@@ -58,7 +58,7 @@ struct NullnoteApp: App {
                 appearance: appearance,
                 showsLineNumbers: showsLineNumbers,
                 syncsTitleWithFileName: syncsTitleWithFileName,
-                breaksOnNewline: breaksOnNewline,
+                newlineStyle: newlineStyle,
                 indentStyle: indentStyle,
                 autoLinksURLs: autoLinksURLs,
                 ignoresWhitespace: ignoresWhitespace,
@@ -119,7 +119,7 @@ struct NullnoteApp: App {
                 appearance: $appearance,
                 showsLineNumbers: $showsLineNumbers,
                 syncsTitleWithFileName: $syncsTitleWithFileName,
-                breaksOnNewline: $breaksOnNewline,
+                newlineStyle: $newlineStyle,
                 indentStyle: $indentStyle,
                 autoLinksURLs: $autoLinksURLs,
                 ignoresWhitespace: $ignoresWhitespace,
