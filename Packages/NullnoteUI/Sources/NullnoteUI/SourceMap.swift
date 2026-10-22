@@ -17,8 +17,8 @@ struct SourceSpan: Hashable, Sendable {
     let end: Int
     /// プレビューの文字が、本文の `start` から1文字ずつそのまま並んでいるか。
     ///
-    /// **確かめられたときだけ true にする。** 逃がし文字（`\*`）や文字参照（`&amp;`）は
-    /// 本文と字数が違うので false になり、範囲を丸ごと対応させる。
+    /// **確かめられたときだけ true にする。** 逃がし文字（`\*`）や文字参照（`&amp;`）のように
+    /// 本文と違うところは false になり、範囲を丸ごと対応させる（`SourceAlignment`）。
     let isExact: Bool
 }
 
@@ -88,6 +88,111 @@ struct SourcePositionConverter {
         let index = text.utf8.index(text.startIndex, offsetBy: bytes, limitedBy: text.endIndex)
             ?? text.endIndex
         return lineStarts[line - 1] + text[..<index].utf16.count
+    }
+}
+
+// MARK: - 本文とプレビューの文字を突き合わせる
+
+/// 本文の範囲とプレビューの文字を突き合わせ、合うところと合わないところに分ける。
+///
+/// 1か所でも違うと範囲を丸ごと対応させていたので、長い段落では2文字選んでも段落全体に
+/// 色が付いた（#010）。違いの出どころは、改行の記法の行末の空白（本文の範囲には入り、
+/// プレビューの文字には無い）、逃がし文字（`\*`）、`...` が `…` になるところなど。
+/// 違うところだけを丸ごと対応させ、前後は1文字ずつ対応させる。
+enum SourceAlignment {
+
+    struct Piece: Equatable {
+        /// プレビューに出す文字。
+        let rendered: String
+        let span: SourceSpan
+    }
+
+    /// 合わなくなったところから、先で合い直すところを探す幅（Unicode スカラー）。
+    private static let searchWidth = 8
+    /// 合い直したと見なすのに、続けて一致していなければならない数。
+    private static let resyncLength = 3
+
+    /// - Parameters:
+    ///   - source: 本文のその範囲の文字。
+    ///   - start: `source` の頭の、本文全体での位置（UTF-16）。
+    ///   - rendered: プレビューに出す文字。
+    /// - Returns: `rendered` を頭から分けたもの。つなげると `rendered` に戻る。
+    static func pieces(source: String, start: Int, rendered: String) -> [Piece] {
+        let src = Array(source.unicodeScalars)
+        let out = Array(rendered.unicodeScalars)
+        // 各スカラーの頭の、本文全体での位置。
+        var offsets: [Int] = []
+        offsets.reserveCapacity(src.count + 1)
+        var offset = start
+        for scalar in src {
+            offsets.append(offset)
+            offset += scalar.utf16.count
+        }
+        offsets.append(offset)
+
+        var pieces: [Piece] = []
+        func add(_ out: ArraySlice<Unicode.Scalar>, from low: Int, to high: Int, exact: Bool) {
+            guard !out.isEmpty else { return }
+            var text = String.UnicodeScalarView()
+            text.append(contentsOf: out)
+            pieces.append(Piece(
+                rendered: String(text),
+                span: SourceSpan(start: offsets[low], end: offsets[high], isExact: exact)
+            ))
+        }
+
+        var i = 0, j = 0
+        while j < out.count {
+            // 一致する並びを伸ばす。
+            let i0 = i, j0 = j
+            while i < src.count, j < out.count, src[i] == out[j] {
+                i += 1
+                j += 1
+            }
+            add(out[j0..<j], from: i0, to: i, exact: true)
+            guard j < out.count else { break }
+
+            // 合わないところ。先で合い直すところを、飛ばす数の少ない順に探す。
+            if let (skipSource, skipRendered) = resync(src, i, out, j) {
+                add(out[j..<(j + skipRendered)], from: i, to: i + skipSource, exact: false)
+                i += skipSource
+                j += skipRendered
+            } else {
+                // 見つからなければ、残りを丸ごと。
+                add(out[j...], from: i, to: src.count, exact: false)
+                break
+            }
+        }
+        return pieces
+    }
+
+    private static func resync(
+        _ src: [Unicode.Scalar], _ i: Int, _ out: [Unicode.Scalar], _ j: Int
+    ) -> (Int, Int)? {
+        for total in 1...(searchWidth * 2) {
+            for skipSource in 0...min(total, searchWidth) {
+                let skipRendered = total - skipSource
+                guard skipRendered <= searchWidth,
+                      i + skipSource <= src.count, j + skipRendered <= out.count
+                else { continue }
+                if matches(src, i + skipSource, out, j + skipRendered) {
+                    return (skipSource, skipRendered)
+                }
+            }
+        }
+        return nil
+    }
+
+    /// その位置から先が続けて一致するか。両方が同時に終わるときも一致と見なす。
+    private static func matches(_ src: [Unicode.Scalar], _ i: Int, _ out: [Unicode.Scalar], _ j: Int) -> Bool {
+        var k = 0
+        while k < resyncLength {
+            let a = i + k, b = j + k
+            if a == src.count || b == out.count { return a == src.count && b == out.count }
+            if src[a] != out[b] { return false }
+            k += 1
+        }
+        return true
     }
 }
 

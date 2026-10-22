@@ -481,9 +481,21 @@ struct PreviewBuilder {
             return fragment
         }
 
+        /// 本文と違うところだけを丸ごと対応させ、前後は1文字ずつ対応させる（#010）。
+        func aligned(_ string: String, adding extra: InlinePresentationIntent = []) -> AttributedString {
+            guard let whole = span(of: markup, rendered: string) else { return styled(string, adding: extra) }
+            guard !whole.isExact else { return styled(string, adding: extra, source: whole) }
+            let original = source.substring(with: NSRange(location: whole.start, length: whole.end - whole.start))
+            var result = AttributedString()
+            for piece in SourceAlignment.pieces(source: original, start: whole.start, rendered: string) {
+                result.append(styled(piece.rendered, adding: extra, source: piece.span))
+            }
+            return result
+        }
+
         switch markup {
         case let text as Markdown.Text:
-            return styled(text.string, source: span(of: markup, rendered: text.string))
+            return aligned(text.string)
 
         case is Emphasis:
             return inline(markup, intent: intent.union(.emphasized))
@@ -524,7 +536,7 @@ struct PreviewBuilder {
         case let html as InlineHTML:
             // 本文の途中に挟んだコメントも出さない。
             if isHTMLComment(html.rawHTML) { return AttributedString() }
-            return styled(html.rawHTML, adding: .code, source: span(of: markup, rendered: html.rawHTML))
+            return aligned(html.rawHTML, adding: .code)
 
         default:
             guard markup.childCount > 0 else { return styled(markup.format()) }

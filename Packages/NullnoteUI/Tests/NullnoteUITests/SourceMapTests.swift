@@ -84,11 +84,27 @@ struct SourceMapTests {
         #expect(sourceText(selecting: "あいう", in: "😀 と **あいう** と") == "あいう")
     }
 
-    @Test("逃がし文字を含む並びは、丸ごと対応させる")
-    func escapedFallsBackToWhole() {
-        // `\*` は本文で2文字、プレビューで1文字。1文字ずつは合わせられない。
-        let mapped = sourceText(selecting: "b", in: "a\\*b")
-        #expect(mapped == "a\\*b")
+    @Test("逃がし文字の前後は、1文字ずつ対応する（#010）")
+    func aroundEscape() {
+        // `\*` は本文で2文字、プレビューで1文字。違うのは `\` だけ。
+        #expect(sourceText(selecting: "b", in: "a\\*b") == "b")
+        #expect(sourceText(selecting: "*1", in: "神道指令[\\*1]でこの体制") == "*1")
+        #expect(sourceText(selecting: "体制", in: "神道指令[\\*1]でこの体制") == "体制")
+    }
+
+    @Test("改行の記法（行末の空白2つ）の前の行も、1文字ずつ対応する（#010）")
+    func beforeHardBreak() {
+        // 本文の範囲には行末の空白が入るが、プレビューの文字には入らない。
+        let source = "四柱推命に興味を持ったのです。  \n次の行"
+        #expect(sourceText(selecting: "興味", in: source) == "興味")
+        #expect(previewText(selecting: "興味", in: source) == ["興味"])
+    }
+
+    @Test("... が … になっても、前後は1文字ずつ対応する（#010）")
+    func aroundEllipsis() {
+        let source = "西洋でいうところのA, B, C...に近いもの"
+        #expect(previewText(selecting: "近い", in: source) == ["近い"])
+        #expect(sourceText(selecting: "ところ", in: source) == "ところ")
     }
 
     // MARK: - 本文 → プレビュー
@@ -141,6 +157,21 @@ struct SourceMapTests {
         let range = (shown.string as NSString).range(of: "あとの")
         let mapped = PreviewSourceIndex(shown).sourceRange(forPreview: range)
         #expect(mapped.map { (source as NSString).substring(with: $0) } == "あとの")
+    }
+
+    // MARK: - 突き合わせ
+
+    @Test("分けた文字をつなげると、プレビューの文字に戻る")
+    func piecesRebuildRendered() {
+        let cases = [("a\\*b", "a*b"), ("あ...い  ", "あ…い"), ("&amp;x", "&x"), ("全然違う", "xyz")]
+        for (source, rendered) in cases {
+            let pieces = SourceAlignment.pieces(source: source, start: 10, rendered: rendered)
+            #expect(pieces.map(\.rendered).joined() == rendered)
+            for piece in pieces {
+                #expect(piece.span.start >= 10 && piece.span.end <= 10 + source.utf16.count)
+                #expect(piece.span.end > piece.span.start)
+            }
+        }
     }
 
     // MARK: - 行と列
