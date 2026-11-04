@@ -25,6 +25,8 @@ struct PreviewText: View {
     @Environment(\.previewSelectionMarks) private var selectionMarks
     /// ここで選ばれたら、本文の位置に直して知らせる先。
     @Environment(\.previewSelectionHandler) private var selectionHandler
+    /// リンクがクリックされたとき。手元のファイルを開く（#013）。
+    @Environment(\.previewLinkAction) private var linkAction
     #endif
 
     init(
@@ -49,7 +51,8 @@ struct PreviewText: View {
         PreviewTextRepresentable(
             text: text, theme: theme, baseFont: font, baseColor: color,
             alignment: alignment.textAlignment,
-            selectionMarks: selectionMarks, selectionHandler: selectionHandler
+            selectionMarks: selectionMarks, selectionHandler: selectionHandler,
+            linkAction: linkAction
         )
         // AppKit のビューはベースラインを持たない。教えないと
         // `HStack(alignment: .firstTextBaseline)` で並べたときにずれる。
@@ -336,6 +339,7 @@ private struct PreviewTextRepresentable: NSViewRepresentable {
     /// 編集画面で選ばれたところ（本文の位置）。
     let selectionMarks: [NSRange]
     let selectionHandler: PreviewSelectionHandler?
+    let linkAction: PreviewLinkAction?
 
     /// 変換結果と、大きさを測るための道具を持つ。
     ///
@@ -367,6 +371,16 @@ private struct PreviewTextRepresentable: NSViewRepresentable {
         /// 文字を貼り直している最中。このときの選択の変化は利用者の操作ではない。
         var isApplyingText = false
         private let selectionReporter = Coalescer(delay: 0.05)
+        var linkAction: PreviewLinkAction?
+
+        /// リンクのクリック。`false` を返すと `NSTextView` が OS に渡す。
+        ///
+        /// **相対パスを OS に渡さない。** 基準が無いので「アプリケーションを開けません。-50」になる（#013）。
+        func textView(_ textView: NSTextView, clickedOnLink link: Any, at charIndex: Int) -> Bool {
+            let url = (link as? URL) ?? (link as? String).flatMap { URL(string: $0) }
+            guard let url, let linkAction else { return false }
+            return linkAction.handle(url)
+        }
 
         /// 編集画面で選ばれたところのうち、この文字に重なる部分に色を付ける。
         func paint(_ marks: [NSRange]) {
@@ -532,6 +546,7 @@ private struct PreviewTextRepresentable: NSViewRepresentable {
         textView.delegate = coordinator
         coordinator.textView = textView
         coordinator.selectionHandler = selectionHandler
+        coordinator.linkAction = linkAction
         setText(on: textView, coordinator: coordinator)
         coordinator.measuringStorage.setAttributedString(measuring)
         coordinator.invalidateMeasurements()
@@ -543,6 +558,7 @@ private struct PreviewTextRepresentable: NSViewRepresentable {
     func updateNSView(_ textView: LinkHoverTextView, context: Context) {
         let coordinator = context.coordinator
         coordinator.selectionHandler = selectionHandler
+        coordinator.linkAction = linkAction
         guard needsRebuild(coordinator) else {
             coordinator.paint(selectionMarks)
             return

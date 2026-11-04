@@ -52,6 +52,17 @@ enum FolderAccess {
         )
     }
 
+    /// フォルダの閲覧を頼む。プレビューのリンク先のファイルを開くため（#013）。
+    ///
+    /// - Returns: 許可されたら `true`。
+    static func requestForLink(to folder: URL) async -> Bool {
+        await request(
+            for: folder,
+            message: String(localized: "リンク先のファイルを開くために、「\(folder.lastPathComponent)」の閲覧を許可してください。"),
+            isSatisfied: { FileManager.default.isReadableFile(atPath: $0.path) }
+        )
+    }
+
     /// フォルダに書き込む許可を頼む。ファイル名を付け直すため。
     ///
     /// **読めるだけでは足りない。** 改名はフォルダの項目を書き換える操作なので、

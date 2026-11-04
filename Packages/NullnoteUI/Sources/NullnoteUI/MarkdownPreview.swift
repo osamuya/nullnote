@@ -24,6 +24,8 @@ public struct MarkdownPreview: View {
     private let selectionReveal: SelectionLink.PreviewReveal?
     /// ここで文字が選ばれたら、本文の位置に直して知らせる先。
     private let onSelectionChange: PreviewSelectionHandler?
+    /// 手元のファイルへのリンクを開く手立て（#013）。無ければリンクは OS に任せる。
+    private let onOpenLink: PreviewLinkOpener?
 
     @State private var blocks: [PreviewBlock] = []
     /// 図が高さを決めた回数。**変わるたびにスクロール同期を送り直す。**
@@ -39,7 +41,8 @@ public struct MarkdownPreview: View {
         newlineStyle: NewlineStyle = .markdown,
         selectionMarks: [NSRange] = [],
         selectionReveal: SelectionLink.PreviewReveal? = nil,
-        onSelectionChange: PreviewSelectionHandler? = nil
+        onSelectionChange: PreviewSelectionHandler? = nil,
+        onOpenLink: PreviewLinkOpener? = nil
     ) {
         self.source = source
         self.theme = theme
@@ -49,6 +52,26 @@ public struct MarkdownPreview: View {
         self.selectionMarks = selectionMarks
         self.selectionReveal = selectionReveal
         self.onSelectionChange = onSelectionChange
+        self.onOpenLink = onOpenLink
+    }
+
+    /// リンクのクリックを、文書の場所を基準に振り分ける。
+    private var linkAction: PreviewLinkAction? {
+        guard let onOpenLink else { return nil }
+        return PreviewLinkAction { [documentURL] url in
+            switch PreviewLinkResolver.resolve(url, relativeTo: documentURL) {
+            case .external?:
+                return false
+            case let .local(file)?:
+                onOpenLink.open(file)
+                return true
+            case nil:
+                // 文書内の見出し（`#…`）や、未保存で基準が無い相対パス。
+                // OS に渡しても -50 になるだけなので、何もしない。
+                Trace.log("プレビュー: 行き先を決められないリンク \(url)")
+                return true
+            }
+        }
     }
 
     private static let horizontalPadding: CGFloat = 20
@@ -73,6 +96,7 @@ public struct MarkdownPreview: View {
                 .environment(\.onDiagramRendered) { diagramRenderCount += 1 }
                 .environment(\.previewSelectionMarks, selectionMarks)
                 .environment(\.previewSelectionHandler, onSelectionChange)
+                .environment(\.previewLinkAction, linkAction)
             }
             .onChange(of: anchorLine) { _, line in
                 scroll(to: line, using: proxy)

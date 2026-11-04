@@ -537,6 +537,9 @@ struct DocumentView: View {
                     selectionReveal: selectionLink.previewReveal,
                     onSelectionChange: PreviewSelectionHandler { range in
                         selectionLink.previewSelectionChanged(range)
+                    },
+                    onOpenLink: PreviewLinkOpener { url in
+                        LocalLinkOpener.open(url)
                     }
                 )
                 .mermaidThemes(mermaidThemes)
