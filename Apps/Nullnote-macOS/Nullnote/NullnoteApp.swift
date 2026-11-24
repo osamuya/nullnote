@@ -24,6 +24,8 @@ struct NullnoteApp: App {
     private var indentStyle: IndentStyle = .fourSpaces
     @AppStorage(AppSettings.autoLinksURLsKey)
     private var autoLinksURLs = false
+    @AppStorage(AppSettings.addsHardBreakKey)
+    private var addsHardBreakOnNewline = false
     @AppStorage(AppSettings.ignoresWhitespaceKey)
     private var ignoresWhitespace = true
     @AppStorage(AppSettings.mermaidLightThemeKey)
@@ -61,6 +63,7 @@ struct NullnoteApp: App {
                 newlineStyle: newlineStyle,
                 indentStyle: indentStyle,
                 autoLinksURLs: autoLinksURLs,
+                addsHardBreakOnNewline: addsHardBreakOnNewline,
                 ignoresWhitespace: ignoresWhitespace,
                 mermaidThemes: MermaidThemes(light: mermaidLightTheme, dark: mermaidDarkTheme)
             )
@@ -122,6 +125,7 @@ struct NullnoteApp: App {
                 newlineStyle: $newlineStyle,
                 indentStyle: $indentStyle,
                 autoLinksURLs: $autoLinksURLs,
+                addsHardBreakOnNewline: $addsHardBreakOnNewline,
                 ignoresWhitespace: $ignoresWhitespace,
                 mermaidLightTheme: $mermaidLightTheme,
                 mermaidDarkTheme: $mermaidDarkTheme

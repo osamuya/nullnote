@@ -12,6 +12,7 @@ enum AppSettings {
     private static let legacyBreaksOnNewlineKey = "previewBreaksOnNewline"
     static let indentStyleKey = "editorIndentStyle"
     static let autoLinksURLsKey = "editorAutoLinksURLs"
+    static let addsHardBreakKey = "editorAddsHardBreakOnNewline"
     static let ignoresWhitespaceKey = "mergeIgnoresWhitespace"
     static let mermaidLightThemeKey = "previewMermaidLightTheme"
     static let mermaidDarkThemeKey = "previewMermaidDarkTheme"
@@ -56,6 +57,10 @@ enum AppSettings {
             // 文字列として URL を書きたいときに、黙って書き換わると困る。
             // プレビューでは、書き換えなくても裸の URL がリンクになる。
             autoLinksURLsKey: false,
+
+            // 改行のときに行末へ半角スペース2つを入れるのは**切ってある**（#015・D-79）。
+            // 打った本文に文字を足す動きなので、選んだ人にだけ効かせる（D-33）。
+            addsHardBreakKey: false,
 
             // 空白の量だけの食い違いで印を出さないのは**入れてある**。
             // 印は人の手を止めるものなので、意味の変わらない違いで出したくない。

@@ -185,6 +185,52 @@
         }
       }
     },
+    "Return で改行したときに、行末へ半角スペース2つを入れます。Markdown ではこれが改行の印なので、コピーしてほかのエディタに貼っても、書いたとおりの位置で改行されます。リストの行・見出し・表・コードの中には入れません。すでに書かれている本文は書き換えません。" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wenn Sie den Zeilenschalter drücken, werden am Zeilenende zwei Leerzeichen eingefügt. In Markdown kennzeichnen sie einen Zeilenumbruch, sodass der Text auch nach dem Kopieren in einen anderen Editor dort umbricht, wo Sie ihn umbrochen haben. In Listenzeilen, Überschriften, Tabellen und Code werden keine Leerzeichen eingefügt. Bereits geschriebener Text wird nicht verändert."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "When you press Return, two spaces are added at the end of the line. In Markdown this marks a line break, so the text breaks where you wrote it even when you copy it into another editor. Spaces are not added to list items, headings, tables, or code. Existing text is never changed."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lorsque vous appuyez sur Retour, deux espaces sont ajoutées en fin de ligne. En Markdown, elles marquent un retour à la ligne : le texte revient à la ligne là où vous l’avez écrit, même une fois copié dans un autre éditeur. Aucune espace n’est ajoutée aux éléments de liste, titres, tableaux ni au code. Le texte déjà écrit n’est jamais modifié."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Return で改行したときに、行末へ半角スペース2つを入れます。Markdown ではこれが改行の印なので、コピーしてほかのエディタに貼っても、書いたとおりの位置で改行されます。リストの行・見出し・表・コードの中には入れません。すでに書かれている本文は書き換えません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Return 키로 줄을 바꾸면 줄 끝에 공백 두 개를 넣습니다. Markdown에서는 이것이 줄바꿈 표시이므로, 복사해서 다른 편집기에 붙여 넣어도 쓴 위치에서 줄이 바뀝니다. 목록 항목, 제목, 표, 코드 안에는 넣지 않습니다. 이미 쓴 본문은 바꾸지 않습니다."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "按 Return 换行时，在行尾添加两个半角空格。在 Markdown 中这是换行的标记，因此复制到其他编辑器后，也会在您换行的位置换行。列表项、标题、表格和代码中不会添加。不会改动已写好的正文。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "按 Return 換行時，在行尾加入兩個半形空格。在 Markdown 中這是換行的標記，因此複製到其他編輯器後，也會在您換行的位置換行。清單項目、標題、表格和程式碼中不會加入。不會更動已寫好的內文。"
+          }
+        }
+      }
+    },
     "URL を自動でリンクにする" : {
       "localizations" : {
         "de" : {
@@ -1611,6 +1657,98 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "粗體"
+          }
+        }
+      }
+    },
+    "改行" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zeilenumbrüche"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Line Breaks"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Retours à la ligne"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "改行"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "줄바꿈"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "换行"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "換行"
+          }
+        }
+      }
+    },
+    "改行のときに行末へ半角スペース2つを入れる" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beim Zeilenumbruch zwei Leerzeichen am Zeilenende einfügen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add two spaces at the end of the line on Return"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajouter deux espaces en fin de ligne lors d’un retour à la ligne"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "改行のときに行末へ半角スペース2つを入れる"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "줄을 바꿀 때 줄 끝에 공백 두 개 넣기"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "换行时在行尾添加两个半角空格"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "換行時在行尾加入兩個半形空格"
           }
         }
       }

@@ -129,6 +129,8 @@ public struct MarkdownEditorView {
     var indentStyle: IndentStyle
     /// 打った URL・貼った URL を `[URL](URL)` に書き換えるか（#M0041）。
     var autoLinksURLs: Bool
+    /// 改行のときに、行末へ半角スペース2つを入れるか（#015）。
+    var addsHardBreakOnNewline: Bool
     /// 本文の右クリックに足す項目。アプリ側から渡す。
     var contextMenuItems: [EditorContextMenuItem]
     /// プレビューで選ばれたところ。色を付けるだけで、選択は動かさない（#M0045）。
@@ -154,6 +156,7 @@ public struct MarkdownEditorView {
         showsLineNumbers: Bool = false,
         indentStyle: IndentStyle = .fourSpaces,
         autoLinksURLs: Bool = false,
+        addsHardBreakOnNewline: Bool = false,
         contextMenuItems: [EditorContextMenuItem] = [],
         selectionMarks: [NSRange] = [],
         markReveal: SelectionLink.EditorReveal? = nil,
@@ -170,6 +173,7 @@ public struct MarkdownEditorView {
         self.showsLineNumbers = showsLineNumbers
         self.indentStyle = indentStyle
         self.autoLinksURLs = autoLinksURLs
+        self.addsHardBreakOnNewline = addsHardBreakOnNewline
         self.contextMenuItems = contextMenuItems
         self.selectionMarks = selectionMarks
         self.markReveal = markReveal
@@ -651,6 +655,12 @@ final class FocusReportingTextView: NSTextView {
     /// 選んだ人にだけ効かせる。切ってあっても、プレビューでは裸の URL もリンクになる。
     var autoLinksURLs = false
 
+    /// 改行のときに、行末へ半角スペース2つを入れるか。設定から降りてくる（#015・D-79）。
+    ///
+    /// **既定は切ってある。** 打った本文に文字を足す動きなので、選んだ人にだけ効かせる。
+    /// 入れるかどうかの判断は `MarkdownCore` の `HardBreakRule` にある。
+    var addsHardBreakOnNewline = false
+
     /// カーソルの手前にある URL を `[URL](URL)` に変える。
     ///
     /// 判断は `MarkdownCore` の `URLLinkify` にあり、ここは本文を書き換えるだけ。
@@ -756,14 +766,22 @@ final class FocusReportingTextView: NSTextView {
         // **複数選択で行ごとに違う印を継ぐのは、狙いが定まらない。**
         // 選んだ場所ごとに前の行が違うので、何が起きるか打つ前に見えない。
         guard composition == nil, currentTargets == nil,
-              let decision = lineContinuation()
+              let context = newlineContext()
         else { return super.insertNewline(sender) }
+        let decision = context.continuation
+        // 改行の印（行末の半角スペース2つ）。改行といっしょに1回で入れるので、
+        // ⌘Z を1回押せば両方まとめて取り消される。
+        let hardBreak = addsHardBreakOnNewline ? context.hardBreakSpaces : ""
 
         switch decision {
         case .plain:
-            super.insertNewline(sender)
+            if hardBreak.isEmpty {
+                super.insertNewline(sender)
+            } else {
+                super.insertText(hardBreak + "\n", replacementRange: selectedRange())
+            }
         case .carry(let prefix):
-            super.insertText("\n" + prefix, replacementRange: selectedRange())
+            super.insertText(hardBreak + "\n" + prefix, replacementRange: selectedRange())
         case .end(let clearing):
             // 印だけの行を消して、改行だけ入れる。空行になってリストから抜ける。
             // **行頭から数える。** カーソルは行末とは限らない（表の空の行では最初のセルにいる。#M0042）。
@@ -790,11 +808,17 @@ final class FocusReportingTextView: NSTextView {
         }
     }
 
+    /// 改行したときに何をするか。継ぐものと、行末に入れる空白。
+    private struct NewlineContext {
+        let continuation: LineContinuation
+        let hardBreakSpaces: String
+    }
+
     /// いまのカーソル位置から、改行したときの振る舞いを決める。
     ///
     /// 選択範囲があるときは `nil`（ふつうの改行に任せる）。
     /// 選んだ文字を消しながら印を継ぐのは、望まれる場面が思いつかない。
-    private func lineContinuation() -> LineContinuation? {
+    private func newlineContext() -> NewlineContext? {
         let selection = selectedRange()
         guard selection.length == 0 else { return nil }
 
@@ -817,13 +841,19 @@ final class FocusReportingTextView: NSTextView {
         let insideCode: Bool
         if case .fencedCode = stateBefore { insideCode = true } else { insideCode = false }
 
-        return LineContinuationRule.decide(
+        let caret = selection.location - lineRange.location
+        let continuation = LineContinuationRule.decide(
             line: line,
-            caretUTF16Offset: selection.location - lineRange.location,
+            caretUTF16Offset: caret,
             isInsideCode: insideCode,
             hasClosingFenceAhead: hasClosingFence(after: lineRange, in: text),
             blockState: stateBefore
         )
+        let spaces = HardBreakRule.spaces(
+            line: line, caretUTF16Offset: caret, continuation: continuation,
+            isInsideCode: insideCode, blockState: stateBefore
+        )
+        return NewlineContext(continuation: continuation, hardBreakSpaces: spaces)
     }
 
     /// この行が開始フェンスのとき、後ろに**それを閉じる**行があるか。
@@ -1210,9 +1240,10 @@ final class FocusReportingTextView: NSTextView {
         lineNumbers.draw(in: rect, of: self, activeLine: active)
     }
 
-    /// 本文の上に、余分なカーソルと変換中の写しを描く。
+    /// 本文の上に、空白の印・余分なカーソル・変換中の写しを描く。
     override func draw(_ dirtyRect: NSRect) {
         super.draw(dirtyRect)
+        drawWhitespaceMarks(in: dirtyRect)
         if !didMarkFirstDraw, !string.isEmpty {
             didMarkFirstDraw = true
             // **文字が組まれているかまで見る。** `draw` が呼ばれても、
@@ -1227,6 +1258,88 @@ final class FocusReportingTextView: NSTextView {
             drawComposing(composition, in: dirtyRect)
         } else {
             drawExtraCarets(in: dirtyRect)
+        }
+    }
+
+    // MARK: - 空白の印（D-80）
+
+    /// 半角・全角の空白に描く印の色。テーマから降りてくる。nil なら描かない。
+    var whitespaceMarkColor: NSColor?
+
+    /// 半角スペースに `␣`、全角スペースに四角を描く。
+    ///
+    /// **本文には入れない。** 文字として入れると、コピー・保存・カーソルの動きがすべて変わる。
+    /// 空白は字の形を持たないので、その上に重ねて描いても字を隠さない。
+    /// 形は線で描く（`␣` の字を使わない）。書体によって字の高さや太さがばらつくため。
+    private func drawWhitespaceMarks(in dirtyRect: NSRect) {
+        guard let color = whitespaceMarkColor, let layoutManager, let container = textContainer,
+              let storage = textStorage, storage.length > 0
+        else { return }
+
+        let origin = textContainerOrigin
+        let glyphs = layoutManager.glyphRange(
+            forBoundingRect: dirtyRect.offsetBy(dx: -origin.x, dy: -origin.y), in: container
+        )
+        let characters = layoutManager.characterRange(forGlyphRange: glyphs, actualGlyphRange: nil)
+        let marks = WhitespaceMarks.find(in: storage.string as NSString, range: characters)
+        guard !marks.isEmpty else { return }
+
+        color.setStroke()
+        for (location, mark) in marks {
+            let glyph = layoutManager.glyphIndexForCharacter(at: location)
+            // 折り返しの端に来た空白は、幅を持たずに行の外へはみ出す。描かない。
+            let box = layoutManager.boundingRect(
+                forGlyphRange: NSRange(location: glyph, length: 1), in: container
+            ).offsetBy(dx: origin.x, dy: origin.y)
+            guard box.width >= 1, box.intersects(dirtyRect) else { continue }
+
+            let fragment = layoutManager.lineFragmentRect(forGlyphAt: glyph, effectiveRange: nil)
+            let baseline = fragment.minY + layoutManager.location(forGlyphAt: glyph).y + origin.y
+            let font = storage.attribute(.font, at: location, effectiveRange: nil) as? NSFont ?? self.font
+            let size = font?.pointSize ?? 14
+
+            let path = NSBezierPath()
+            path.lineWidth = 1
+            switch mark {
+            case .space:
+                // `␣`。下の横棒と、両端の短い縦棒。
+                // **半角スペースの字の幅は文字の大きさの3割ほどしかない。** その中に収めると
+                // 小さな点に潰れて形が読めない（実測）。横幅は文字の大きさから決め、
+                // 字の幅より広いときは真ん中に揃えて両隣へ少しはみ出させる。
+                //
+                // **半角スペースが並んでいるところは、字の幅ちょうどで描く。** 隣どうしで縦棒が重なり、
+                // `␣␣` は棒3本の `⊔⊔` になる。数えられて、潰れない（字の幅に縮めて間を空けると、
+                // 小さな塊が並んで読めなかった。実測）。
+                let text = storage.string as NSString
+                let besideSpace = (location > 0 && text.character(at: location - 1) == 0x20)
+                    || (location + 1 < text.length && text.character(at: location + 1) == 0x20)
+                let left: CGFloat
+                let right: CGFloat
+                if besideSpace {
+                    left = box.minX
+                    right = box.maxX
+                } else {
+                    let width = max(box.width - 1, (size * 0.45).rounded())
+                    left = (box.midX - width / 2).rounded() + 0.5
+                    right = left + width - 1
+                }
+                let bottom = baseline.rounded() + 0.5
+                let top = bottom - (size * 0.25).rounded()
+                path.move(to: NSPoint(x: left, y: top))
+                path.line(to: NSPoint(x: left, y: bottom))
+                path.line(to: NSPoint(x: right, y: bottom))
+                path.line(to: NSPoint(x: right, y: top))
+            case .ideographicSpace:
+                // 字の幅いっぱいの四角より少し小さく、字の真ん中の高さに置く。
+                let side = (min(box.width, size) * 0.7).rounded()
+                let center = NSPoint(x: box.midX, y: baseline - size * 0.36)
+                let square = NSRect(
+                    x: (center.x - side / 2).rounded() + 0.5, y: (center.y - side / 2).rounded() + 0.5,
+                    width: side - 1, height: side - 1
+                )
+                path.appendRoundedRect(square, xRadius: 1.5, yRadius: 1.5)
+            }
+            path.stroke()
         }
     }
 
@@ -1397,6 +1510,7 @@ extension MarkdownEditorView: NSViewRepresentable {
         textView.textStorage?.delegate = context.coordinator
         textView.indentUnit = indentStyle.unit
         textView.autoLinksURLs = autoLinksURLs
+        textView.addsHardBreakOnNewline = addsHardBreakOnNewline
         textView.extraContextMenuItems = contextMenuItems
         // 改行でリストを継ぐかの判断に使う。コードブロックの中では継がない。
         textView.lineNumber = { [weak coordinator = context.coordinator] offset in
@@ -1489,6 +1603,7 @@ extension MarkdownEditorView: NSViewRepresentable {
         // 設定で変えたら、開いている窓にもすぐ効かせる。
         (textView as? FocusReportingTextView)?.indentUnit = indentStyle.unit
         (textView as? FocusReportingTextView)?.autoLinksURLs = autoLinksURLs
+        (textView as? FocusReportingTextView)?.addsHardBreakOnNewline = addsHardBreakOnNewline
         // 開いているファイルが変わると処理の中身も変わるので、毎回入れ直す。
         (textView as? FocusReportingTextView)?.extraContextMenuItems = contextMenuItems
 
@@ -1562,6 +1677,10 @@ extension MarkdownEditorView: NSViewRepresentable {
         textView.insertionPointColor = theme.text
         textView.font = theme.bodyFont
         textView.textColor = theme.text
+        if let textView = textView as? FocusReportingTextView {
+            textView.whitespaceMarkColor = theme.whitespaceMark
+            textView.needsDisplay = true
+        }
     }
 }
 

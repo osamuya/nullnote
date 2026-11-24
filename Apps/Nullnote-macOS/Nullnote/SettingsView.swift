@@ -10,6 +10,7 @@ struct SettingsView: View {
     @Binding var newlineStyle: NewlineStyle
     @Binding var indentStyle: IndentStyle
     @Binding var autoLinksURLs: Bool
+    @Binding var addsHardBreakOnNewline: Bool
     @Binding var ignoresWhitespace: Bool
     @Binding var mermaidLightTheme: MermaidTheme
     @Binding var mermaidDarkTheme: MermaidTheme
@@ -65,6 +66,21 @@ struct SettingsView: View {
                     Toggle("URL を自動でリンクにする", isOn: $autoLinksURLs)
                         .multilineTextAlignment(.leading)
                     Text("https:// で始まる URL のあとに空白か改行を打ったとき、または URL だけを貼り付けたときに、[URL](URL) の形に書き換えます。切ってあると、打ったとおりの文字のまま残します。プレビューでは、どちらでもリンクとして表示されます。")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                        // `LabeledContent` の中は右揃えが受け継がれる。
+                        .multilineTextAlignment(.leading)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .frame(width: Self.controlWidth, alignment: .leading)
+            }
+
+            LabeledContent("改行") {
+                VStack(alignment: .leading, spacing: 4) {
+                    Toggle("改行のときに行末へ半角スペース2つを入れる", isOn: $addsHardBreakOnNewline)
+                        .multilineTextAlignment(.leading)
+                    Text("Return で改行したときに、行末へ半角スペース2つを入れます。Markdown ではこれが改行の印なので、コピーしてほかのエディタに貼っても、書いたとおりの位置で改行されます。リストの行・見出し・表・コードの中には入れません。すでに書かれている本文は書き換えません。")
                         .font(.callout)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)

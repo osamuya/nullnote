@@ -192,6 +192,11 @@ public struct MarkdownTheme {
     /// 本文を読む邪魔になっては本末転倒。探しているときに見つかれば足りる。
     public var invisibleWhitespace: PlatformColor { marker.withAlphaComponent(0.30) }
 
+    /// 半角・全角の空白に描く印（`␣` と四角。D-80）。
+    ///
+    /// 空白は本文のどこにでもあるので、記法の記号より一段薄くする。
+    public var whitespaceMark: PlatformColor { marker.withAlphaComponent(0.45) }
+
     /// ボタンやトグルが「オン」のときの色。
     ///
     /// **OS のアクセントカラーに従わせない。** 利用者の設定しだいで

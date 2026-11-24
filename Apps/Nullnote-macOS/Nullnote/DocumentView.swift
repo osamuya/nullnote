@@ -21,6 +21,8 @@ struct DocumentView: View {
     let indentStyle: IndentStyle
     /// 打った URL・貼った URL を `[URL](URL)` に書き換えるか。
     let autoLinksURLs: Bool
+    /// 改行のときに、行末へ半角スペース2つを入れるか（#015）。
+    let addsHardBreakOnNewline: Bool
     /// 合流で、行の途中の空白の量を無視するか。
     let ignoresWhitespace: Bool
     /// mermaid の図のテーマ。ライトとダークのそれぞれ。
@@ -603,6 +605,7 @@ struct DocumentView: View {
             showsLineNumbers: showsLineNumbers,
             indentStyle: indentStyle,
             autoLinksURLs: autoLinksURLs,
+            addsHardBreakOnNewline: addsHardBreakOnNewline,
             contextMenuItems: contextMenuItems,
             // プレビューを閉じているときは行き来させない。色を付ける先が無い。
             selectionMarks: showsPreview ? selectionLink.editorMarks : [],
