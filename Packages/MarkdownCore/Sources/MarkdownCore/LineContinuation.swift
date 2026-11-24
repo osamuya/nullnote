@@ -169,6 +169,10 @@ public enum LineContinuationRule {
             return .tableRow(lines: [emptyRow(columns)], caretInFirstCellOf: 0)
 
         case .blank, .paragraph:
+            // **別の記法で始まる行は、表の見出しにならない。**
+            // `- [#000][nullnote|sabanote] 本文` はリストの行で、`|` は本文の文字（#018）。
+            // 色付け（`MarkdownTokenizer`）がリストや見出しを表より先に判定するのと揃える。
+            guard !startsOtherBlock(line) else { return nil }
             // 見出し行。区切り行と、最初の本体の行を置く。
             return .tableRow(
                 lines: [delimiterRow(columns), emptyRow(columns)], caretInFirstCellOf: 1
@@ -177,6 +181,17 @@ public enum LineContinuationRule {
         default:
             return nil
         }
+    }
+
+    /// リスト・引用・見出し・水平線・コードフェンスで始まる行か。
+    private static func startsOtherBlock(_ line: String) -> Bool {
+        let body = trimmedIndent(of: line)
+        guard !body.isEmpty else { return false }
+        return line[body.lowerBound] == ">"
+            || BlockScanner.listMarker(line, body) != nil
+            || BlockScanner.atxHeading(line, body) != nil
+            || BlockScanner.thematicBreak(line, body) != nil
+            || BlockScanner.openingFence(line, body) != nil
     }
 
     /// 表の行で、どのセルにも何も書いていないか。`|  |  |` のようにセルの空白だけなら空とみなす。

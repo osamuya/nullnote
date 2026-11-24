@@ -253,11 +253,7 @@ final class InlineCodeLayoutManager: NSLayoutManager {
         forCharacterRange charRange: NSRange,
         color: NSColor
     ) {
-        // 編集画面との選択の行き来の色（一時属性。#M0045）は、札にせずふつうに塗る。
-        let isSelectionMark = temporaryAttribute(
-            .backgroundColor, atCharacterIndex: charRange.location, effectiveRange: nil
-        ) != nil
-        guard let theme, !isSelectionMark else {
+        guard let theme, isInlineCode(charRange, color: color) else {
             return super.fillBackgroundRectArray(rectArray, count: count, forCharacterRange: charRange, color: color)
         }
 
@@ -302,6 +298,22 @@ final class InlineCodeLayoutManager: NSLayoutManager {
             path.lineWidth = 1
             path.stroke()
         }
+    }
+
+    /// 塗ろうとしているのが、インラインコードの背景か。
+    ///
+    /// **札にするのは、文字そのものに付いた背景色を塗るときだけ。**
+    /// AppKit はテキストの選択の色もここを通して塗る。札として描くと、選択に枠線が付き、
+    /// 右端が余白の分だけ削られて最後の文字が欠けて見えた（#017）。
+    /// 編集画面との選択の行き来の色（一時属性。#M0045）も札にしない。
+    func isInlineCode(_ charRange: NSRange, color: NSColor) -> Bool {
+        guard let storage = textStorage, charRange.location < storage.length else { return false }
+        let isSelectionMark = temporaryAttribute(
+            .backgroundColor, atCharacterIndex: charRange.location, effectiveRange: nil
+        ) != nil
+        guard !isSelectionMark else { return false }
+        let own = storage.attribute(.backgroundColor, at: charRange.location, effectiveRange: nil) as? NSColor
+        return own == color
     }
 
     /// 札がまたぐ行それぞれの、**文字が実際に使っている範囲**。
@@ -545,6 +557,11 @@ private struct PreviewTextRepresentable: NSViewRepresentable {
         let coordinator = context.coordinator
         textView.delegate = coordinator
         coordinator.textView = textView
+        // 外をクリックして選択を外したら、すぐに知らせる（間引かない）。
+        // 間引くと、続けてほかの段落で選んだ知らせより後に届き、そちらの色を消してしまう。
+        textView.onSelectionDismissed = { [weak coordinator] in
+            coordinator?.selectionHandler?.report(nil)
+        }
         coordinator.selectionHandler = selectionHandler
         coordinator.linkAction = linkAction
         setText(on: textView, coordinator: coordinator)
@@ -632,6 +649,67 @@ final class LinkHoverTextView: NSTextView {
 
     /// いま下線を太くしている範囲。
     private var hoveredRange: NSRange?
+
+    // MARK: 外をクリックしたら選択を外す（#017）
+
+    /// 自分の外をクリックして、選択を外したときに呼ぶ。編集画面に付けた色を消すのに使う。
+    var onSelectionDismissed: (() -> Void)?
+    private var outsideClickMonitor: Any?
+
+    /// **プレビューは段落ごとに別のテキストビュー。** 余白やほかの段落をクリックしても、
+    /// 選んだ段落のビューには何も届かず、選択が灰色で残り続けた。
+    /// 焦点を持っているあいだだけ、窓に届くクリックを見張る。
+    override func becomeFirstResponder() -> Bool {
+        let became = super.becomeFirstResponder()
+        if became, outsideClickMonitor == nil {
+            outsideClickMonitor = NSEvent.addLocalMonitorForEvents(matching: .leftMouseDown) { [weak self] event in
+                MainActor.assumeIsolated {
+                    self?.handleMouseDown(at: event.locationInWindow, in: event.window)
+                }
+                return event
+            }
+        }
+        return became
+    }
+
+    /// 焦点がほかへ移ったら（編集画面やほかの段落を押した）、選択を外す。
+    override func resignFirstResponder() -> Bool {
+        let resigned = super.resignFirstResponder()
+        if resigned {
+            stopWatchingOutsideClicks()
+            dismissSelection()
+        }
+        return resigned
+    }
+
+    override func viewWillMove(toWindow newWindow: NSWindow?) {
+        if newWindow == nil { stopWatchingOutsideClicks() }
+        super.viewWillMove(toWindow: newWindow)
+    }
+
+    private func stopWatchingOutsideClicks() {
+        if let outsideClickMonitor { NSEvent.removeMonitor(outsideClickMonitor) }
+        outsideClickMonitor = nil
+    }
+
+    /// 窓のどこかが押された。自分の外なら選択を外す。
+    ///
+    /// **スクロールバーは外に数えない。** 選んだまま送って読むことがある（編集画面も外れない）。
+    func handleMouseDown(at windowPoint: NSPoint, in eventWindow: NSWindow?) {
+        guard let window, eventWindow === window else { return }
+        // **`visibleRect` では見ない。** SwiftUI の中に置いたビューでは、自分の枠より広い範囲を返す。
+        if bounds.contains(convert(windowPoint, from: nil)) { return }
+        if window.contentView?.hitTest(windowPoint) is NSScroller { return }
+        dismissSelection()
+    }
+
+    /// 選択を外し、外したことを知らせる。選んでいなければ何もしない。
+    private func dismissSelection() {
+        let selected = selectedRange()
+        guard selected.length > 0 else { return }
+        setSelectedRange(NSRange(location: selected.location, length: 0))
+        onSelectionDismissed?()
+    }
 
     override func updateTrackingAreas() {
         super.updateTrackingAreas()

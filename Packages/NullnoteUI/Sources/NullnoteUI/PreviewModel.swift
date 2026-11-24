@@ -33,10 +33,10 @@ struct PreviewBlock: Identifiable {
         /// 永久にずれ続け、そのずれを説明し続けることになる（D-65）。
         case mermaid(code: String)
         case table(PreviewTable)
-        /// 画像だけで出来た段落。**文中に混ざった画像は含めない**（そちらは代替テキストのまま）。
+        /// 絵として置く画像。段落に文字が混ざっていたら、文字はその前後の別の段落になる（D-76）。
         ///
-        /// 1枚とは限らない。空行を挟まずに続けて書かれた画像は、
-        /// Markdown では1つの段落になる。
+        /// 1枚とは限らない。間に文字を挟まずに続けて書かれた画像は、1つのまとまりにする。
+        /// リンクで包んだ画像は含めない（そちらは代替テキストのまま）。
         case images([PreviewImageRef])
         case thematicBreak
         /// 合流の印で割られたところ。**Markdown の記法ではない。**
@@ -251,8 +251,10 @@ struct PreviewBuilder {
         // 段落を分けるのは文書の一番外だけ。リスト・引用の中まで分けると、項目の形が崩れる（D-74）。
         let splitsLines = newlineStyle == .paragraph && markup is Document
         return markup.children.flatMap { child -> [PreviewBlock] in
-            if splitsLines, let paragraph = child as? Paragraph {
-                return blocks(splittingLinesOf: paragraph)
+            if let paragraph = child as? Paragraph {
+                return splitsLines
+                    ? blocks(splittingLinesOf: paragraph)
+                    : blocks(splittingImagesOf: Array(paragraph.children))
             }
             return block(from: child).map { [$0] } ?? []
         }
@@ -276,28 +278,125 @@ struct PreviewBuilder {
             }
         }
         lines.removeAll(where: \.isEmpty)
-        guard lines.count > 1, imagesOnly(in: paragraph).isEmpty else {
-            return block(from: paragraph).map { [$0] } ?? []
+        let whole = Array(paragraph.children)
+        guard lines.count > 1, !Self.isImagesOnly(whole) else {
+            return blocks(splittingImagesOf: whole)
         }
+        return lines.flatMap { blocks(splittingImagesOf: $0) }
+    }
 
+    /// 段落の中身を、書かれた順に文字のかたまりと絵のかたまりに分けて組む（#019・D-76）。
+    ///
+    /// 画像の行の次に空行を置かずに文字を書いても、文字と同じ行に画像を書いても、
+    /// **画像は絵として出す。** 文字はその前後で別の段落になる。
+    /// 続けて書いた画像（間に文字が無いもの）は、1つの絵のまとまりにする（D-27）。
+    private mutating func blocks(splittingImagesOf children: [Markup]) -> [PreviewBlock] {
+        let pieces = Self.pieces(of: children)
         var result: [PreviewBlock] = []
-        for children in lines {
-            let line = children.first?.range.map { $0.lowerBound.line + lineOffset } ?? lastKnownLine
-            lastKnownLine = line
-
+        for (index, piece) in pieces.enumerated() {
+            let first: Markup
             let content: PreviewBlock.Content
-            let images = imagesOnly(in: children)
-            if !images.isEmpty {
-                content = .images(images)
-            } else {
-                let text = inlineText(children)
+            switch piece {
+            case .images(let entries):
+                first = entries[0].image
+                content = .images(entries.map { entry in
+                    counter += 1
+                    return PreviewImageRef(
+                        id: counter, source: entry.image.source ?? "",
+                        alt: entry.image.plainText, layout: entry.layout
+                    )
+                })
+            case .text(let nodes):
+                first = nodes[0]
+                var text = inlineText(nodes)
+                // 画像と同じ行に書いた文字は、画像との間の空白が端に残る。
+                // 画像の側の端だけを削る（段落の端はもともと cmark が削っている）。
+                if index > 0 { Self.trimSpaces(of: &text, leading: true) }
+                if index < pieces.count - 1 { Self.trimSpaces(of: &text, leading: false) }
+                // コメントを取り除いた結果、何も残らなかった段落は置かない。
+                // 空の段落を置くと、そこだけ行間が空いて見える。
                 if text.characters.allSatisfy(\.isWhitespace) { continue }
                 content = .paragraph(text)
             }
+            let line = first.range.map { $0.lowerBound.line + lineOffset } ?? lastKnownLine
+            lastKnownLine = line
             counter += 1
             result.append(PreviewBlock(id: counter, sourceLine: line, content: content))
         }
         return result
+    }
+
+    /// 段落の中の、文字のかたまりか絵のかたまり。
+    enum InlinePiece {
+        case text([Markup])
+        case images([(image: Markdown.Image, layout: PreviewImageLayout)])
+    }
+
+    /// 段落の中身を、書かれた順に文字のかたまりと絵のかたまりに分ける。
+    ///
+    /// 画像の直後の `{.center}` などは、置き方の指定として読む。
+    /// 画像のあいだの空白と改行は、絵のかたまりの中では読み捨てる。
+    /// リンクで包んだ画像（`[![](a.png)](…)`）は文字の側に入る（代替テキストのまま）。
+    static func pieces(of children: [Markup]) -> [InlinePiece] {
+        var result: [InlinePiece] = []
+        var text: [Markup] = []
+        var images: [(image: Markdown.Image, layout: PreviewImageLayout)] = []
+
+        func flushText() {
+            // 画像との境目に来た改行は、どちらのかたまりにも要らない。
+            while let first = text.first, first is SoftBreak || first is LineBreak { text.removeFirst() }
+            while let last = text.last, last is SoftBreak || last is LineBreak { text.removeLast() }
+            if !text.isEmpty { result.append(.text(text)) }
+            text = []
+        }
+        func flushImages() {
+            if !images.isEmpty { result.append(.images(images)) }
+            images = []
+        }
+
+        for child in children {
+            switch child {
+            case let image as Markdown.Image:
+                flushText()
+                images.append((image, .normal))
+            case is SoftBreak, is LineBreak:
+                if images.isEmpty { text.append(child) }
+            case let node as Markdown.Text where !images.isEmpty:
+                let (layout, rest) = layoutMarker(in: node.string)
+                if let layout { images[images.count - 1].layout = layout }
+                if rest.allSatisfy(\.isWhitespace) { continue }
+                flushImages()
+                // 指定を読まなかったときは元のノードのまま渡す（本文の位置を保つため）。
+                text.append(layout == nil ? node : Markdown.Text(String(rest)))
+            default:
+                flushImages()
+                text.append(child)
+            }
+        }
+        flushText()
+        flushImages()
+        return result
+    }
+
+    /// 段落が画像だけで出来ているか。空白・改行・置き方の指定は数えない。
+    static func isImagesOnly(_ children: [Markup]) -> Bool {
+        let pieces = pieces(of: children)
+        guard pieces.count == 1, case .images = pieces[0] else { return false }
+        return true
+    }
+
+    /// 端の半角空白とタブを削る。全角空白は字下げなので残す。
+    private static func trimSpaces(of text: inout AttributedString, leading: Bool) {
+        let isSpace: (Character) -> Bool = { $0 == " " || $0 == "\t" }
+        if leading {
+            while let first = text.characters.first, isSpace(first) {
+                text.removeSubrange(text.startIndex..<text.characters.index(after: text.startIndex))
+            }
+        } else {
+            while let last = text.characters.last, isSpace(last) {
+                text.removeSubrange(text.characters.index(before: text.endIndex)..<text.endIndex)
+            }
+        }
     }
 
     private mutating func block(from markup: Markup) -> PreviewBlock? {
@@ -311,52 +410,19 @@ struct PreviewBuilder {
         return PreviewBlock(id: counter, sourceLine: line, content: content)
     }
 
-    /// その段落が画像だけで出来ているか。出来ていれば、その画像を順に返す。
+    /// 文字列の先頭にある `{.…}` を読む。直前の画像の置き方にする。
     ///
-    /// 空白や改行は無視する。**文字が混ざっていたら空を返す**（段落として扱う）。
-    /// 文中の画像を絵にすると、行の流れが切れて読みにくくなる。
-    ///
-    /// 空行を挟まずに画像を並べると1つの段落になるので、**複数を受け取る**。
-    private mutating func imagesOnly(in paragraph: Paragraph) -> [PreviewImageRef] {
-        imagesOnly(in: Array(paragraph.children))
-    }
-
-    private mutating func imagesOnly(in children: [Markup]) -> [PreviewImageRef] {
-        var found: [PreviewImageRef] = []
-        for child in children {
-            switch child {
-            case let image as Markdown.Image:
-                counter += 1
-                found.append(
-                    PreviewImageRef(
-                        id: counter, source: image.source ?? "", alt: image.plainText, layout: .normal
-                    )
-                )
-            case let text as Markdown.Text:
-                // 画像の直後の `{.center}` などは、置き方の指定として読む。
-                // 読み終えた残りに文字があれば、絵にはしない。
-                let rest = Self.applyLayoutMarkers(from: text.string, to: &found)
-                guard rest.trimmingCharacters(in: .whitespaces).isEmpty else { return [] }
-            case is SoftBreak, is LineBreak:
-                continue
-            default:
-                return []
-            }
-        }
-        return found
-    }
-
-    /// 文字列の先頭にある `{.…}` を読み、直前の画像の置き方にする。
-    ///
-    /// - Returns: 読み残した文字。ここに中身があれば、その段落は絵ではなく本文。
-    static func applyLayoutMarkers(from text: String, to images: inout [PreviewImageRef]) -> String {
+    /// 続けて書かれていたら、最後のものが効く。
+    /// - Returns: 読んだ置き方（無ければ nil）と、読み残した文字。
+    static func layoutMarker(in text: String) -> (layout: PreviewImageLayout?, rest: Substring) {
         var rest = Substring(text)
+        var layout: PreviewImageLayout?
         while true {
             let trimmed = rest.drop(while: \.isWhitespace)
             guard trimmed.hasPrefix("{"), let close = trimmed.firstIndex(of: "}"),
                   trimmed.dropFirst().drop(while: \.isWhitespace).hasPrefix(".")
             else {
-                return String(rest)
+                return (layout, rest)
             }
             // `{.center}` `{. center}` `{ .center }` のどれでも読む。
             // 空白ひとつで効かなくなると、なぜ効かないのか分からない。
@@ -366,14 +432,7 @@ struct PreviewBuilder {
                 .drop(while: { $0 == "." })
                 .trimmingCharacters(in: .whitespaces)
                 .lowercased()
-            // 直前の画像に効かせる。画像が無いところに書かれていたら、ただの文字。
-            guard let last = images.indices.last else { return String(rest) }
-            images[last] = PreviewImageRef(
-                id: images[last].id,
-                source: images[last].source,
-                alt: images[last].alt,
-                layout: PreviewImageLayout(marker: name)
-            )
+            layout = PreviewImageLayout(marker: name)
             rest = trimmed[trimmed.index(after: close)...]
         }
     }
@@ -384,9 +443,7 @@ struct PreviewBuilder {
             return .heading(level: heading.level, text: inlineText(heading))
 
         case let paragraph as Paragraph:
-            // 画像だけで出来た段落は、絵として置く。
-            let images = imagesOnly(in: paragraph)
-            if !images.isEmpty { return .images(images) }
+            // 段落はふつう `blocks(splittingImagesOf:)` で組む。ここに来るのは保険。
             let text = inlineText(paragraph)
             // コメントを取り除いた結果、何も残らなかった段落は置かない。
             // 空の段落を置くと、そこだけ行間が空いて見える。

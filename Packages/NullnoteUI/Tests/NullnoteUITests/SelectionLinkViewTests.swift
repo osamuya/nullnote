@@ -132,6 +132,52 @@ struct SelectionLinkViewTests {
         #expect(await wait { !isMarked(editor, at: source.range(of: "_ga").location) })
     }
 
+    /// 余白を押しても選んだ段落には何も届かず、選択が灰色で残り続けた（#017）。
+    @Test("プレビューで選んだあと、外をクリックすると選択が外れ、編集画面の色も消える")
+    func outsideClickDismissesPreviewSelection() async throws {
+        let window = await makeWindow()
+        defer { window.close() }
+        let (editor, preview) = try await views(in: window)
+
+        window.makeFirstResponder(preview)
+        preview.setSelectedRange((preview.string as NSString).range(of: "大雑把な"))
+        let source = Self.source as NSString
+        #expect(await wait { isMarked(editor, at: source.range(of: "大雑把な").location) })
+
+        // プレビューの下の余白（段落の外）を押した。
+        let inPreview = preview.convert(NSPoint(x: preview.bounds.midX, y: preview.bounds.maxY + 40), to: nil)
+        preview.handleMouseDown(at: inPreview, in: window)
+
+        #expect(preview.selectedRange().length == 0)
+        #expect(await wait { !isMarked(editor, at: source.range(of: "大雑把な").location) })
+    }
+
+    @Test("選んだ段落の中を押しても、外す扱いにしない")
+    func insideClickKeepsSelection() async throws {
+        let window = await makeWindow()
+        defer { window.close() }
+        let (_, preview) = try await views(in: window)
+
+        window.makeFirstResponder(preview)
+        let picked = (preview.string as NSString).range(of: "大雑把な")
+        preview.setSelectedRange(picked)
+        let inside = preview.convert(NSPoint(x: preview.bounds.midX, y: preview.bounds.midY), to: nil)
+        preview.handleMouseDown(at: inside, in: window)
+        #expect(preview.selectedRange() == picked)
+    }
+
+    @Test("編集画面に焦点が移ったら、プレビューの選択は外れる")
+    func focusMoveDismissesPreviewSelection() async throws {
+        let window = await makeWindow()
+        defer { window.close() }
+        let (editor, preview) = try await views(in: window)
+
+        window.makeFirstResponder(preview)
+        preview.setSelectedRange((preview.string as NSString).range(of: "大雑把な"))
+        window.makeFirstResponder(editor)
+        #expect(preview.selectedRange().length == 0)
+    }
+
     @Test("入力の焦点が無いときの選択の変化は、相手側に伝えない")
     func ignoresProgrammaticSelection() async throws {
         let window = await makeWindow()

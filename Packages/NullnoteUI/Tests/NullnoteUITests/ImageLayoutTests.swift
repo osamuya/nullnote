@@ -4,7 +4,7 @@ import Testing
 /// `{.center}` のような置き方の指定。
 ///
 /// **Markdown の標準ではない。** 記法として読み損ねると、
-/// `{.center}` の文字が本文に出るか、段落ごと絵にならなくなる。
+/// `{.center}` の文字が本文に出る。
 @Suite("画像の置き方の指定")
 struct ImageLayoutTests {
 
@@ -48,10 +48,14 @@ struct ImageLayoutTests {
         #expect(images("![絵](a.jpg){.wobble}\n").map(\.layout) == [.normal])
     }
 
-    @Test("指定のあとに文字が続けば、絵にしない")
+    @Test("指定のあとに文字が続いても、指定は効く。文字は後ろの段落になる（D-76）")
     func textAfterMarker() {
-        // 本文の一部として書かれている。段落として扱う。
-        #expect(images("![絵](a.jpg){.center} という写真\n").isEmpty)
+        let all = PreviewBuilder.build("![絵](a.jpg){.center} という写真\n", theme: .standard())
+        #expect(images("![絵](a.jpg){.center} という写真\n").map(\.layout) == [.center])
+        guard all.count == 2, case .paragraph(let text) = all[1].content else {
+            Issue.record("後ろの文字が段落になっていない"); return
+        }
+        #expect(String(text.characters) == "という写真")
     }
 
     @Test("画像が無いところの {.center} は、ただの文字")
@@ -82,6 +86,12 @@ extension ImageLayoutTests {
     @Test("中かっこでもドットが無ければ、ただの文字")
     func bracesWithoutDot() {
         // `{注釈}` のような書き方を、置き方の指定と取り違えない。
-        #expect(images("![絵](a.jpg){center}\n").isEmpty)
+        // 画像は絵になり、`{center}` は後ろの段落の文字として残る（D-76）。
+        let all = PreviewBuilder.build("![絵](a.jpg){center}\n", theme: .standard())
+        #expect(images("![絵](a.jpg){center}\n").map(\.layout) == [.normal])
+        guard all.count == 2, case .paragraph(let text) = all[1].content else {
+            Issue.record("{center} が文字として残っていない"); return
+        }
+        #expect(String(text.characters) == "{center}")
     }
 }

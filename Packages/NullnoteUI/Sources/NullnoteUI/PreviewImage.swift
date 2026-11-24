@@ -266,7 +266,8 @@ struct PreviewImageView: View {
 
         case .failed(let failure):
             HStack(spacing: 10) {
-                placeholder("\(altLabel) — \(failure.reason)")
+                // 読めなかったことが一目で分かる形にする（#009）。読み込み中は写真の形のまま。
+                placeholder("\(altLabel) — \(failure.reason)", symbol: "photo.badge.exclamationmark")
                 // 許可さえあれば読めるものだけ、頼む口を出す。
                 // 「見つかりません」に許可のボタンを出しても、押しても直らない。
                 if failure == .noPermission, accessRequester != nil {
@@ -284,9 +285,9 @@ struct PreviewImageView: View {
         }
     }
 
-    private func placeholder(_ text: String) -> some View {
+    private func placeholder(_ text: String, symbol: String = "photo") -> some View {
         HStack(alignment: .firstTextBaseline, spacing: 6) {
-            Image(systemName: "photo")
+            Image(systemName: symbol)
             Text(text)
         }
         .font(.system(size: theme.fontSize * 0.9))

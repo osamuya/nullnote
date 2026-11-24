@@ -104,6 +104,63 @@ struct SelectionMarkDrawingTests {
         #expect(!isGround(badge))
     }
 
+    /// AppKit が選択を塗るときと同じ呼び方で、その範囲を塗る。
+    private func fillAsSelection(_ range: NSRange, in laid: Layout, size: NSSize) throws -> NSBitmapImageRep {
+        let canvas = try #require(NSBitmapImageRep(
+            bitmapDataPlanes: nil,
+            pixelsWide: Int(size.width), pixelsHigh: Int(size.height),
+            bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false,
+            colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0
+        ))
+        let context = try #require(NSGraphicsContext(bitmapImageRep: canvas))
+        NSGraphicsContext.saveGraphicsState()
+        NSGraphicsContext.current = context
+        ground.setFill()
+        NSRect(origin: .zero, size: size).fill()
+        context.cgContext.translateBy(x: 0, y: size.height)
+        context.cgContext.scaleBy(x: 1, y: -1)
+        let glyphs = laid.manager.glyphRange(forCharacterRange: range, actualCharacterRange: nil)
+        var rects: [NSRect] = []
+        laid.manager.enumerateEnclosingRects(
+            forGlyphRange: glyphs, withinSelectedGlyphRange: glyphs, in: laid.container
+        ) { rect, _ in rects.append(rect) }
+        // AppKit は塗る色を先に設定してから呼ぶ。
+        mark.setFill()
+        rects.withUnsafeBufferPointer { buffer in
+            laid.manager.fillBackgroundRectArray(
+                buffer.baseAddress!, count: buffer.count, forCharacterRange: range, color: mark
+            )
+        }
+        context.flushGraphics()
+        NSGraphicsContext.restoreGraphicsState()
+        return canvas
+    }
+
+    /// 札として描かれると、枠線が付き、右端が余白の分だけ削られて最後の文字が欠けた（#017）。
+    @Test("テキストの選択は札にせず、最後の文字まで平らに塗る")
+    func selectionIsNotBadge() throws {
+        let laid = layout("v1.4 以降では、アラビア語の追加を目指す。")
+        let string = laid.storage.string as NSString
+        let picked = string.range(of: "アラビア語の追加を目指す。")
+        let canvas = try fillAsSelection(picked, in: laid, size: NSSize(width: 600, height: 40))
+
+        let lastGlyph = laid.manager.glyphRange(
+            forCharacterRange: NSRange(location: NSMaxRange(picked) - 1, length: 1), actualCharacterRange: nil
+        )
+        let last = laid.manager.boundingRect(forGlyphRange: lastGlyph, in: laid.container)
+        #expect(isMark(canvas.colorAt(x: Int(last.maxX) - 1, y: Int(last.midY))))
+        #expect(isMark(canvas.colorAt(x: Int(last.midX), y: Int(last.midY))))
+    }
+
+    @Test("インラインコードを選んでも、札ではなく選択として塗る")
+    func selectionOverCodeIsNotBadge() throws {
+        let laid = layout("Cookie には `_ga` という値")
+        let string = laid.storage.string as NSString
+        let code = string.range(of: "_ga")
+        let canvas = try fillAsSelection(code, in: laid, size: NSSize(width: 600, height: 40))
+        #expect(isMark(color(at: code, in: laid, canvas: canvas)))
+    }
+
     @Test("インラインコードに色を付けると、その文字の背景が色で塗られる")
     func paintsMarkedCode() throws {
         let laid = layout("Cookie には `_ga` という値")

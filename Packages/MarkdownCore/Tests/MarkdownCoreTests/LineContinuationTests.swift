@@ -209,6 +209,27 @@ struct LineContinuationTests {
         #expect(table("ふつうの段落", state: .blank) == .plain)
     }
 
+    /// `|` を含むリストの行で、区切り行が足されていた（#018）。
+    @Test("リストの行の `|` は表ではない。リストとして継ぐ")
+    func pipeInListItem() {
+        #expect(table("- [#000][nullnote|sabanote] 000000000", state: .blank) == .carry("- "))
+        #expect(table("- [#000][nullnote|sabanote] 000000000", state: .paragraph) == .carry("- "))
+        #expect(table("1. a | b", state: .blank) == .carry("1. "))
+        #expect(table("  * a | b |", state: .blank) == .carry("  * "))
+    }
+
+    @Test("引用・見出しの行の `|` も表ではない")
+    func pipeInOtherBlocks() {
+        #expect(table("> a | b", state: .blank) == .carry("> "))
+        #expect(table("## a | b", state: .blank) == .plain)
+    }
+
+    @Test("先頭のパイプが無い書き方の見出し行は、これまでどおり表")
+    func headerWithoutLeadingPipe() {
+        #expect(table("名前 | 値", state: .blank)
+                == .tableRow(lines: ["|---|---|", "|  |  |"], caretInFirstCellOf: 1))
+    }
+
     @Test("コードブロックの中の `|` は表ではない")
     func pipeInsideCode() {
         #expect(LineContinuationRule.decide(
